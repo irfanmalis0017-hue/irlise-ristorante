@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>From Zero to CEO — Update 1.5</title>
+<title>From Zero to CEO — Update 1.6</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -77,14 +77,34 @@
   .actBtn.on { background:#287f80; }
   #musicBtn { position:fixed; left:16px; top:78px; z-index:6; pointer-events:auto; border:1px solid rgba(255,255,255,.25); border-radius:12px; padding:8px 12px; background:rgba(18,29,39,.82); color:#fff; font:700 13px Inter,system-ui,sans-serif; cursor:pointer; }
   body.touch #musicBtn { top:56px; left:10px; padding:6px 10px; }
+
+  #stats .stat#levelStat { min-width:120px; }
+  .xpbar { height:6px; border-radius:4px; background:rgba(255,255,255,.16); margin:5px 0 3px; overflow:hidden; }
+  .xpbar i { display:block; height:100%; width:0; background:#f3c75b; transition:width .3s; }
+  #tutorial { position:absolute; top:132px; left:50%; transform:translateX(-50%); width:max-content; max-width:min(420px,calc(100vw - 32px)); display:none; text-align:center; font-size:13px; line-height:1.45; border-color:#f3c75b; }
+  #tutorial.show { display:block; }
+  #tutorial b { display:block; color:#f3c75b; font-size:11px; letter-spacing:.08em; margin-bottom:3px; }
+  #levelUp { position:absolute; top:30%; left:50%; transform:translate(-50%,-50%) scale(.92); opacity:0; transition:opacity .3s,transform .3s; text-align:center; width:max-content; max-width:min(380px,calc(100vw - 32px)); border-color:#f3c75b; }
+  #levelUp.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  #levelUp small { display:block; color:#f3c75b; letter-spacing:.12em; font-size:11px; }
+  #levelUp b { display:block; font-size:26px; margin:2px 0 6px; }
+  #levelUp span { font-size:13px; color:#dbe8ef; line-height:1.45; }
+  #levelInfo { color:#f3e3b0 !important; }
+  .dangerBtn { margin-top:8px; width:100%; border:1px solid rgba(255,255,255,.2); border-radius:9px; padding:8px; background:transparent; color:#e7a79b; font:inherit; font-weight:700; cursor:pointer; }
+  #marketInventory { white-space:pre-line; }
+  .marketItem .staffRow { margin-top:2px; }
+  .marketItem .skillLabel { font-size:11px; color:#b8cbd4; }
+  .marketItem .staffRow button { padding:6px 8px; font-size:11px; }
+  .marketItem .fireBtn { background:#d75c48; color:#fff; }
 </style>
 </head>
 <body>
 <div id="loading"><div><div style="font-size:22px;font-weight:800">FROM ZERO TO CEO</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div id="brand" class="panel"><strong>FROM ZERO TO CEO</strong><span>Restaurant Simulator • Update 1.5 — Perbaikan Bug & Ruangan Terkunci</span></div>
+  <div id="brand" class="panel"><strong>FROM ZERO TO CEO</strong><span>Restaurant Simulator • Update 1.6 — Sistem Level & Progres</span></div>
   <div id="stats">
+    <div class="panel stat" id="levelStat"><small>Level restoran</small><b id="levelValue">Lv 1</b><div class="xpbar"><i id="xpFill"></i></div><small id="xpText">0 / 50 XP</small></div>
     <div class="panel stat"><small>Uang pemain</small><b id="coinValue">10.000 koin</b></div>
     <div class="panel stat"><small>Hari</small><b id="dayValue">01</b></div>
     <div class="panel stat"><small>Reputasi</small><b id="repValue">★ 1.0</b></div>
@@ -93,10 +113,13 @@
   <div id="help" class="panel"><b>KONTROL</b><br>W A S D — Bergerak<br>F — Layani pelanggan jika tidak ada kasir<br>I / J — Angkat & sajikan jika tanpa karyawan<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div>
   <div id="crosshair"></div>
   <div id="toast" class="panel">Selamat datang, Bos!</div>
+  <div id="tutorial" class="panel"><b>PANDUAN PEMULA</b><span id="tutorialText"></span></div>
+  <div id="levelUp" class="panel"></div>
 </div>
 <div id="businessPanel" class="panel">
   <h2>Bisnis Restoran</h2>
-  <p>Mulai dari restoran kecil. Layani pesanan untuk mendapat koin, beli perlengkapan, lalu buka area yang terkunci.</p>
+  <p>Mulai dari restoran kecil. Layani pesanan untuk mendapat XP dan koin, naik level untuk membuka fitur baru.</p>
+  <p id="levelInfo"></p>
   <div class="shopGrid">
     <button class="shopBtn" id="sellOrder"><b>ℹ️ Panduan alur kerja</b><small>Urutan dapur: K → L → I → J. Klik untuk panduan singkat.</small></button>
     <button class="shopBtn" id="buyTable"><b>Beli meja</b><small>1.200 koin • kapasitas +4</small></button>
@@ -106,6 +129,7 @@
     <button class="shopBtn" id="expandLeftArea"><b>Buka ruangan kiri</b><small>3.500 koin • ruang makan +2 meja & kantor owner</small></button>
   </div>
   <button id="closeShop">Tutup (E)</button>
+  <button id="resetGame" class="dangerBtn" type="button">Mulai ulang dari awal</button>
 </div>
 <div id="cookStatus" class="panel" aria-live="polite">Dapur siap — belum ada proses memasak.</div>
 <button id="shopLauncher" type="button" aria-label="Buka toko"><span class="shopIcon">🛒</span><span>SHOP</span></button>
@@ -117,7 +141,7 @@
 </div>
 <div id="cashierOrderPanel" class="panel" role="dialog" aria-label="Pesanan pelanggan" style="display:none;position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 28px));pointer-events:auto;color:#fff">
  <h2 style="margin:0 0 8px">💬 Pelanggan di Kasir</h2>
- <p style="margin:0 0 8px;color:#c7d8df;font-size:13px;line-height:1.6"><b>Pelanggan:</b> “Selamat pagi, Kak! Ada menu apa saja?”<br><b>Kasir:</b> “Ada 10 menu: ayam, nasi & mie goreng, sate, bakso, soto, pisang goreng, dan aneka minuman.”<br><b>Pelanggan:</b> “Saya mau pesan beberapa menu ya.”</p>
+ <p style="margin:0 0 8px;color:#c7d8df;font-size:13px;line-height:1.6"><b>Pelanggan:</b> “Selamat pagi, Kak! Ada menu apa saja?”<br><b>Kasir:</b> “Ada <span id="menuListText">beberapa menu.</span>”<br><b>Pelanggan:</b> “Saya mau pesan beberapa menu ya.”</p>
  <p id="orderMenuInfo" style="margin:0 0 12px;color:#f3c75b;font-size:12px">Pesanan diproses setelah dikonfirmasi.</p>
  <div style="display:flex;gap:8px"><button id="acceptOrder" style="flex:1;border:0;border-radius:8px;padding:10px;background:#f3c75b;font-weight:800;cursor:pointer">Konfirmasi Pesanan</button><button id="rejectOrder" style="border:0;border-radius:8px;padding:10px;background:#40525d;color:white;font-weight:700;cursor:pointer">Batalkan</button></div>
 </div>
@@ -571,7 +595,7 @@ function findPath(from,to){
  res[res.length-1]=V3(to.x,to.z);
  return res;
 }
-const maxCust=()=>{rebuildSeats();return Math.min(12,1+Math.floor(seatList.length/3));};
+const maxCust=()=>{rebuildSeats();return Math.min(KONFIG.batasPelanggan[level]||12,12,1+Math.floor(seatList.length/3));};
 // Pelanggan meninggalkan restoran (selesai makan atau kehilangan kesabaran).
 function leaveNow(c,angry){
  const g=c.g;
@@ -608,7 +632,7 @@ function spawnCustomer(){
  const g=makePerson({shirt:pickOne(custShirts),hair:pickOne(custHairs),skin:pickOne(custSkins),pants:pickOne(custPants),style,hijab:pickOne(custShirts),scale:.95+Math.random()*.1});
  g.position.set((Math.random()<.5?-1:1)*(4.5+Math.random()*3),0,9.8);scene.add(g);standPose(g);
  const badge=makeBadge();g.add(badge.sp);
- const total=2+Math.floor(Math.random()*3),items=[];for(let i=0;i<total;i++)items.push(pickOne(menuIds));
+ const total=2+Math.floor(Math.random()*3),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
  seat.taken=true;
  customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.2,3.2)]});
  return true;
@@ -621,6 +645,7 @@ function openCashierOrder(){
  const c=customers.find(x=>x.stage==='ordering');
  if(!c){showToast('Belum ada pelanggan yang menunggu di kasir.');return;}
  if(!nearPoint(-2.2,-3.55,3.0)){showToast('Dekati pelanggan di kasir untuk berinteraksi.');return;}
+ {const names=unlockedMenuIds().map(id=>menuCatalog[id].name);document.getElementById('menuListText').textContent=names.length+' menu: '+names.join(', ')+'.';}
  orderInfoEl.innerHTML=orderSummary(c);cashierOrderPanel.style.display='block';
 }
 function exitPath(){return [V3(-2.2,3.2),V3(0,6.3),V3(0,8.4),V3((Math.random()<.5?-1:1)*7,10.2)];}
@@ -640,9 +665,9 @@ document.getElementById('rejectOrder').addEventListener('click',rejectCashierOrd
 
 // Pembayaran per hidangan + bonus untuk pesanan banyak.
 function deliverTo(c){
- const m=menuCatalog[currentTicket.menuId];const ri=c.remaining.indexOf(currentTicket.menuId);if(ri>=0)c.remaining.splice(ri,1);c.wait=0;coins+=m.price;c.served++;c.paid+=m.price;currentTicket=null;
- if(c.served>=c.total){rep=Math.min(5,rep+.04);const tip=Math.round(c.paid*.1/10)*10;coins+=tip;c.paid+=tip;c.stage='eating';c.timer=0;showToast('Pesanan lengkap! '+m.name+' +'+m.price+' • bonus pesanan banyak +'+tip+' koin');setCookStatus('Pelanggan puas — total '+rupiah(c.paid)+' koin',true);}
- else{showToast(m.name+' diantar! +'+m.price+' koin ('+c.served+'/'+c.total+')');setCookStatus(m.name+' disajikan. Sisa pesanan pelanggan: '+(c.total-c.served),true);}
+ const m=menuCatalog[currentTicket.menuId];const ri=c.remaining.indexOf(currentTicket.menuId);if(ri>=0)c.remaining.splice(ri,1);c.wait=0;coins+=m.price;c.served++;c.paid+=m.price;currentTicket=null;const xpGain=awardXp(Math.round(m.price/100));saveData.tutorialDone=true;
+ if(c.served>=c.total){rep=Math.min(5,rep+.04);const xpBonus=awardXp(KONFIG.bonusXpPesananLengkap);const tip=Math.round(c.paid*.1/10)*10;coins+=tip;c.paid+=tip;c.stage='eating';c.timer=0;showToast('Pesanan lengkap! '+m.name+' +'+m.price+' • bonus pesanan banyak +'+tip+' koin • +'+(xpGain+xpBonus)+' XP');setCookStatus('Pelanggan puas — total '+rupiah(c.paid)+' koin',true);}
+ else{showToast(m.name+' diantar! +'+m.price+' koin • +'+xpGain+' XP ('+c.served+'/'+c.total+')');setCookStatus(m.name+' disajikan. Sisa pesanan pelanggan: '+(c.total-c.served),true);}
  persist();renderInventory();renderMarket();sfxCoin();
 }
 
@@ -662,13 +687,13 @@ function updateStaff(dt){
   }
  }
  const ordering=customers.find(x=>x.stage==='ordering');
- if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=Math.PI;if(cashierAutoTimer>=2.6){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
+ if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=Math.PI;if(cashierAutoTimer>=2.6*cashierSpeedFactor()){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
  // Pelayan: ambil hidangan matang di pass, antar ke pelanggan yang memesannya.
  const waiter=getWorker('staff');
  if(waiter&&dishReady&&currentTicket&&waiterMode==='idle'){waiterMode='toFood';waiterPath=[V3(4.8,-3.1)];}
  if(waiter&&waiterMode!=='idle'){
   const u=waiter.userData;
-  if(stepAlong(waiter,waiterPath,2.65,dt,t*7)){
+  if(stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7)){
    if(waiterMode==='toFood'){
     const plate=scene.getObjectByName('ready ayam geprek plate');if(plate){scene.remove(plate);disposeObj(plate);}
     if(!dishReady||!currentTicket){waiterMode='idle';waiterPath=[];return;}
@@ -685,7 +710,7 @@ function updateStaff(dt){
 
 function updateCustomers(dt){
  spawnTimer-=dt;
- if(spawnTimer<=0&&customers.length<maxCust())spawnTimer=spawnCustomer()?(6+Math.random()*6)/(0.8+rep*0.2):3;
+ if(spawnTimer<=0&&customers.length<maxCust())spawnTimer=spawnCustomer()?(6+Math.random()*6)*(KONFIG.jedaPelanggan[level]||1)/(0.8+rep*0.2):3;
  const line=customers.filter(c=>c.stage==='line'||c.stage==='ordering').sort((a,b)=>a.id-b.id);
  line.forEach((c,i)=>{c.slot=i;});
  const ph=performance.now()/1000*7.5;
@@ -712,7 +737,7 @@ function updateCustomers(dt){
   refreshBadge(c);
  }
  statusTimer+=dt;
- if(statusTimer>.5){statusTimer=0;
+ if(statusTimer>.5){statusTimer=0;updateTutorial();
   if(!cooking&&!dishReady&&!holdingDish){if(kitchenQueue.length){setCookStatus('Antrean dapur: '+kitchenQueue.length+' pesanan'+(hasStaffOnDuty('chef')?'':' — tekan L di dekat kompor'),true);queueShown=true;}else if(queueShown){setCookStatus('',false);queueShown=false;}}
  }
 }
@@ -799,7 +824,7 @@ function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearT
 // Kitchen workflow: open fridge, cook for 10 seconds, pick up, then serve.
 const cookStatus=document.getElementById('cookStatus');
 const ingredientNames={rice:'beras',chicken:'ayam',flour:'tepung',oil:'minyak',spices:'bumbu',vegetables:'sayuran',egg:'telur',noodles:'mi',tea:'teh',ice:'es batu',orange:'jeruk',coffee:'kopi',milk:'susu',banana:'pisang'};
-let fridgeOpen=false,cooking=false,cookStarted=0,dishReady=false,holdingDish=null;
+let fridgeOpen=false,cooking=false,cookStarted=0,dishReady=false,holdingDish=null,currentCookTime=10;
 function nearPoint(x,z,r=3.2){return Math.hypot(player.position.x-x,player.position.z-z)<=r;}
 function setCookStatus(message,show=true){if(cookStatus.textContent!==message)cookStatus.textContent=message;if(cookStatus.classList.contains('show')!==show)cookStatus.classList.toggle('show',show);}
 function createAyamGeprekPlate(menuId='ayam'){
@@ -873,7 +898,7 @@ function beginCooking(automatic=false){
  if(idx<0){const m=menuCatalog[kitchenQueue[0].menuId];const missing=Object.entries(m.recipe).filter(([id,qty])=>(saveData.inventory[id]||0)<qty);setCookStatus('Stok bahan kurang — buka SHOP untuk belanja.');if(!automatic)showToast('Bahan kurang: '+missing.map(([id])=>ingredientNames[id]).join(', ')+'. Beli bahan di SHOP.');return false;}
  currentTicket=kitchenQueue.splice(idx,1)[0];currentOrderMenuId=currentTicket.menuId;const selected=menuCatalog[currentOrderMenuId];
  Object.entries(selected.recipe).forEach(([id,qty])=>saveData.inventory[id]-=qty);persist();renderInventory();renderMarket();refreshFridgeStock();
- cooking=true;cookStarted=performance.now();setCookStatus((automatic?'Koki sedang menyiapkan ':'Memasak ')+selected.name+'... '+selected.cook+' detik');if(!automatic)showToast('Memasak '+selected.name+' dimulai!');return true;
+ currentCookTime=selected.cook*(automatic?chefSpeedFactor():1);cooking=true;cookStarted=performance.now();setCookStatus((automatic?'Koki sedang menyiapkan ':'Memasak ')+selected.name+'... '+currentCookTime.toFixed(0)+' detik');if(!automatic)showToast('Memasak '+selected.name+' dimulai!');return true;
 }
 function startCooking(){
  if(!nearPoint(4.8,-4.55,3.5)){showToast('Dekati kompor untuk mulai memasak.');return;}
@@ -898,8 +923,25 @@ function serveDish(){
 const businessPanel=document.getElementById('businessPanel');
 const coinValue=document.getElementById('coinValue');
 const saveKey='fromZeroToCEO_save_v10';
-let saveData={coins:10000,areaUnlocked:false,leftAreaUnlocked:false,items:{table:0,chair:0,stove:0},inventory:{}};
-try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)) saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}}; } catch(e) {}
+const MAX_LEVEL=10,MAX_SKILL=3;
+// ===== KONFIG: semua angka keseimbangan game ada di sini, ubah sesuai selera =====
+const KONFIG={
+ koinAwal:1000,
+ xpPerLevel:[0,0,50,140,280,480,740,1060,1450,1900,2400], // XP minimum tiap level (indeks = level)
+ bonusXpPesananLengkap:5,
+ levelMenu:{1:['tea','pisang','nasgor'],3:['mie','jeruk'],4:['ayam','kopi'],5:['sate','bakso','soto']},
+ levelMeja:[2,4], levelKursi:2, levelKompor:4,
+ levelRekrut:{cashier:3,staff:4,chef:5}, levelShift2:6,
+ levelRuanganKanan:6, levelRuanganKiri:8,
+ gajiHarian:{cashier:1200,staff:1500,chef:2000},
+ skill:{kecepatanKoki:[0,1,.8,.6],kecepatanPelayan:[0,1,1.3,1.6],kecepatanKasir:[0,1,.7,.45],biayaUpgrade:[0,0,1200,2500],levelUpgrade:[0,0,5,8]},
+ jedaPelanggan:[0,2.2,1.8,1.5,1.25,1.1,1,.95,.9,.85,.8], // pengali jeda kedatangan pelanggan (makin kecil makin ramai)
+ batasPelanggan:[0,2,3,3,4,5,6,8,10,12,12],
+ kapasitasKulkas:lv=>20+10*(lv-1)
+};
+let legacySave=false;
+let saveData={coins:KONFIG.koinAwal,areaUnlocked:false,leftAreaUnlocked:false,items:{table:0,chair:0,stove:0},inventory:{rice:10,egg:10,oil:5,spices:10,vegetables:10,banana:10,flour:10,tea:10,ice:10},staff:[],level:1,xp:0,tutorialDone:false,initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true};
+try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)) saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}}; if(old&&Number.isFinite(old.coins))legacySave=!old.initializedV16; } catch(e) {}
 let coins=saveData.coins, areaUnlocked=!!saveData.areaUnlocked, leftAreaUnlocked=!!saveData.leftAreaUnlocked, lastSale=0;
 let rep=Number.isFinite(saveData.rep)?saveData.rep:1, day=(saveData.day|0)||1, dayStartCoins=coins;
 if(!saveData.initializedV10){coins=10000;saveData.initializedV10=true;saveData.inventory={rice:10,chicken:5,vegetables:10,flour:10,oil:5,spices:10};saveData.staff=[];saveData.items={table:0,chair:0,stove:0};saveData.areaUnlocked=false;saveData.leftAreaUnlocked=false;areaUnlocked=false;leftAreaUnlocked=false;}
@@ -909,10 +951,109 @@ if(!saveData.initializedV12){saveData.inventory=saveData.inventory||{};for(const
 if(!saveData.initializedV14){saveData.inventory=saveData.inventory||{};for(const [id,q] of [['beef',5],['orange',10],['coffee',10],['milk',10],['banana',10]])if(!(id in saveData.inventory))saveData.inventory[id]=q;saveData.initializedV14=true;}
 if(!saveData.initializedV15){leftAreaUnlocked=false;saveData.leftAreaUnlocked=false;saveData.initializedV15=true;}
 saveData.staff=Array.isArray(saveData.staff)?saveData.staff:[];
-function persist(){saveData={...saveData,coins,areaUnlocked,leftAreaUnlocked,items:saveData.items,inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,rep,day};try{localStorage.setItem(saveKey,JSON.stringify(saveData));}catch(e){} updateCoins();}
-function updateCoins(){const dv=document.getElementById('dayValue'),rv=document.getElementById('repValue');if(dv)dv.textContent=String(day).padStart(2,'0');if(rv)rv.textContent='★ '+rep.toFixed(1);const formatted=coins.toLocaleString('id-ID')+' koin';coinValue.textContent=formatted;const mb=document.getElementById('marketBalance');if(mb)mb.textContent=formatted;}
+// ===== Update 1.6: Sistem level, XP, gaji harian, skill karyawan, tutorial =====
+// Level lama (legacy): save dari versi sebelumnya langsung dianggap Level maksimum agar progres tidak hilang.
+if(legacySave){saveData.level=MAX_LEVEL;saveData.xp=KONFIG.xpPerLevel[MAX_LEVEL];saveData.tutorialDone=true;saveData.staff=saveData.staff.map(s=>({...s,skill:s.skill||1}));}
+let level=Math.max(1,Math.min(MAX_LEVEL,(saveData.level|0)||1));
+saveData.level=level;saveData.xp=saveData.xp||0;
+let resetting=false;
+const levelForXp=x=>{let l=1;for(let i=2;i<=MAX_LEVEL;i++)if(x>=KONFIG.xpPerLevel[i])l=i;return l;};
+const menuLevel={};for(const [lv,ids] of Object.entries(KONFIG.levelMenu))for(const id of ids)menuLevel[id]=+lv;
+const ingLevel={};for(const [id,m] of Object.entries(menuCatalog))for(const ing of Object.keys(m.recipe))ingLevel[ing]=Math.min(ingLevel[ing]??99,menuLevel[id]||1);
+const unlockedMenuIds=()=>menuIds.filter(id=>level>=(menuLevel[id]||1));
+const stockCap=()=>KONFIG.kapasitasKulkas(level);
+const totalWages=()=>(saveData.staff||[]).reduce((a,s)=>a+(KONFIG.gajiHarian[s.role]||0),0);
+const roleName=r=>r==='chef'?'Koki':r==='cashier'?'Kasir':'Pelayan';
+const staffSkill=role=>{const sh=gameMinutes>=900?2:1;const s=(saveData.staff||[]).find(m=>m.role===role&&m.shift===sh);return Math.min(MAX_SKILL,((s&&s.skill)|0)||1);};
+const chefSpeedFactor=()=>KONFIG.skill.kecepatanKoki[staffSkill('chef')];
+const waiterSpeedFactor=()=>KONFIG.skill.kecepatanPelayan[staffSkill('staff')];
+const cashierSpeedFactor=()=>KONFIG.skill.kecepatanKasir[staffSkill('cashier')];
+const hireLevel=item=>Math.max(KONFIG.levelRekrut[item.role]||1,item.shift===2?KONFIG.levelShift2:1);
+const LEVEL_TEXT={
+ 2:'Meja tambahan pertama dan kursi. Kapasitas kulkas naik.',
+ 3:'Rekrut Kasir. Menu baru: Mie Goreng dan Es Jeruk.',
+ 4:'Rekrut Pelayan. Menu baru: Ayam Geprek dan Kopi Susu. Meja kedua dan kompor.',
+ 5:'Rekrut Koki. Menu baru: Sate, Bakso, dan Soto. Upgrade skill ke 2.',
+ 6:'Karyawan Shift 2 dan Ruangan kanan.',
+ 7:'Pelanggan makin ramai. Kapasitas kulkas naik.',
+ 8:'Ruangan kiri dan Kantor Owner. Upgrade skill ke 3. Saatnya mengelola, bukan lagi kerja sendiri.',
+ 9:'Restoran makin ramai dan makin menguntungkan.',
+ 10:'Level maksimum tercapai. Restoran impianmu!'
+};
+function updateLevelHud(){
+ const lv=document.getElementById('levelValue');if(!lv)return;
+ const xp=saveData.xp||0,cur=KONFIG.xpPerLevel[level],next=KONFIG.xpPerLevel[level+1];
+ lv.textContent='Lv '+level;
+ const fill=document.getElementById('xpFill'),tx=document.getElementById('xpText');
+ if(level>=MAX_LEVEL){fill.style.width='100%';tx.textContent='MAKS • '+xp+' XP';}
+ else{fill.style.width=Math.max(0,Math.min(100,(xp-cur)/(next-cur)*100))+'%';tx.textContent=(xp-cur)+' / '+(next-cur)+' XP';}
+}
+let levelUpTimer;
+function onLevelUp(n){
+ const el=document.getElementById('levelUp');
+ el.innerHTML='<small>NAIK LEVEL</small><b>Level '+n+'</b><span>'+(LEVEL_TEXT[n]||'')+'</span>';
+ el.classList.add('show');clearTimeout(levelUpTimer);levelUpTimer=setTimeout(()=>el.classList.remove('show'),7000);
+ updateMenuBoard();refreshBusinessLocks();if(marketPanel.classList.contains('open'))renderMarket();
+ try{sfxDing();}catch(e){}
+}
+function awardXp(base){
+ const gain=Math.max(1,Math.round(base*(0.8+rep*0.2)));
+ saveData.xp=(saveData.xp||0)+gain;
+ const nl=levelForXp(saveData.xp);
+ if(nl>level){level=nl;saveData.level=level;onLevelUp(nl);}
+ updateLevelHud();return gain;
+}
+function updateMenuBoard(){
+ const short={tea:'TEH',pisang:'PISANG',nasgor:'NASGOR',mie:'MIE',jeruk:'JERUK',ayam:'AYAM',kopi:'KOPI',sate:'SATE',bakso:'BAKSO',soto:'SOTO'};
+ const ids=unlockedMenuIds().map(id=>short[id]);
+ ctx.fillStyle='#28343d';ctx.fillRect(0,0,512,160);
+ ctx.fillStyle='#ffe7ad';ctx.textAlign='center';ctx.font='bold 48px Arial';ctx.fillText('MENU HARI INI',256,52);
+ ctx.font='bold 25px Arial';ctx.fillText(ids.slice(0,5).join(' • '),256,98);
+ if(ids.length>5)ctx.fillText(ids.slice(5).join(' • '),256,138);
+ menuTex.needsUpdate=true;
+}
+function refreshBusinessLocks(){
+ const set=(id,text)=>{const b=document.getElementById(id);if(!b)return;const sm=b.querySelector('small');if(sm)sm.textContent=text;};
+ const tn=KONFIG.levelMeja[saveData.items.table|0];
+ set('buyTable',tn&&level<tn?'🔒 Terbuka di Level '+tn:'1.200 koin • kapasitas +4');
+ set('buyChair',level<KONFIG.levelKursi?'🔒 Terbuka di Level '+KONFIG.levelKursi:'500 koin • kursi dekorasi');
+ set('buyStove',level<KONFIG.levelKompor?'🔒 Terbuka di Level '+KONFIG.levelKompor:'1.800 koin • alat dapur');
+ if(!areaUnlocked)set('expandArea',level<KONFIG.levelRuanganKanan?'🔒 Terbuka di Level '+KONFIG.levelRuanganKanan+' • 4.000 koin':'4.000 koin • ruang makan +3 meja (12 kursi)');
+ if(!leftAreaUnlocked)set('expandLeftArea',level<KONFIG.levelRuanganKiri?'🔒 Terbuka di Level '+KONFIG.levelRuanganKiri+' • 3.500 koin':'3.500 koin • ruang makan +2 meja & kantor owner');
+ const info=document.getElementById('levelInfo');
+ if(info)info.innerHTML='<b>Level '+level+'</b> • '+(saveData.xp||0)+' XP'+(level<MAX_LEVEL?'<br>Level '+(level+1)+': '+LEVEL_TEXT[level+1]:'<br>Level maksimum tercapai.')+'<br>Gaji harian karyawan: '+rupiah(totalWages())+' koin';
+}
+function payWages(){
+ const w=totalWages();if(!w)return '';
+ if(coins>=w){coins-=w;return ' Gaji karyawan dibayar −'+rupiah(w)+' koin.';}
+ const paid=coins;coins=0;rep=Math.max(0,rep-.1);
+ return ' Uang tidak cukup untuk gaji ('+rupiah(w)+' koin), hanya terbayar '+rupiah(paid)+'. Karyawan kecewa, reputasi turun.';
+}
+function updateTutorial(){
+ const el=document.getElementById('tutorial');if(!el)return;
+ if(saveData.tutorialDone||level>1){el.classList.remove('show');return;}
+ let msg;
+ if(holdingDish)msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';
+ else if(dishReady)msg='Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.';
+ else if(cooking)msg='Sedang memasak. Tunggu sampai matang.';
+ else if(kitchenQueue.length)msg=fridgeOpen?'Dekati kompor lalu tekan L untuk mulai memasak.':'Pesanan masuk dapur. Dekati kulkas lalu tekan K untuk membukanya.';
+ else if(customers.some(c=>c.stage==='ordering'))msg='Pelanggan menunggu di kasir. Dekati kasir lalu tekan F untuk menerima pesanan.';
+ else if(customers.some(c=>c.stage==='toSeat'))msg='Pelanggan sedang menuju meja...';
+ else msg='Menunggu pelanggan pertama datang...';
+ document.getElementById('tutorialText').textContent=msg;el.classList.add('show');
+}
+(function(){
+ const b=document.getElementById('resetGame');let armed=false,tm;
+ b.addEventListener('click',()=>{
+  if(!armed){armed=true;b.textContent='Yakin? Semua progres dihapus. Klik lagi untuk lanjut.';clearTimeout(tm);tm=setTimeout(()=>{armed=false;b.textContent='Mulai ulang dari awal';},4000);return;}
+  resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();
+ });
+})();
+
+function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,items:saveData.items,inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,rep,day};try{localStorage.setItem(saveKey,JSON.stringify(saveData));}catch(e){} updateCoins();}
+function updateCoins(){const dv=document.getElementById('dayValue'),rv=document.getElementById('repValue');if(dv)dv.textContent=String(day).padStart(2,'0');if(rv)rv.textContent='★ '+rep.toFixed(1);updateLevelHud();const formatted=coins.toLocaleString('id-ID')+' koin';coinValue.textContent=formatted;const mb=document.getElementById('marketBalance');if(mb)mb.textContent=formatted;}
 function spend(amount){if(coins<amount){showToast('Koin belum cukup. Layani pesanan untuk mendapat uang!');return false;}coins-=amount;persist();return true;}
-function openBusiness(){businessPanel.classList.add('open');}
+function openBusiness(){refreshBusinessLocks();businessPanel.classList.add('open');}
 function closeBusiness(){businessPanel.classList.remove('open');}
 
 // Shop catalogue: purchases increase persistent stock; equipment is tracked separately from ingredients.
@@ -956,34 +1097,96 @@ const marketPanel=document.getElementById('marketPanel');
 const marketItems=document.getElementById('marketItems');
 function renderMarket(){
  marketItems.innerHTML='';
+ const cap=stockCap();
  marketCatalog[marketCategory].forEach(item=>{
   const card=document.createElement('div');card.className='marketItem';
+  let need=1;
+  if(item.role)need=hireLevel(item);
+  else if(item.action==='existingTable')need=KONFIG.levelMeja[saveData.items.table|0]||1;
+  else if(item.action==='existingChair')need=KONFIG.levelKursi;
+  else if(item.action==='existingStove')need=KONFIG.levelKompor;
+  else if(marketCategory==='ingredients')need=ingLevel[item.id]||1;
+  const locked=level<need;
+  const stock=saveData.inventory[item.id]||0;
+  const full=marketCategory==='ingredients'&&stock+(item.quantity||1)>cap;
   const name=document.createElement('div');name.className='itemName';name.textContent=item.icon+' '+item.name;
-  const desc=document.createElement('div');desc.className='itemDesc';desc.textContent=item.desc;
+  const desc=document.createElement('div');desc.className='itemDesc';
+  let d=item.desc;
+  if(item.role)d+=' Gaji harian: '+rupiah(KONFIG.gajiHarian[item.role])+' koin.';
+  if(marketCategory==='ingredients')d+=' Stok: '+stock+' / '+cap+'.';
+  desc.textContent=d;
   const foot=document.createElement('div');foot.className='itemFoot';
   const price=document.createElement('strong');price.textContent=item.price.toLocaleString('id-ID')+' koin';
-  const buy=document.createElement('button');buy.type='button';const owned=item.role?(saveData.staff||[]).filter(x=>x.role===item.role&&x.shift===item.shift).length:0;const has=item.once&&(saveData.inventory[item.id]||0)>0;buy.textContent=item.role?(owned?'Sudah direkrut':'Rekrut'):(has?'Dimiliki':'Beli');buy.disabled=coins<item.price||(!!item.role&&owned>=1)||!!has;
+  const buy=document.createElement('button');buy.type='button';
+  const owned=item.role?(saveData.staff||[]).filter(x=>x.role===item.role&&x.shift===item.shift).length:0;
+  const has=item.once&&(saveData.inventory[item.id]||0)>0;
+  buy.textContent=locked?'🔒 Level '+need:item.role?(owned?'Sudah direkrut':'Rekrut'):(has?'Dimiliki':(full?'Kulkas penuh':'Beli'));
+  buy.disabled=locked||coins<item.price||(!!item.role&&owned>=1)||!!has||full;
   buy.addEventListener('click',()=>purchaseMarketItem(item));
-  foot.append(price,buy);card.append(name,desc,foot);marketItems.append(card);
+  foot.append(price,buy);card.append(name,desc,foot);
+  if(item.role&&owned){
+   const st=saveData.staff.find(x=>x.role===item.role&&x.shift===item.shift);
+   const sk=(st&&st.skill)||1;
+   const row=document.createElement('div');row.className='itemFoot staffRow';
+   const lab=document.createElement('span');lab.className='skillLabel';lab.textContent='Skill '+sk+' / '+MAX_SKILL;
+   const up=document.createElement('button');up.type='button';
+   if(sk>=MAX_SKILL){up.textContent='Skill maks';up.disabled=true;}
+   else{const nx=sk+1,cost=KONFIG.skill.biayaUpgrade[nx],lv=KONFIG.skill.levelUpgrade[nx];up.textContent=level<lv?'🔒 Lv '+lv:'Upgrade '+rupiah(cost);up.disabled=level<lv||coins<cost;}
+   up.addEventListener('click',()=>upgradeStaff(item));
+   const fire=document.createElement('button');fire.type='button';fire.className='fireBtn';fire.textContent='Pecat';
+   fire.addEventListener('click',()=>{if(fire.dataset.sure!=='1'){fire.dataset.sure='1';fire.textContent='Yakin?';setTimeout(()=>{fire.dataset.sure='';fire.textContent='Pecat';},3000);return;}fireStaff(item);});
+   row.append(lab,up,fire);card.append(row);
+  }
+  marketItems.append(card);
  });
  renderInventory();updateCoins();
+}
+function upgradeStaff(item){
+ const st=(saveData.staff||[]).find(x=>x.role===item.role&&x.shift===item.shift);if(!st)return;
+ const sk=st.skill||1;if(sk>=MAX_SKILL)return;
+ const nx=sk+1,cost=KONFIG.skill.biayaUpgrade[nx],lv=KONFIG.skill.levelUpgrade[nx];
+ if(level<lv){showToast('🔒 Upgrade ini terbuka di Level '+lv+'.');return;}
+ if(coins<cost){showToast('Koin belum cukup untuk upgrade skill.');return;}
+ coins-=cost;st.skill=nx;persist();showToast(roleName(item.role)+' Shift '+item.shift+' naik ke skill '+nx+'!');renderMarket();
+}
+function fireStaff(item){
+ const before=(saveData.staff||[]).length;
+ saveData.staff=(saveData.staff||[]).filter(x=>!(x.role===item.role&&x.shift===item.shift));
+ if(saveData.staff.length===before)return;
+ persist();refreshStaffVisuals();refreshBusinessLocks();showToast(roleName(item.role)+' Shift '+item.shift+' diberhentikan. Biaya rekrut tidak dikembalikan.');renderMarket();
 }
 function renderInventory(){
  refreshFridgeStock();
  const entries=Object.entries(saveData.inventory||{}).filter(([,qty])=>qty>0);
  const labels={table:'Meja',chair:'Kursi',stove:'Kompor',fridge:'Kulkas',prepTable:'Meja persiapan',plates:'Set piring',rice:'Beras',chicken:'Ayam',beef:'Daging sapi',vegetables:'Sayuran',flour:'Tepung',oil:'Minyak goreng',spices:'Bumbu',egg:'Telur',noodles:'Mi',tea:'Teh',ice:'Es batu',orange:'Jeruk',coffee:'Kopi',milk:'Susu',banana:'Pisang'};
- const stockText=entries.length?'Stok dimiliki: '+entries.map(([id,qty])=>(labels[id]||id)+' × '+qty).join(' • '):'Inventaris barang masih kosong.';const staffText=(saveData.staff||[]).length?'Karyawan: '+saveData.staff.map(x=>(x.role==='chef'?'Koki':x.role==='cashier'?'Kasir':'Pelayan')+' Shift '+x.shift).join(' • '):'Belum ada karyawan direkrut.';document.getElementById('marketInventory').textContent=stockText+'\n'+staffText;
+ const stockText=entries.length?'Stok dimiliki: '+entries.map(([id,qty])=>(labels[id]||id)+' × '+qty).join(' • '):'Inventaris barang masih kosong.';const staffText=(saveData.staff||[]).length?'Karyawan: '+saveData.staff.map(x=>(x.role==='chef'?'Koki':x.role==='cashier'?'Kasir':'Pelayan')+' Shift '+x.shift+' (skill '+(x.skill||1)+')').join(' • '):'Belum ada karyawan direkrut.';document.getElementById('marketInventory').textContent=stockText+'\n'+staffText+'\nKapasitas kulkas per bahan: '+stockCap()+' • Gaji harian total: '+rupiah(totalWages())+' koin';
 }
 function purchaseMarketItem(item){
+ // Rekrut karyawan: terkunci per level, dikenai gaji harian.
+ if(item.role){
+  const need=hireLevel(item);
+  if(level<need){showToast('🔒 '+roleName(item.role)+(item.shift===2?' Shift 2':'')+' terbuka di Level '+need+'.');return;}
+  if(coins<item.price){showToast('Koin belum cukup untuk membeli '+item.name+'.');return;}
+  if((saveData.staff||[]).some(x=>x.role===item.role&&x.shift===item.shift)){showToast(item.name+' sudah direkrut.');return;}
+  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift,id:item.id,skill:1});persist();refreshStaffVisuals();
+  showToast(roleName(item.role)+' Shift '+item.shift+' direkrut. Gaji harian '+rupiah(KONFIG.gajiHarian[item.role])+' koin.');renderMarket();refreshBusinessLocks();return;
+ }
  if(coins<item.price){showToast('Koin belum cukup untuk membeli '+item.name+'.');return;}
- // Staff hiring is saved and their 3D characters appear only during their assigned shift.
- if(item.role){if((saveData.staff||[]).some(x=>x.role===item.role&&x.shift===item.shift)){showToast(item.name+' sudah direkrut.');return;}coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift,id:item.id});persist();refreshStaffVisuals();showToast((item.role==='chef'?'Koki':item.role==='cashier'?'Kasir':'Pelayan')+' Shift '+item.shift+' berhasil direkrut!');renderMarket();return;}
- // Existing furniture purchases retain their original in-game placement logic.
+ // Perabot lama: pengecekan level ada di tombolnya masing-masing.
  if(item.action==='existingTable'){document.getElementById('buyTable').click();}
  else if(item.action==='existingChair'){document.getElementById('buyChair').click();}
  else if(item.action==='existingStove'){document.getElementById('buyStove').click();}
- else {if(item.once&&(saveData.inventory[item.id]||0)>0){showToast(item.name+' sudah dimiliki.');return;}coins-=item.price;saveData.inventory[item.id]=(saveData.inventory[item.id]||0)+(item.quantity||1);persist();showToast(item.name+' berhasil dibeli!');}
- renderMarket();
+ else{
+  if(marketCategory==='ingredients'){
+   const need=ingLevel[item.id]||1;
+   if(level<need){showToast('🔒 '+item.name+' terbuka di Level '+need+'.');return;}
+   const cap=stockCap();
+   if((saveData.inventory[item.id]||0)+(item.quantity||1)>cap){showToast('Kulkas penuh (maks '+cap+' per bahan). Naik level untuk kapasitas lebih besar.');return;}
+  }
+  if(item.once&&(saveData.inventory[item.id]||0)>0){showToast(item.name+' sudah dimiliki.');return;}
+  coins-=item.price;saveData.inventory[item.id]=(saveData.inventory[item.id]||0)+(item.quantity||1);persist();showToast(item.name+' berhasil dibeli!');
+ }
+ renderMarket();refreshBusinessLocks();
 }
 document.getElementById('shopLauncher').addEventListener('click',()=>{marketPanel.classList.add('open');renderMarket();});
 document.getElementById('closeMarket').addEventListener('click',()=>marketPanel.classList.remove('open'));
@@ -996,9 +1199,9 @@ const tableSlots=[[0,0],[4.8,-1.8]],chairSlots=[[-7.2,3.5],[-7.2,-1.3],[7.2,-1.3
 function placeTable(i){const [x,z]=tableSlots[i];makeTable(x,z);solidRects.push({x,z,hx:.82,hz:.82},...[[-1.18,0],[1.18,0],[0,-1.18],[0,1.18]].map(([dx,dz])=>({x:x+dx,z:z+dz,hx:.39,hz:.39})));}
 function placeChair(i){const [x,z]=chairSlots[i];box(scene,'purchased chair seat',x,.55,z,.7,.16,.7,materials.teal);box(scene,'purchased chair back',x,.98,z+.28,.7,.72,.13,materials.darkTeal);for(const [dx,dz] of [[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]])box(scene,'purchased chair leg',x+dx,.27,z+dz,.09,.55,.09,materials.wood);solidRects.push({x,z,hx:.42,hz:.42});}
 function placeStove(i){const [x,z]=stoveSlots[i];box(scene,'purchased stove base',x,.62,z,1.35,1.15,1.2,materials.steel);box(scene,'purchased stove top',x,1.23,z,1.42,.14,1.26,materials.black);for(const dx of [-.38,.38])cylinder(scene,'purchased stove burner',x+dx,1.33,z,.25,.25,.08,materials.yellow,20);solidRects.push({x,z,hx:.82,hz:.72});}
-document.getElementById('buyTable').addEventListener('click',()=>{if(saveData.items.table>=tableSlots.length){showToast('Area makan sudah penuh — tidak ada tempat untuk meja lagi.');return;}if(!spend(1200))return;placeTable(saveData.items.table++);persist();showToast('Meja tambahan berhasil dibeli dan dipasang!');});
-document.getElementById('buyChair').addEventListener('click',()=>{if(saveData.items.chair>=chairSlots.length){showToast('Tidak ada tempat kosong untuk kursi lagi.');return;}if(!spend(500))return;placeChair(saveData.items.chair++);persist();showToast('Kursi tambahan berhasil dibeli dan dipasang!');});
-document.getElementById('buyStove').addEventListener('click',()=>{if(saveData.items.stove>=stoveSlots.length){showToast('Dapur sudah penuh — tidak ada tempat untuk kompor lagi.');return;}if(!spend(1800))return;placeStove(saveData.items.stove++);persist();showToast('Kompor tambahan berhasil dibeli dan dipasang!');});
+document.getElementById('buyTable').addEventListener('click',()=>{const needT=KONFIG.levelMeja[saveData.items.table|0];if(needT&&level<needT){showToast('🔒 Meja berikutnya terbuka di Level '+needT+'.');return;}if(saveData.items.table>=tableSlots.length){showToast('Area makan sudah penuh — tidak ada tempat untuk meja lagi.');return;}if(!spend(1200))return;placeTable(saveData.items.table++);persist();showToast('Meja tambahan berhasil dibeli dan dipasang!');});
+document.getElementById('buyChair').addEventListener('click',()=>{if(level<KONFIG.levelKursi){showToast('🔒 Kursi terbuka di Level '+KONFIG.levelKursi+'.');return;}if(saveData.items.chair>=chairSlots.length){showToast('Tidak ada tempat kosong untuk kursi lagi.');return;}if(!spend(500))return;placeChair(saveData.items.chair++);persist();showToast('Kursi tambahan berhasil dibeli dan dipasang!');});
+document.getElementById('buyStove').addEventListener('click',()=>{if(level<KONFIG.levelKompor){showToast('🔒 Kompor tambahan terbuka di Level '+KONFIG.levelKompor+'.');return;}if(saveData.items.stove>=stoveSlots.length){showToast('Dapur sudah penuh — tidak ada tempat untuk kompor lagi.');return;}if(!spend(1800))return;placeStove(saveData.items.stove++);persist();showToast('Kompor tambahan berhasil dibeli dan dipasang!');});
 for(let i=0;i<Math.min(saveData.items.table|0,tableSlots.length);i++)placeTable(i);
 for(let i=0;i<Math.min(saveData.items.chair|0,chairSlots.length);i++)placeChair(i);
 for(let i=0;i<Math.min(saveData.items.stove|0,stoveSlots.length);i++)placeStove(i);
@@ -1056,7 +1259,7 @@ function refreshStaffVisuals(){
 function getWorker(role){return staffVisuals.find(w=>w.role===role)?.group||null;}
 let gameMinutes=480,lastShift=1,autoServeAt=0;
 function updateShiftClock(dt){
- gameMinutes+=dt; if(gameMinutes>=1320){gameMinutes=480;const earned=coins-dayStartCoins;showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin. Hari baru dimulai!');day++;dayStartCoins=coins;persist();}
+ gameMinutes+=dt; if(gameMinutes>=1320){gameMinutes=480;const earned=coins-dayStartCoins;const wageMsg=payWages();showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+wageMsg+' Hari baru dimulai!');day++;dayStartCoins=coins;persist();}
  const h=Math.floor(gameMinutes/60),m=Math.floor(gameMinutes%60),shift=h<15?1:2;
  const clock=document.getElementById('shiftClock');if(clock)clock.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' • Shift '+shift;
  if(shift!==lastShift){lastShift=shift;refreshStaffVisuals();showToast(shift===2?'Pukul 15.00 — Shift 1 pulang, Shift 2 mulai bekerja.':'Pukul 08.00 — Shift 1 mulai bekerja.');}
@@ -1082,11 +1285,11 @@ function buildOwnerOffice(){
 }
 function buildExpansion(){unlockWing('right');}
 document.getElementById('expandArea').addEventListener('click',()=>{
- if(areaUnlocked){showToast('Ruangan kanan sudah terbuka.');return;}
+ if(areaUnlocked){showToast('Ruangan kanan sudah terbuka.');return;}if(level<KONFIG.levelRuanganKanan){showToast('🔒 Ruangan kanan terbuka di Level '+KONFIG.levelRuanganKanan+'.');return;}
  if(!spend(4000))return;buildExpansion();showToast('Ruangan kanan berhasil dibuka!');
 });
 document.getElementById('expandLeftArea').addEventListener('click',()=>{
- if(leftAreaUnlocked){showToast('Ruangan kiri sudah terbuka.');return;}
+ if(leftAreaUnlocked){showToast('Ruangan kiri sudah terbuka.');return;}if(level<KONFIG.levelRuanganKiri){showToast('🔒 Ruangan kiri terbuka di Level '+KONFIG.levelRuanganKiri+'.');return;}
  if(!spend(3500))return;unlockWing('left');showToast('Ruangan kiri berhasil dibuka!');
 });
 addEventListener('keydown',e=>{if(e.code==='KeyE'&&!e.repeat){
@@ -1108,7 +1311,7 @@ addEventListener('keydown',e=>{
  else if(e.code==='KeyJ') serveDish();
 });
 updateCoins();refreshFridgeStock();
-if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refreshStaffVisuals();persist();
+if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refreshStaffVisuals();persist();updateMenuBoard();refreshBusinessLocks();updateTutorial();
 
 // ===== Backsound (v1.4): musik santai buatan WebAudio, tanpa file eksternal =====
 const music={ctx:null,master:null,send:null,noise:null,on:true,t:0,step:0};
@@ -1212,7 +1415,7 @@ function frame(){
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
  if(kitchenQueue.length&&!cooking&&!dishReady&&!holdingDish&&hasStaffOnDuty('chef'))beginCooking(true);
  // Complete the ayam-geprek cooking cycle after exactly 10 seconds.
- if(cooking){const elapsed=(performance.now()-cookStarted)/1000;const selected=menuCatalog[currentOrderMenuId];const remaining=Math.max(0,selected.cook-elapsed);setCookStatus('Memasak '+selected.name+'... '+remaining.toFixed(1)+' detik');if(elapsed>=selected.cook){cooking=false;dishReady=true;const readyPlate=createAyamGeprekPlate(currentOrderMenuId);readyPlate.name='ready ayam geprek plate';readyPlate.position.set(4.8,1.42,-4.55);readyPlate.scale.setScalar(.72);scene.add(readyPlate);setCookStatus(selected.name+' matang! Siap diantar.');showToast(selected.name+' selesai disiapkan!');autoServeAt=performance.now()+1200;sfxDing();}}
+ if(cooking){const elapsed=(performance.now()-cookStarted)/1000;const selected=menuCatalog[currentOrderMenuId];const remaining=Math.max(0,currentCookTime-elapsed);setCookStatus('Memasak '+selected.name+'... '+remaining.toFixed(1)+' detik');if(elapsed>=currentCookTime){cooking=false;dishReady=true;const readyPlate=createAyamGeprekPlate(currentOrderMenuId);readyPlate.name='ready ayam geprek plate';readyPlate.position.set(4.8,1.42,-4.55);readyPlate.scale.setScalar(.72);scene.add(readyPlate);setCookStatus(selected.name+' matang! Siap diantar.');showToast(selected.name+' selesai disiapkan!');autoServeAt=performance.now()+1200;sfxDing();}}
  // Karyawan kini bergerak dan menjalankan tugas, bukan berdiri diam.
  updateStaff(dt);updateFrontWall(dt);
  // Move traffic continuously in both directions; recycle cars beyond the road edges.
@@ -1233,7 +1436,7 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-showToast('Update 1.5 siap! Bug diperbaiki, pelanggan lebih hidup, ruangan kiri & kanan bisa dibeli.');
+showToast('Update 1.6: sistem level! Layani pelanggan, kumpulkan XP, dan buka fitur baru.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
