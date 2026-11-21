@@ -110,6 +110,9 @@
   #settingsCard { max-height:calc(100vh - 36px); overflow:auto; }
   #settingsCard textarea { width:100%; margin:6px 0; padding:8px; border-radius:9px; border:1px solid rgba(255,255,255,.18); background:#0f1a22; color:#cfe0e8; font:12px ui-monospace,Menlo,Consolas,monospace; resize:vertical; }
   .setSec { margin:14px 0 4px; font-weight:800; font-size:13px; color:#f3c75b; }
+  .qualityOptions { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:7px 0 12px; }
+  .qualityBtn { border:1px solid rgba(255,255,255,.18); border-radius:9px; padding:9px 6px; background:#223640; color:#dce8ee; font:800 12px Inter,system-ui,sans-serif; cursor:pointer; }
+  .qualityBtn[aria-pressed="true"] { background:#b88752; border-color:#f0c58d; color:#17232b; box-shadow:inset 0 0 0 1px rgba(255,255,255,.18); }
   #saveMsg { min-height:16px; font-size:12px; color:#9be3b5; margin:2px 0 6px; }
   #verText { font-size:11px; color:#7f98a6; text-align:center; margin-top:6px; }
   #langScreen { position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 30%,#223646,#101a22); padding:20px; pointer-events:auto; }
@@ -154,6 +157,13 @@
   <h2>Pengaturan</h2><p>Atur permainan IRLISE RISTORANTE. Progres tersimpan otomatis.</p>
   <button class="settingAction" id="pauseToggle" type="button">⏸ Jeda permainan</button>
   <button class="settingAction" id="soundToggle" type="button">🔊 Suara: ON</button>
+  <div class="setSec" id="qualityTitle">Kualitas grafis</div>
+  <p id="qualityDescription">Pilih kualitas visual sesuai kemampuan perangkat.</p>
+  <div class="qualityOptions" role="group" aria-label="Kualitas grafis">
+   <button class="qualityBtn" type="button" data-quality="low" id="qualityLow">Low</button>
+   <button class="qualityBtn" type="button" data-quality="medium" id="qualityMedium">Medium</button>
+   <button class="qualityBtn" type="button" data-quality="high" id="qualityHigh">High</button>
+  </div>
   <button class="settingAction danger" id="restartLevelOne" type="button">↻ Restart dari Level 1</button>
   <button class="settingAction" id="langToggle" type="button"></button>
   <div class="setSec">Cadangan & pindah perangkat</div>
@@ -401,22 +411,66 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9bc6d6);
 scene.fog = new THREE.Fog(0x9bc6d6, 48, 115);
 
+// Graphics quality is stored separately from gameplay saves. Auto default is device-aware.
+const QUALITY_KEY='irlise_graphics_quality';
+const QUALITY_PRESETS={
+ low:{pixelRatio:1.15,shadowSize:1024,shadowRadius:2,exposure:1.12},
+ medium:{pixelRatio:1.5,shadowSize:1536,shadowRadius:2.5,exposure:1.15},
+ high:{pixelRatio:2,shadowSize:2048,shadowRadius:3,exposure:1.17}
+};
+function getDefaultQuality(){
+ const cores=navigator.hardwareConcurrency||4, memory=navigator.deviceMemory||4;
+ return (matchMedia('(pointer:coarse)').matches||cores<=4||memory<=4)?'low':'medium';
+}
+let graphicsQuality='medium';
+try{
+ const savedQuality=localStorage.getItem(QUALITY_KEY);
+ graphicsQuality=QUALITY_PRESETS[savedQuality]?savedQuality:getDefaultQuality();
+}catch(e){graphicsQuality=getDefaultQuality();}
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+function applyGraphicsQuality(level){
+ const preset=QUALITY_PRESETS[level]||QUALITY_PRESETS.medium;
+ graphicsQuality=QUALITY_PRESETS[level]?level:'medium';
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,preset.pixelRatio));
+ renderer.shadowMap.enabled=true;
+ sun.shadow.mapSize.set(preset.shadowSize,preset.shadowSize);
+ sun.shadow.radius=preset.shadowRadius;
+ sun.shadow.map?.dispose();
+ sun.shadow.map=null;
+ sun.shadow.needsUpdate=true;
+ renderer.toneMappingExposure=preset.exposure;
+ renderer.setSize(innerWidth,innerHeight);
+ try{localStorage.setItem(QUALITY_KEY,graphicsQuality);}catch(e){}
+ document.querySelectorAll('[data-quality]').forEach(btn=>{
+  btn.setAttribute('aria-pressed',String(btn.dataset.quality===graphicsQuality));
+ });
+}
+
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 
 const camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, .1, 220);
-const hemi = new THREE.HemisphereLight(0xfff4df, 0x607080, 2.0); scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xffe0ad, 3.0);
+const hemi = new THREE.HemisphereLight(0xfff1dc, 0x59616a, 1.65); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffe5c1, 2.55);
 sun.position.set(-7, 13, 8); sun.castShadow = true;
 sun.shadow.mapSize.set(2048,2048);
 sun.shadow.camera.left=-18; sun.shadow.camera.right=18; sun.shadow.camera.top=18; sun.shadow.camera.bottom=-18;
+sun.shadow.camera.near=1; sun.shadow.camera.far=48;
+sun.shadow.bias=-0.00008; sun.shadow.normalBias=0.035; sun.shadow.radius=3;
+sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun);
+
+// Warm local light pools create a premium dining-room mood. Shadow casting stays
+// disabled on these fill lights to avoid multiplying the frame's shadow cost.
+const warmLightPositions=[[-4.8,3.15,-2.6],[0,3.15,-2.6],[4.8,3.15,-2.6],[0,3.15,3.2]];
+for(const [lx,ly,lz] of warmLightPositions){
+  const light=new THREE.PointLight(0xffc987,.72,9,2);
+  light.position.set(lx,ly,lz);light.castShadow=false;scene.add(light);
+}
 
 const mat = (color, roughness=.82) => new THREE.MeshStandardMaterial({color, roughness});
 const materials = {
@@ -426,6 +480,109 @@ const materials = {
   black:mat(0x28343d), skin:mat(0xf1bd91), hair:mat(0x392c2a), shirt:mat(0x36a3a0),
   pants:mat(0x344a70), white:mat(0xffffff), yellow:mat(0xf3c75b)
 };
+
+// ===== VISUAL UPGRADE 2.0 — Phase 1: procedural PBR surfaces =====
+// Procedural CanvasTextures keep the first visual pass self-contained: no external
+// asset download, no gameplay/save changes, and modest texture memory usage.
+function makeSurfaceTexture(kind, size=512) {
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  const x=c.getContext('2d');
+  const palettes={
+    wood:['#68452f','#8a5b3c','#a9784e'],
+    stone:['#c9c1b4','#ded7ca','#b9b1a5'],
+    tile:['#d8d4cb','#e7e2d8','#c9c4ba'],
+    steel:['#69777d','#8d999d','#56636a'],
+    wall:['#e8dfd0','#f2eadc','#ddd3c4']
+  };
+  const p=palettes[kind]||palettes.stone;
+  x.fillStyle=p[0]; x.fillRect(0,0,size,size);
+  if(kind==='wood'){
+    for(let i=0;i<46;i++){
+      const y=(i/46)*size, wobble=(i%5)*2.5;
+      x.strokeStyle=i%3===0?'rgba(36,20,12,.24)':'rgba(230,190,145,.12)';
+      x.lineWidth=i%7===0?3:1;
+      x.beginPath();x.moveTo(0,y);
+      x.bezierCurveTo(size*.28,y+wobble,size*.62,y-wobble,size,y+(i%4)*1.5);x.stroke();
+    }
+    for(let i=0;i<9;i++){
+      const y=(i+.5)*size/9;
+      x.strokeStyle='rgba(40,24,15,.16)';x.lineWidth=2;
+      x.beginPath();x.moveTo(0,y);x.lineTo(size,y);x.stroke();
+    }
+  }else if(kind==='steel'){
+    for(let i=0;i<160;i++){
+      const y=i*size/160;
+      x.fillStyle=i%4===0?'rgba(255,255,255,.12)':'rgba(20,30,35,.045)';
+      x.fillRect(0,y,size,1.4);
+    }
+  }else if(kind==='wall'){
+    for(let i=0;i<1500;i++){
+      const v=(i*73)%size, w=(i*131)%size;
+      x.fillStyle=i%2?'rgba(255,255,255,.09)':'rgba(90,75,55,.035)';
+      x.fillRect(v,w,1.2,1.2);
+    }
+  }else{
+    // Fine stone grain and restrained marble-like veins.
+    for(let i=0;i<2200;i++){
+      const px=(i*97)%size,py=(i*193)%size;
+      x.fillStyle=i%2?'rgba(255,255,255,.12)':'rgba(65,55,45,.055)';
+      x.fillRect(px,py,1.5,1.5);
+    }
+    if(kind==='stone'){
+      for(let i=0;i<7;i++){
+        x.strokeStyle='rgba(112,103,91,.17)';x.lineWidth=1.5+(i%2);
+        x.beginPath();x.moveTo(-20,i*83+30);
+        x.bezierCurveTo(120,i*83-25,280,i*83+85,size+20,i*83+12);x.stroke();
+      }
+    }
+    if(kind==='tile'){
+      x.strokeStyle='rgba(255,255,255,.3)';x.lineWidth=2;
+      x.strokeRect(1,1,size-2,size-2);
+    }
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+  tex.needsUpdate=true;
+  return tex;
+}
+function makeRoughnessTexture(base, variation=18) {
+  const c=document.createElement('canvas');c.width=128;c.height=128;
+  const x=c.getContext('2d');x.fillStyle='rgb('+base+','+base+','+base+')';x.fillRect(0,0,128,128);
+  for(let i=0;i<900;i++){
+    const v=Math.max(0,Math.min(255,base+(((i*47)%variation)-variation/2)));
+    x.fillStyle='rgb('+v+','+v+','+v+')';x.fillRect((i*37)%128,(i*71)%128,2,2);
+  }
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.NoColorSpace;
+  t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return t;
+}
+const surfaceMaps={
+  wood:makeSurfaceTexture('wood'),
+  stone:makeSurfaceTexture('stone'),
+  tile:makeSurfaceTexture('tile'),
+  steel:makeSurfaceTexture('steel'),
+  wall:makeSurfaceTexture('wall')
+};
+materials.floor.map=surfaceMaps.stone;
+materials.floor.roughnessMap=makeRoughnessTexture(190,24);
+materials.floor.roughness=.72;
+materials.tile.map=surfaceMaps.tile;
+materials.tile.roughnessMap=makeRoughnessTexture(165,18);
+materials.tile.roughness=.58;
+materials.wall.map=surfaceMaps.wall;
+materials.wall.roughness=.9;
+materials.wood.map=surfaceMaps.wood;
+materials.wood.roughnessMap=makeRoughnessTexture(205,20);
+materials.wood.roughness=.7;
+materials.wood2.map=surfaceMaps.wood;
+materials.wood2.roughness=.64;
+materials.trim.map=surfaceMaps.wood;
+materials.trim.roughness=.68;
+materials.steel.map=surfaceMaps.steel;
+materials.steel.roughnessMap=makeRoughnessTexture(112,26);
+materials.steel.roughness=.38;
+materials.steel.metalness=.72;
+materials.steel.envMapIntensity=1.0;
 
 const sharedMats=new Set(Object.values(materials));
 function disposeObj(root){if(!root)return;root.traverse(o=>{if(o.geometry&&!o.isSprite&&!(o.geometry.userData&&o.geometry.userData.shared))o.geometry.dispose();const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(sharedMats.has(m))continue;if(m.map)m.map.dispose();m.dispose();}});}
@@ -583,6 +740,56 @@ fridgeIds.forEach((id,i)=>{const y=i<3?.62:1.62;const col=i%3;const x=6.45+col*.
 function refreshFridgeStock(){fridgeIds.forEach(id=>{const label=fridgeStockSprites[id];if(!label)return;const qty=saveData.inventory?.[id]||0;label.ctx.fillStyle='#26343b';label.ctx.fillRect(0,48,256,48);label.ctx.fillStyle='#f3c75b';label.ctx.font='bold 30px Arial';label.ctx.textAlign='center';label.ctx.fillText('× '+qty,128,84);label.texture.needsUpdate=true;const pkg=fridgeStockMeshes.getObjectByName('fridge package '+id);if(pkg)pkg.visible=qty>0;label.sp.visible=qty>0;});}
 
 
+// ===== Visual Upgrade 2.0 — Phase 2: premium interior details =====
+// Decorative-only meshes: keep all gameplay anchors, interaction points and collision logic unchanged.
+const detailGold=mat(0xb58b52,.38), detailCeramic=mat(0xd9d2c4,.58), detailDark=mat(0x26343b,.62), detailGlow=new THREE.MeshStandardMaterial({color:0xffe2a3,emissive:0xffb94d,emissiveIntensity:.45,roughness:.3});
+const detailSteel=mat(0x9ca8ad,.32);
+function detailBox(parent,name,x,y,z,sx,sy,sz,material){
+  return box(parent,name,x,y,z,sx,sy,sz,material,false,true);
+}
+// Warm stone backsplash behind the cooking line.
+for(let ix=0;ix<8;ix++) for(let iy=0;iy<2;iy++){
+  const x=3.35+ix*.48, y=1.72+iy*.43;
+  detailBox(scene,'kitchen backsplash tile',x,y,-6.79,.455,.405,.035,detailCeramic);
+  detailBox(scene,'backsplash grout accent',x,y,-6.765,.018,.405,.012,detailGold);
+}
+// Stainless extractor hood and compact duct above the two burners.
+detailBox(scene,'extractor hood canopy',4.8,2.38,-4.82,2.35,.22,1.05,materials.steel);
+detailBox(scene,'extractor hood front fascia',4.8,2.23,-4.28,2.18,.09,.08,detailDark);
+detailBox(scene,'extractor duct',4.8,2.83,-5.12,.72,.78,.62,materials.steel);
+detailBox(scene,'extractor control strip',4.8,2.39,-4.225,.9,.055,.025,detailGold);
+for(let i=0;i<3;i++) cylinder(scene,'extractor control dial',4.48+i*.32,2.39,-4.19,.045,.045,.035,detailDark,12);
+// Stove control knobs and subtle burner markings on the island's front edge.
+for(let i=0;i<2;i++){
+  const x=4.22+i*1.16;
+  cylinder(scene,'stove control knob',x,.83,-3.625,.105,.105,.07,detailSteel,16);
+  cylinder(scene,'stove knob center',x,.83,-3.582,.035,.035,.012,detailDark,12);
+  detailBox(scene,'stove control marker',x,.98,-3.62,.025,.08,.018,detailGold);
+}
+// Refined cabinet drawer faces and brass pulls; original cabinet volumes remain intact.
+for(let i=0;i<2;i++){
+  const x=4.0+i*1.5;
+  detailBox(scene,'kitchen drawer face',x,.34,-3.495,1.05,.28,.035,materials.wood2);
+  detailBox(scene,'kitchen drawer pull',x,.35,-3.455,.32,.035,.035,detailGold);
+}
+// Fridge shelves and a soft interior lamp, positioned clear of the stock packages.
+for(const y of [1.12,2.12]) detailBox(scene,'fridge glass shelf',6.6,y,-6.12,.78,.035,.48,detailSteel);
+detailBox(scene,'fridge interior light',6.6,2.54,-6.17,.5,.045,.045,detailGlow);
+const fridgeInteriorLight=new THREE.PointLight(0xc9efff,.32,2.2,2);fridgeInteriorLight.position.set(6.6,2.35,-6.05);fridgeInteriorLight.castShadow=false;scene.add(fridgeInteriorLight);
+// Counterfront framed panels and brass kick plate for a more crafted reception counter.
+detailBox(scene,'counter brass kickplate',0,.12,-4.445,5.9,.12,.045,detailGold);
+for(const x of [-2.65,-1.35,0,1.35,2.65]){
+  detailBox(scene,'counter front vertical trim',x,.64,-4.405,.035,.72,.025,detailGold);
+}
+detailBox(scene,'counter service ledge',0,1.43,-4.46,5.9,.055,.12,detailGold);
+// A small cutting board and utensil holder add depth to the prep area without blocking movement.
+detailBox(scene,'prep cutting board',6.05,1.305,-4.55,.72,.055,.48,materials.wood2);
+detailBox(scene,'prep board inset',6.05,1.336,-4.55,.58,.012,.34,detailCeramic);
+cylinder(scene,'utensil crock',3.55,1.48,-4.95,.14,.16,.36,materials.cream,18);
+for(let i=0;i<3;i++){
+  cylinder(scene,'utensil handle',3.48+i*.07,1.78,-4.95,.018,.018,.42,detailSteel,8);
+}
+
 // Dining tables and chairs.
 const tablePositions=[];
 function makeTable(x,z) {tablePositions.push([x,z]);
@@ -591,7 +798,12 @@ function makeTable(x,z) {tablePositions.push([x,z]);
   cylinder(g,'table foot',0,.08,0,.52,.52,.12,materials.trim);
   cylinder(g,'round table top',0,1.0,0,.88,.88,.16,materials.wood2,32);
   cylinder(g,'plate',-.18,1.1,0,.24,.24,.035,materials.white,24);
+  const plateRim=new THREE.Mesh(new THREE.TorusGeometry(.205,.012,6,28),detailGold);plateRim.name='plate brass rim';plateRim.rotation.x=Math.PI/2;plateRim.position.set(-.18,1.125,0);plateRim.castShadow=false;g.add(plateRim);
+  cylinder(g,'juice coaster',.36,1.105,.18,.145,.145,.025,detailGold,20);
   cylinder(g,'juice',.36,1.22,.18,.10,.10,.25,materials.red,16);
+  detailBox(g,'folded table napkin',.39,1.105,-.32,.22,.018,.16,materials.cream);
+  detailBox(g,'table cutlery handle',-.55,1.12,-.04,.025,.018,.26,detailSteel);
+  detailBox(g,'table cutlery grip',-.55,1.12,.105,.045,.025,.07,detailGold);
   for(const [dx,dz] of [[-1.18,0],[1.18,0],[0,-1.18],[0,1.18]]) {
     box(g,'chair seat',dx,.55,dz,.7,.16,.7,materials.teal);
     for(const [lx,lz] of [[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]]) box(g,'chair leg',dx+lx,.27,dz+lz,.09,.55,.09,materials.wood);
@@ -627,10 +839,34 @@ for(let x=-76;x<=76;x+=8) box(scene,'road center dash',x,-.155,22,.0+4.2,.025,.1
 for(const z of [17.3,26.7]) box(scene,'road edge line',0,-.15,z,160,.025,.12,mat(0xe9ecef),false,false);
 
 // Sidewalk trees and street lamps.
+// Shared exterior foliage materials keep draw calls and material allocations controlled.
+const treeBark=mat(0x684832,.94), treeLeafDark=mat(0x2f7045,.92),
+      treeLeafMid=mat(0x438b52,.9), treeLeafLight=mat(0x68a95e,.88),
+      shrubMat=mat(0x397b49,.94), planterMat=mat(0x9b988a,.88);
 function makeStreetTree(x,z){
- cylinder(scene,'street tree trunk',x,1.15,z,.22,.28,2.3,mat(0x79523a));
- sphere(scene,'tree canopy',x,2.8,z,1.25,mat(0x438a55)).scale.set(1,1.15,1);
- sphere(scene,'tree canopy highlight',x+.55,3.15,z+.12,.72,mat(0x5b9d5d));
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ cylinder(g,'street tree trunk',0,1.22,0,.2,.27,2.45,treeBark,12);
+ // Split branches and overlapping foliage volumes create a fuller, less spherical crown.
+ const branchA=cylinder(g,'tree branch',-.28,2.15,.02,.085,.12,1.05,treeBark,8);
+ branchA.rotation.z=-.48;
+ const branchB=cylinder(g,'tree branch',.3,2.18,-.04,.08,.12,1.0,treeBark,8);
+ branchB.rotation.z=.5;
+ const clusters=[
+  [-.58,2.95,.02,.76,treeLeafDark],[.34,3.05,.12,.82,treeLeafMid],
+  [0,3.48,-.22,.86,treeLeafMid],[.62,3.45,-.08,.65,treeLeafLight],
+  [-.25,3.62,.42,.62,treeLeafLight],[.05,2.86,.48,.68,treeLeafDark],
+  [-.7,3.38,-.32,.55,treeLeafMid]
+ ];
+ for(const [lx,ly,lz,r,m] of clusters){
+  const crown=sphere(g,'tree foliage cluster',lx,ly,lz,r,m);
+  crown.scale.set(1.05,.92,.98);
+ }
+ // Compact planted verge at the base visually anchors the tree to the sidewalk.
+ box(g,'tree planter base',0,.08,0,2.35,.16,1.55,planterMat,false);
+ for(let i=0;i<3;i++){
+  const bush=sphere(g,'tree base shrub',-.62+i*.62,.34,.48,.38,shrubMat);
+  bush.scale.set(1.2,.55,.8);
+ }
 }
 for(const x of [-42,-25,-8,9,26,43]) makeStreetTree(x,13.8);
 for(const x of [-36,-12,12,36]){
@@ -640,19 +876,34 @@ for(const x of [-36,-12,12,36]){
 }
 
 // Nearby low-poly shops and apartment blocks with lit windows.
+const exteriorGlass=new THREE.MeshPhysicalMaterial({
+ color:0xa9d4df,roughness:.18,metalness:.12,transparent:true,opacity:.58,
+ clearcoat:.8,clearcoatRoughness:.12
+});
+const facadeTrim=mat(0xe8dcc7,.72), facadeDark=mat(0x3a4650,.62);
 function makeBuilding(x,z,w,h,depth,color,label){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- const facade=mat(color), glass=mat(0x8fc6d8,.3), frame=mat(0xf0dfc5);
+ const facade=mat(color,.78), glass=exteriorGlass;
  box(g,label+' building',0,h/2,0,w,h,depth,facade);
- box(g,label+' roof trim',0,h+.08,0,w+.25,.16,depth+.25,mat(0x454f59));
+ box(g,label+' roof trim',0,h+.08,0,w+.25,.16,depth+.25,facadeDark);
+ box(g,label+' facade base',0,.22,depth/2+.035,w,.38,.12,facadeDark,false);
  const floors=Math.max(2,Math.floor(h/2.3));
  const cols=Math.max(2,Math.floor(w/2.2));
  for(let row=0;row<floors;row++) for(let col=0;col<cols;col++){
   const wx=-w/2+(col+.5)*w/cols, wy=1.25+row*(h-1.8)/floors;
-  box(g,label+' window frame',wx,wy,depth/2+.025,.95,.95,.08,frame,false);
-  box(g,label+' window glass',wx,wy,depth/2+.075,.78,.76,.035,glass,false);
+  box(g,label+' window frame',wx,wy,depth/2+.025,1.02,1.02,.09,facadeTrim,false);
+  box(g,label+' window glass',wx,wy,depth/2+.078,.82,.82,.035,glass,false);
+  box(g,label+' window mullion',wx,wy,depth/2+.103,.045,.82,.025,facadeTrim,false);
+  box(g,label+' window sill',wx,wy-.53,depth/2+.12,1.12,.09,.18,facadeTrim,false);
  }
- box(g,label+' storefront',0,.85,depth/2+.09,w*.72,1.55,.12,mat(0x344d59),false);
+ // Storefront glazing, sign band and restrained canopy detail.
+ box(g,label+' storefront',0,.88,depth/2+.09,w*.76,1.62,.13,glass,false);
+ box(g,label+' storefront sign band',0,1.82,depth/2+.17,w*.78,.34,.16,facadeDark,false);
+ box(g,label+' entrance frame',0,.9,depth/2+.18,.12,1.72,.12,facadeTrim,false);
+ box(g,label+' entrance canopy',0,2.12,depth/2+.42,w*.82,.12,.62,facadeTrim,false);
+ for(const sx of [-1,1]){
+  box(g,label+' canopy bracket',sx*w*.35,1.92,depth/2+.34,.09,.42,.09,facadeDark,false);
+ }
  return g;
 }
 makeBuilding(-34,39,13,13,8,0xd18a62,'bakery shop');
@@ -742,8 +993,21 @@ function makePerson(o={}){
  }
  if(o.hat==='chef'){cylinder(head,'chef hat band',0,.3,0,.2,.2,.12,materials.white,20);_ell(head,'chef hat crown',0,.46,0,.22,.17,.2,materials.white);}
  if(o.cap!=null){const cm=mat(o.cap,.7);_ell(head,'cap dome',0,.15,-.04,.215,.17,.2,cm);_ell(head,'cap brim',0,.115,.2,.16,.016,.14,cm).rotation.x=.12;_ell(head,'cap logo',0,.19,.2,.035,.035,.01,mat(0xf3c75b,.5));}
- if(o.apron!=null){const am=mat(o.apron,.85);box(root,'apron bib',0,1.1,.155,.34,.42,.035,am);box(root,'apron skirt',0,.8,.15,.4,.32,.04,am);}
- if(o.tag)box(root,'name tag',.14,1.2,.158,.1,.07,.02,materials.yellow);
+ // Tailored clothing details: small reusable primitives add depth without changing rig or hitboxes.
+ const seamMat=mat(new THREE.Color(o.shirt??0x4b83b7).multiplyScalar(.78).getHex(),.82);
+ box(root,'shirt chest pocket',.105,1.285,.177,.105,.115,.018,seamMat,false);
+ box(root,'shirt pocket flap',.105,1.35,.19,.12,.025,.018,shirt,false);
+ for(let bi=0;bi<3;bi++)_ell(root,'shirt button',-.015,1.34-bi*.105,.183,.012,.012,.009,mat(0xe8dfcf,.5));
+ if(o.apron!=null){
+  const am=mat(o.apron,.85), strap=mat(new THREE.Color(o.apron).multiplyScalar(.82).getHex(),.9);
+  box(root,'apron bib',0,1.1,.155,.34,.42,.035,am);
+  box(root,'apron skirt',0,.8,.15,.4,.32,.04,am);
+  box(root,'apron left strap',-.12,1.36,.13,.055,.22,.035,strap).rotation.z=-.22;
+  box(root,'apron right strap',.12,1.36,.13,.055,.22,.035,strap).rotation.z=.22;
+  box(root,'apron pocket',0,.82,.176,.19,.12,.018,strap,false);
+  box(root,'apron pocket seam',0,.82,.188,.012,.12,.008,am,false);
+ }
+ if(o.tag)box(root,'name tag',.14,1.2,.19,.1,.07,.025,materials.yellow,false);
  g.userData={root,legs,arms,elbows,head,mats:{skin,hair,shirt}};
  if(o.scale)g.scale.setScalar(o.scale);
  return g;
@@ -1605,6 +1869,19 @@ const updateMusicBtn=()=>{mbtn.textContent=music.on?'🔊 Musik':'🔇 Musik';};
 // Pengaturan permainan: jeda menghentikan simulasi waktu, NPC, pelanggan, dan gerakan pemain.
 let gamePaused=false;
 const settingsOverlay=document.getElementById('settingsOverlay');
+const qualityTitle=document.getElementById('qualityTitle');
+const qualityDescription=document.getElementById('qualityDescription');
+if(window.IR_LANG==='en'){
+ qualityTitle.textContent='Graphics quality';
+ qualityDescription.textContent='Choose visual quality for your device.';
+}else{
+ qualityTitle.textContent='Kualitas grafis';
+ qualityDescription.textContent='Pilih kualitas visual sesuai kemampuan perangkat.';
+}
+document.querySelectorAll('[data-quality]').forEach(btn=>{
+ btn.addEventListener('click',()=>applyGraphicsQuality(btn.dataset.quality));
+});
+applyGraphicsQuality(graphicsQuality);
 const pauseShade=document.getElementById('pauseShade');
 const pauseToggle=document.getElementById('pauseToggle');
 const soundToggle=document.getElementById('soundToggle');
@@ -1616,8 +1893,8 @@ soundToggle.addEventListener('click',()=>{mbtn.click();soundToggle.textContent=m
 document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
-// ===== Update 1.9: bahasa, cadangan save, autosave, layar pemeliharaan =====
-const GAME_VERSION='1.9.0';
+// ===== IRLISE RISTORANTE 2.0: visual upgrade =====
+const GAME_VERSION='2.0.0';
 (function(){
  const L=window.IR_LANG,T=window.TRX,$=id=>document.getElementById(id);
  $('verText').textContent=(L==='en'?'Game version ':'Versi game ')+GAME_VERSION;
