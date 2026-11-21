@@ -33,9 +33,12 @@ Modern Premium Realistic: warm interior lighting, natural wood and stone surface
 - PMREM/environment-map reflections remain deferred until memory and performance can be measured in a browser.
 - Browser/device regression testing is still required.
 
-### Phase 4 — Characters and animation
-- Improve character proportions, clothing details, and animation transitions.
-- Preserve character names, interaction radii, staff roles, and movement targets.
+### Phase 4 — Characters and animation (initial detail pass implemented)
+- Added tailored shirt pockets, pocket flaps, subtle buttons, apron straps, apron pocket and seam details, and refined name-tag placement to the existing articulated character rig.
+- Reused the existing body rig, limb groups, animation functions, character creation parameters, and movement system.
+- Character identity/configuration, names, interaction radii, staff roles, and movement targets remain unchanged.
+- Animation transition blending remains a later pass because it needs runtime validation against seated, walking, serving, and player-control states.
+- Browser/device regression testing is still required.
 
 ### Phase 5 — Post-processing and quality controls
 - Consider subtle ambient occlusion and restrained bloom; avoid heavy effects by default.
