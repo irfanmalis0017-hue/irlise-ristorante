@@ -40,10 +40,12 @@ Modern Premium Realistic: warm interior lighting, natural wood and stone surface
 - Animation transition blending remains a later pass because it needs runtime validation against seated, walking, serving, and player-control states.
 - Browser/device regression testing is still required.
 
-### Phase 5 — Post-processing and quality controls
-- Consider subtle ambient occlusion and restrained bloom; avoid heavy effects by default.
-- Add Low / Medium / High settings with sensible device-aware defaults.
-- Keep the existing renderer as the fallback path.
+### Phase 5 — Post-processing and quality controls (initial pass implemented)
+- Added Low / Medium / High graphics presets in Settings, stored separately from gameplay saves.
+- Added a device-aware default: touch-first / lower-core / lower-memory devices start at Low; other devices start at Medium.
+- Presets adjust renderer pixel ratio, shadow-map resolution and radius, and tone-mapping exposure without changing the gameplay simulation.
+- Kept the existing Three.js renderer and direct render loop as the fallback; no EffectComposer, SSAO, or bloom dependency was added in this pass to protect performance.
+- Browser/device regression testing and frame-rate measurement are still required.
 
 ### Phase 6 — Acceptance and release
 - Verify restaurant loading, movement, collision, customer queues, cooking, serving, staff shifts, upgrades, expansion, pause/settings, language, and mobile controls.
