@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>From Zero to CEO — Update 1.6</title>
+<title>IRLISE RISTORANTE — Update 1.7</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -99,10 +99,10 @@
 </style>
 </head>
 <body>
-<div id="loading"><div><div style="font-size:22px;font-weight:800">FROM ZERO TO CEO</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
+<div id="loading"><div><div style="font-size:22px;font-weight:800">IRLISE RISTORANTE</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div id="brand" class="panel"><strong>FROM ZERO TO CEO</strong><span>Restaurant Simulator • Update 1.6 — Sistem Level & Progres</span></div>
+  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 1.7 — Stabilitas Pesanan</span></div>
   <div id="stats">
     <div class="panel stat" id="levelStat"><small>Level restoran</small><b id="levelValue">Lv 1</b><div class="xpbar"><i id="xpFill"></i></div><small id="xpText">0 / 50 XP</small></div>
     <div class="panel stat"><small>Uang pemain</small><b id="coinValue">10.000 koin</b></div>
@@ -605,6 +605,30 @@ function leaveNow(c,angry){
  c.path.push(V3(0,8.4),V3((Math.random()<.5?-1:1)*7,10.2));
  c.seat.taken=false;c.stage='leaving';
  for(let i=kitchenQueue.length-1;i>=0;i--)if(kitchenQueue[i].cust===c)kitchenQueue.splice(i,1);
+
+ // Update 1.7: bersihkan tiket aktif jika pelanggan pergi di tengah proses.
+ // Ini mencegah dapur/pelayan terkunci pada pelanggan yang sudah tidak ada.
+ if(currentTicket && currentTicket.cust===c){
+  currentTicket=null;
+  if(cooking){cooking=false;cookStarted=0;}
+  dishReady=false;
+  if(holdingDish){
+   avatar.remove(holdingDish);
+   disposeObj(holdingDish);
+   holdingDish=null;
+  }
+  if(waiterDish){
+   if(waiterDish.parent)waiterDish.parent.remove(waiterDish);
+   disposeObj(waiterDish);
+   waiterDish=null;
+  }
+  waiterMode='idle';
+  waiterPath=[];
+  const readyPlate=scene.getObjectByName('ready ayam geprek plate');
+  if(readyPlate){scene.remove(readyPlate);disposeObj(readyPlate);}
+  if(typeof setCookStatus==='function')
+   setCookStatus('Pesanan dibatalkan karena pelanggan sudah pergi. Dapur siap menerima pesanan berikutnya.',true);
+ }
  if(angry){rep=Math.max(0,rep-.15);showToast('Pelanggan kesal menunggu terlalu lama dan pergi. Reputasi turun.');persist();}
 }
 // Kursi: 4 kursi per meja.
@@ -1436,7 +1460,7 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-showToast('Update 1.6: sistem level! Layani pelanggan, kumpulkan XP, dan buka fitur baru.');
+showToast('IRLISE RISTORANTE Update 1.7 siap! Sistem pesanan lebih stabil.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
