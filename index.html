@@ -1223,8 +1223,8 @@ document.getElementById('rejectOrder').addEventListener('click',rejectCashierOrd
 
 // Pembayaran per hidangan + bonus untuk pesanan banyak.
 function deliverTo(c){
- const m=menuCatalog[currentTicket.menuId];const ri=c.remaining.indexOf(currentTicket.menuId);if(ri>=0)c.remaining.splice(ri,1);c.wait=0;coins+=m.price;c.served++;c.paid+=m.price;currentTicket=null;const xpGain=awardXp(Math.round(m.price/100));saveData.tutorialDone=true;
- if(c.served>=c.total){rep=Math.min(5,rep+.04);const xpBonus=awardXp(KONFIG.bonusXpPesananLengkap);const tip=Math.round(c.paid*.1/10)*10;coins+=tip;c.paid+=tip;c.stage='eating';c.timer=0;showToast('Pesanan lengkap! '+m.name+' +'+m.price+' • bonus pesanan banyak +'+tip+' koin • +'+(xpGain+xpBonus)+' XP');setCookStatus('Pelanggan puas — total '+rupiah(c.paid)+' koin',true);}
+ const m=menuCatalog[currentTicket.menuId];const ri=c.remaining.indexOf(currentTicket.menuId);if(ri>=0)c.remaining.splice(ri,1);c.wait=0;coins+=m.price;c.served++;c.paid+=m.price;recordDailyMission('dishes',1);recordDailyMission('revenue',m.price);currentTicket=null;const xpGain=awardXp(Math.round(m.price/100));saveData.tutorialDone=true;
+ if(c.served>=c.total){recordDailyMission('orders',1);rep=Math.min(5,rep+.04);const xpBonus=awardXp(KONFIG.bonusXpPesananLengkap);const tip=Math.round(c.paid*.1/10)*10;coins+=tip;c.paid+=tip;c.stage='eating';c.timer=0;showToast('Pesanan lengkap! '+m.name+' +'+m.price+' • bonus pesanan banyak +'+tip+' koin • +'+(xpGain+xpBonus)+' XP');setCookStatus('Pelanggan puas — total '+rupiah(c.paid)+' koin',true);}
  else{showToast(m.name+' diantar! +'+m.price+' koin • +'+xpGain+' XP ('+c.served+'/'+c.total+')');setCookStatus(m.name+' disajikan. Sisa pesanan pelanggan: '+(c.total-c.served),true);}
  persist();renderInventory();renderMarket();sfxCoin();
 }
@@ -1891,7 +1891,7 @@ function refreshStaffVisuals(){
 function getWorker(role){return staffVisuals.find(w=>w.role===role)?.group||null;}
 let gameMinutes=480,lastShift=1,autoServeAt=0;
 function updateShiftClock(dt){
- gameMinutes+=dt; if(gameMinutes>=1320){gameMinutes=480;const earned=coins-dayStartCoins;const wageMsg=payWages();showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+wageMsg+' Hari baru dimulai!');day++;dayStartCoins=coins;persist();}
+ gameMinutes+=dt; if(gameMinutes>=1320){gameMinutes=480;const earned=coins-dayStartCoins;const wageMsg=payWages();showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+wageMsg+' Hari baru dimulai!');day++;resetDailyMissions();dayStartCoins=coins;persist();}
  const h=Math.floor(gameMinutes/60),m=Math.floor(gameMinutes%60),shift=h<15?1:2;
  const clock=document.getElementById('shiftClock');if(clock)clock.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' • Shift '+shift;
  if(shift!==lastShift){lastShift=shift;refreshStaffVisuals();showToast(shift===2?'Pukul 15.00 — Shift 1 pulang, Shift 2 mulai bekerja.':'Pukul 08.00 — Shift 1 mulai bekerja.');}
