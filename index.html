@@ -92,6 +92,17 @@
   #levelInfo { color:#f3e3b0 !important; }
   .dangerBtn { margin-top:8px; width:100%; border:1px solid rgba(255,255,255,.2); border-radius:9px; padding:8px; background:transparent; color:#e7a79b; font:inherit; font-weight:700; cursor:pointer; }
   #marketInventory { white-space:pre-line; }
+  #settingsBtn { position:fixed; right:16px; bottom:18px; z-index:8; pointer-events:auto; border:1px solid rgba(255,255,255,.25); border-radius:12px; padding:10px 14px; background:rgba(18,29,39,.9); color:#fff; font:800 13px Inter,system-ui,sans-serif; cursor:pointer; }
+  #settingsOverlay { position:fixed; inset:0; z-index:30; display:none; place-items:center; padding:18px; background:rgba(3,9,14,.72); pointer-events:auto; }
+  #settingsOverlay.open { display:grid; }
+  #settingsCard { width:min(390px,100%); padding:20px; border:1px solid rgba(255,255,255,.2); border-radius:16px; background:#182833; color:#fff; box-shadow:0 18px 60px rgba(0,0,0,.45); }
+  #settingsCard h2 { margin:0 0 6px; }
+  #settingsCard p { margin:0 0 14px; color:#b9cbd5; font-size:12px; line-height:1.5; }
+  .settingAction { display:block; width:100%; margin:8px 0; padding:11px 12px; border:1px solid rgba(255,255,255,.15); border-radius:10px; background:#29414e; color:#fff; font:700 13px Inter,system-ui,sans-serif; text-align:left; cursor:pointer; }
+  .settingAction.danger { color:#ffc0b4; background:#442d30; }
+  #pauseShade { position:fixed; inset:0; z-index:20; display:none; place-items:center; background:rgba(5,12,18,.58); color:#fff; font-size:28px; font-weight:900; letter-spacing:.12em; pointer-events:none; }
+  #pauseShade.show { display:grid; }
+  @media(max-width:650px){ #settingsBtn { right:10px; bottom:158px; padding:8px 10px; } }
   .marketItem .staffRow { margin-top:2px; }
   .marketItem .skillLabel { font-size:11px; color:#b8cbd4; }
   .marketItem .staffRow button { padding:6px 8px; font-size:11px; }
@@ -116,6 +127,17 @@
   <div id="tutorial" class="panel"><b>PANDUAN PEMULA</b><span id="tutorialText"></span></div>
   <div id="levelUp" class="panel"></div>
 </div>
+<button id="settingsBtn" type="button">⚙ PENGATURAN</button>
+<div id="pauseShade">GAME DIJEDA</div>
+<div id="settingsOverlay" role="dialog" aria-modal="true" aria-label="Pengaturan game">
+ <div id="settingsCard">
+  <h2>Pengaturan</h2><p>Atur permainan IRLISE RISTORANTE. Progres tersimpan otomatis.</p>
+  <button class="settingAction" id="pauseToggle" type="button">⏸ Jeda permainan</button>
+  <button class="settingAction" id="soundToggle" type="button">🔊 Suara: ON</button>
+  <button class="settingAction danger" id="restartLevelOne" type="button">↻ Restart dari Level 1</button>
+  <button class="settingAction" id="closeSettings" type="button">Tutup pengaturan</button>
+ </div>
+</div>
 <div id="businessPanel" class="panel">
   <h2>Bisnis Restoran</h2>
   <p>Mulai dari restoran kecil. Layani pesanan untuk mendapat XP dan koin, naik level untuk membuka fitur baru.</p>
@@ -125,8 +147,8 @@
     <button class="shopBtn" id="buyTable"><b>Beli meja</b><small>1.200 koin • kapasitas +4</small></button>
     <button class="shopBtn" id="buyChair"><b>Beli kursi</b><small>500 koin • kursi dekorasi</small></button>
     <button class="shopBtn" id="buyStove"><b>Beli kompor</b><small>1.800 koin • alat dapur</small></button>
-    <button class="shopBtn" id="expandArea"><b>Buka ruangan kanan</b><small>4.000 koin • ruang makan +3 meja (12 kursi)</small></button>
-    <button class="shopBtn" id="expandLeftArea"><b>Buka ruangan kiri</b><small>3.500 koin • ruang makan +2 meja & kantor owner</small></button>
+    <button class="shopBtn" id="expandArea"><b>Buka bangunan kanan</b><small>4.000 koin • bangunan kanan • area makan tambahan</small></button>
+    <button class="shopBtn" id="expandLeftArea"><b>Buka bangunan kiri</b><small>3.500 koin • bangunan kiri • area makan & kantor owner</small></button>
   </div>
   <button id="closeShop">Tutup (E)</button>
   <button id="resetGame" class="dangerBtn" type="button">Mulai ulang dari awal</button>
@@ -832,7 +854,7 @@ function movePlayerWithCollision(dx,dz){
 // Camera orbit/follow.
 let yaw=0, pitch=.23, dragging=false, lastX=0,lastY=0;
 const keys={};
-addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
+addEventListener('keydown',e=>{if(e.code==='Escape'&&settingsOverlay.classList.contains('open')){settingsOverlay.classList.remove('open');return;}if(settingsOverlay.classList.contains('open'))return;keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;dragging=false;});canvas.addEventListener('pointercancel',()=>dragging=false);
 canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
@@ -957,6 +979,7 @@ const KONFIG={
  levelMeja:[2,4], levelKursi:2, levelKompor:4,
  levelRekrut:{cashier:3,staff:4,chef:5}, levelShift2:6,
  levelRuanganKanan:6, levelRuanganKiri:8,
+ batasKokiPerShift:2, batasPelayanPerShift:4,
  gajiHarian:{cashier:1200,staff:1500,chef:2000},
  skill:{kecepatanKoki:[0,1,.8,.6],kecepatanPelayan:[0,1,1.3,1.6],kecepatanKasir:[0,1,.7,.45],biayaUpgrade:[0,0,1200,2500],levelUpgrade:[0,0,5,8]},
  jedaPelanggan:[0,2.2,1.8,1.5,1.25,1.1,1,.95,.9,.85,.8], // pengali jeda kedatangan pelanggan (makin kecil makin ramai)
@@ -975,6 +998,8 @@ if(!saveData.initializedV12){saveData.inventory=saveData.inventory||{};for(const
 if(!saveData.initializedV14){saveData.inventory=saveData.inventory||{};for(const [id,q] of [['beef',5],['orange',10],['coffee',10],['milk',10],['banana',10]])if(!(id in saveData.inventory))saveData.inventory[id]=q;saveData.initializedV14=true;}
 if(!saveData.initializedV15){leftAreaUnlocked=false;saveData.leftAreaUnlocked=false;saveData.initializedV15=true;}
 saveData.staff=Array.isArray(saveData.staff)?saveData.staff:[];
+// Migrasi staf versi lama: pertahankan karyawan lama sebagai slot pertama agar tetap bisa di-upgrade atau diberhentikan.
+saveData.staff=saveData.staff.map(st=>{if(!st||!st.role||!st.shift)return st;const slot=st.slot||1;const id=st.id&&st.id.includes('_slot')?st.id:(st.role+'_shift'+st.shift+'_slot'+slot);return {...st,slot,id,skill:st.skill||1};});
 // ===== Update 1.6: Sistem level, XP, gaji harian, skill karyawan, tutorial =====
 // Level lama (legacy): save dari versi sebelumnya langsung dianggap Level maksimum agar progres tidak hilang.
 if(legacySave){saveData.level=MAX_LEVEL;saveData.xp=KONFIG.xpPerLevel[MAX_LEVEL];saveData.tutorialDone=true;saveData.staff=saveData.staff.map(s=>({...s,skill:s.skill||1}));}
@@ -1014,8 +1039,11 @@ function updateLevelHud(){
 }
 let levelUpTimer;
 function onLevelUp(n){
+ const bonus=500*Math.pow(2,n-2);
+ coins+=bonus;
  const el=document.getElementById('levelUp');
- el.innerHTML='<small>NAIK LEVEL</small><b>Level '+n+'</b><span>'+(LEVEL_TEXT[n]||'')+'</span>';
+ el.innerHTML='<small>NAIK LEVEL</small><b>Level '+n+'</b><span>Bonus level +'+rupiah(bonus)+' koin<br>'+(LEVEL_TEXT[n]||'')+'</span>';
+ updateCoins();
  el.classList.add('show');clearTimeout(levelUpTimer);levelUpTimer=setTimeout(()=>el.classList.remove('show'),7000);
  updateMenuBoard();refreshBusinessLocks();if(marketPanel.classList.contains('open'))renderMarket();
  try{sfxDing();}catch(e){}
@@ -1024,8 +1052,8 @@ function awardXp(base){
  const gain=Math.max(1,Math.round(base*(0.8+rep*0.2)));
  saveData.xp=(saveData.xp||0)+gain;
  const nl=levelForXp(saveData.xp);
- if(nl>level){level=nl;saveData.level=level;onLevelUp(nl);}
- updateLevelHud();return gain;
+ if(nl>level){for(let reached=level+1;reached<=nl;reached++){level=reached;saveData.level=level;onLevelUp(reached);}}
+ updateLevelHud();if(nl>1)persist();return gain;
 }
 function updateMenuBoard(){
  const short={tea:'TEH',pisang:'PISANG',nasgor:'NASGOR',mie:'MIE',jeruk:'JERUK',ayam:'AYAM',kopi:'KOPI',sate:'SATE',bakso:'BAKSO',soto:'SOTO'};
@@ -1042,8 +1070,8 @@ function refreshBusinessLocks(){
  set('buyTable',tn&&level<tn?'🔒 Terbuka di Level '+tn:'1.200 koin • kapasitas +4');
  set('buyChair',level<KONFIG.levelKursi?'🔒 Terbuka di Level '+KONFIG.levelKursi:'500 koin • kursi dekorasi');
  set('buyStove',level<KONFIG.levelKompor?'🔒 Terbuka di Level '+KONFIG.levelKompor:'1.800 koin • alat dapur');
- if(!areaUnlocked)set('expandArea',level<KONFIG.levelRuanganKanan?'🔒 Terbuka di Level '+KONFIG.levelRuanganKanan+' • 4.000 koin':'4.000 koin • ruang makan +3 meja (12 kursi)');
- if(!leftAreaUnlocked)set('expandLeftArea',level<KONFIG.levelRuanganKiri?'🔒 Terbuka di Level '+KONFIG.levelRuanganKiri+' • 3.500 koin':'3.500 koin • ruang makan +2 meja & kantor owner');
+ if(!areaUnlocked)set('expandArea',level<KONFIG.levelRuanganKanan?'🔒 Terbuka di Level '+KONFIG.levelRuanganKanan+' • 4.000 koin':'4.000 koin • bangunan kanan • area makan tambahan');
+ if(!leftAreaUnlocked)set('expandLeftArea',level<KONFIG.levelRuanganKiri?'🔒 Terbuka di Level '+KONFIG.levelRuanganKiri+' • 3.500 koin':'3.500 koin • bangunan kiri • area makan & kantor owner');
  const info=document.getElementById('levelInfo');
  if(info)info.innerHTML='<b>Level '+level+'</b> • '+(saveData.xp||0)+' XP'+(level<MAX_LEVEL?'<br>Level '+(level+1)+': '+LEVEL_TEXT[level+1]:'<br>Level maksimum tercapai.')+'<br>Gaji harian karyawan: '+rupiah(totalWages())+' koin';
 }
@@ -1108,12 +1136,10 @@ const marketCatalog={
   {id:'banana',name:'Pisang (10 buah)',icon:'🍌',price:350,quantity:10,desc:'Pisang untuk pisang goreng.'}
  ],
  employees:[
-  {id:'chef_shift1',name:'Koki • Shift 1 (08.00–15.00)',icon:'👨‍🍳',price:1800,desc:'Koki bertugas pada shift pagi.' ,role:'chef',shift:1},
-  {id:'staff_shift1',name:'Pelayan • Shift 1 (08.00–15.00)',icon:'🧑‍💼',price:1200,desc:'Mengambil makanan matang dan mengantar ke meja pelanggan.',role:'staff',shift:1},
-  {id:'chef_shift2',name:'Koki • Shift 2 (15.00–22.00)',icon:'👨‍🍳',price:1800,desc:'Koki bertugas pada shift sore.',role:'chef',shift:2},
-  {id:'staff_shift2',name:'Pelayan • Shift 2 (15.00–22.00)',icon:'🧑‍💼',price:1200,desc:'Mengambil makanan matang dan mengantar ke meja pelanggan.',role:'staff',shift:2},
-  {id:'cashier_shift1',name:'Kasir • Shift 1 (08.00–15.00)',icon:'🧑‍💻',price:1500,desc:'Menyambut pelanggan dan menerima pesanan di meja kasir.',role:'cashier',shift:1},
-  {id:'cashier_shift2',name:'Kasir • Shift 2 (15.00–22.00)',icon:'🧑‍💻',price:1500,desc:'Melayani percakapan dan konfirmasi pesanan pelanggan.',role:'cashier',shift:2}
+  ...[1,2].flatMap(shift=>Array.from({length:KONFIG.batasKokiPerShift},(_,i)=>({id:'chef_shift'+shift+'_slot'+(i+1),name:'Koki '+(i+1)+' • Shift '+shift,icon:'👨‍🍳',price:1800,desc:'Koki dapur untuk shift '+shift+'. Maksimal 2 koki per shift.',role:'chef',shift,slot:i+1}))),
+  ...[1,2].flatMap(shift=>Array.from({length:KONFIG.batasPelayanPerShift},(_,i)=>({id:'staff_shift'+shift+'_slot'+(i+1),name:'Pelayan '+(i+1)+' • Shift '+shift,icon:'🧑‍💼',price:1200,desc:'Pelayan untuk shift '+shift+'. Maksimal 4 pelayan per shift.',role:'staff',shift,slot:i+1}))),
+  {id:'cashier_shift1',name:'Kasir • Shift 1 (08.00–15.00)',icon:'🧑‍💻',price:1500,desc:'Menyambut pelanggan dan menerima pesanan di meja kasir.',role:'cashier',shift:1,slot:1},
+  {id:'cashier_shift2',name:'Kasir • Shift 2 (15.00–22.00)',icon:'🧑‍💻',price:1500,desc:'Melayani percakapan dan konfirmasi pesanan pelanggan.',role:'cashier',shift:2,slot:1}
  ]
 };
 let marketCategory='equipment';
@@ -1142,14 +1168,14 @@ function renderMarket(){
   const foot=document.createElement('div');foot.className='itemFoot';
   const price=document.createElement('strong');price.textContent=item.price.toLocaleString('id-ID')+' koin';
   const buy=document.createElement('button');buy.type='button';
-  const owned=item.role?(saveData.staff||[]).filter(x=>x.role===item.role&&x.shift===item.shift).length:0;
+  const owned=item.role?(saveData.staff||[]).some(x=>x.id===item.id):false;
   const has=item.once&&(saveData.inventory[item.id]||0)>0;
   buy.textContent=locked?'🔒 Level '+need:item.role?(owned?'Sudah direkrut':'Rekrut'):(has?'Dimiliki':(full?'Kulkas penuh':'Beli'));
-  buy.disabled=locked||coins<item.price||(!!item.role&&owned>=1)||!!has||full;
+  buy.disabled=locked||coins<item.price||(!!item.role&&owned)||!!has||full;
   buy.addEventListener('click',()=>purchaseMarketItem(item));
   foot.append(price,buy);card.append(name,desc,foot);
   if(item.role&&owned){
-   const st=saveData.staff.find(x=>x.role===item.role&&x.shift===item.shift);
+   const st=saveData.staff.find(x=>x.id===item.id);
    const sk=(st&&st.skill)||1;
    const row=document.createElement('div');row.className='itemFoot staffRow';
    const lab=document.createElement('span');lab.className='skillLabel';lab.textContent='Skill '+sk+' / '+MAX_SKILL;
@@ -1166,7 +1192,7 @@ function renderMarket(){
  renderInventory();updateCoins();
 }
 function upgradeStaff(item){
- const st=(saveData.staff||[]).find(x=>x.role===item.role&&x.shift===item.shift);if(!st)return;
+ const st=(saveData.staff||[]).find(x=>x.id===item.id);if(!st)return;
  const sk=st.skill||1;if(sk>=MAX_SKILL)return;
  const nx=sk+1,cost=KONFIG.skill.biayaUpgrade[nx],lv=KONFIG.skill.levelUpgrade[nx];
  if(level<lv){showToast('🔒 Upgrade ini terbuka di Level '+lv+'.');return;}
@@ -1175,7 +1201,7 @@ function upgradeStaff(item){
 }
 function fireStaff(item){
  const before=(saveData.staff||[]).length;
- saveData.staff=(saveData.staff||[]).filter(x=>!(x.role===item.role&&x.shift===item.shift));
+ saveData.staff=(saveData.staff||[]).filter(x=>x.id!==item.id);
  if(saveData.staff.length===before)return;
  persist();refreshStaffVisuals();refreshBusinessLocks();showToast(roleName(item.role)+' Shift '+item.shift+' diberhentikan. Biaya rekrut tidak dikembalikan.');renderMarket();
 }
@@ -1191,8 +1217,11 @@ function purchaseMarketItem(item){
   const need=hireLevel(item);
   if(level<need){showToast('🔒 '+roleName(item.role)+(item.shift===2?' Shift 2':'')+' terbuka di Level '+need+'.');return;}
   if(coins<item.price){showToast('Koin belum cukup untuk membeli '+item.name+'.');return;}
-  if((saveData.staff||[]).some(x=>x.role===item.role&&x.shift===item.shift)){showToast(item.name+' sudah direkrut.');return;}
-  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift,id:item.id,skill:1});persist();refreshStaffVisuals();
+  if((saveData.staff||[]).some(x=>x.id===item.id)){showToast(item.name+' sudah direkrut.');return;}
+  const same=(saveData.staff||[]).filter(x=>x.role===item.role&&x.shift===item.shift).length;
+  const cap=item.role==='chef'?KONFIG.batasKokiPerShift:item.role==='staff'?KONFIG.batasPelayanPerShift:1;
+  if(same>=cap){showToast('Kapasitas '+roleName(item.role)+' Shift '+item.shift+' sudah penuh ('+cap+').');return;}
+  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift,id:item.id,slot:item.slot||1,skill:1});persist();refreshStaffVisuals();
   showToast(roleName(item.role)+' Shift '+item.shift+' direkrut. Gaji harian '+rupiah(KONFIG.gajiHarian[item.role])+' koin.');renderMarket();refreshBusinessLocks();return;
  }
  if(coins<item.price){showToast('Koin belum cukup untuk membeli '+item.name+'.');return;}
@@ -1271,8 +1300,12 @@ function refreshStaffVisuals(){
  (saveData.staff||[]).forEach((staff,i)=>{
   if(staff.shift!==activeShift||gameMinutes>=1320)return;
   const role=staff.role;const g=makeStaffCharacter(role);
+  const sameRole=(saveData.staff||[]).filter(x=>x.shift===staff.shift&&x.role===role);
+  const roleIndex=Math.max(0,sameRole.findIndex(x=>x.id===staff.id));
   // All three jobs have a dedicated station: cashier behind the counter, chef behind the stove, waiter near the kitchen pass.
   const home=role==='chef'?new THREE.Vector3(4.8,0,-5.72):role==='cashier'?new THREE.Vector3(-2.2,0,-6.05):new THREE.Vector3(3.25,0,-3.05);
+  if(role==='chef'&&roleIndex>0){home.x+=roleIndex*1.15;home.z-=.45;}
+  if(role==='staff'&&roleIndex>0){home.x-=roleIndex*.72;home.z+=roleIndex*.65;}
   g.position.copy(home);g.userData.home.copy(home);
   if(role==='chef')g.rotation.y=0;
   if(role==='cashier')g.rotation.y=0;
@@ -1309,12 +1342,12 @@ function buildOwnerOffice(){
 }
 function buildExpansion(){unlockWing('right');}
 document.getElementById('expandArea').addEventListener('click',()=>{
- if(areaUnlocked){showToast('Ruangan kanan sudah terbuka.');return;}if(level<KONFIG.levelRuanganKanan){showToast('🔒 Ruangan kanan terbuka di Level '+KONFIG.levelRuanganKanan+'.');return;}
- if(!spend(4000))return;buildExpansion();showToast('Ruangan kanan berhasil dibuka!');
+ if(areaUnlocked){showToast('Bangunan kanan sudah terbuka.');return;}if(level<KONFIG.levelRuanganKanan){showToast('🔒 Bangunan kanan terbuka di Level '+KONFIG.levelRuanganKanan+'.');return;}
+ if(!confirm('Beli dan buka bangunan kanan seharga 4.000 koin?'))return;if(!spend(4000))return;buildExpansion();showToast('Bangunan kanan berhasil dibuka!');
 });
 document.getElementById('expandLeftArea').addEventListener('click',()=>{
- if(leftAreaUnlocked){showToast('Ruangan kiri sudah terbuka.');return;}if(level<KONFIG.levelRuanganKiri){showToast('🔒 Ruangan kiri terbuka di Level '+KONFIG.levelRuanganKiri+'.');return;}
- if(!spend(3500))return;unlockWing('left');showToast('Ruangan kiri berhasil dibuka!');
+ if(leftAreaUnlocked){showToast('Bangunan kiri sudah terbuka.');return;}if(level<KONFIG.levelRuanganKiri){showToast('🔒 Bangunan kiri terbuka di Level '+KONFIG.levelRuanganKiri+'.');return;}
+ if(!confirm('Beli dan buka bangunan kiri seharga 3.500 koin?'))return;if(!spend(3500))return;unlockWing('left');showToast('Bangunan kiri berhasil dibuka!');
 });
 addEventListener('keydown',e=>{if(e.code==='KeyE'&&!e.repeat){
  if(cashierOrderPanel.style.display==='block'){cashierOrderPanel.style.display='none';return;}
@@ -1342,6 +1375,20 @@ const music={ctx:null,master:null,send:null,noise:null,on:true,t:0,step:0};
 try{if(localStorage.getItem('fromZeroToCEO_music')==='off')music.on=false;}catch(e){}
 const mbtn=document.createElement('button');mbtn.id='musicBtn';mbtn.type='button';document.body.appendChild(mbtn);
 const updateMusicBtn=()=>{mbtn.textContent=music.on?'🔊 Musik':'🔇 Musik';};updateMusicBtn();
+// Pengaturan permainan: jeda menghentikan simulasi waktu, NPC, pelanggan, dan gerakan pemain.
+let gamePaused=false;
+const settingsOverlay=document.getElementById('settingsOverlay');
+const pauseShade=document.getElementById('pauseShade');
+const pauseToggle=document.getElementById('pauseToggle');
+const soundToggle=document.getElementById('soundToggle');
+function setPaused(value){gamePaused=!!value;pauseShade.classList.toggle('show',gamePaused);pauseToggle.textContent=gamePaused?'▶ Lanjutkan permainan':'⏸ Jeda permainan';}
+document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOverlay.classList.add('open');soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
+document.getElementById('closeSettings').addEventListener('click',()=>settingsOverlay.classList.remove('open'));
+pauseToggle.addEventListener('click',()=>setPaused(!gamePaused));
+soundToggle.addEventListener('click',()=>{mbtn.click();soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
+document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
+settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
+
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 const CHORDS=[{r:36,c:[60,64,67,71]},{r:33,c:[57,60,64,67]},{r:38,c:[62,65,69,72]},{r:31,c:[59,62,65,67]}];
 const PENT=[72,74,76,79,81,84,79,76];
@@ -1418,7 +1465,9 @@ const clock=new THREE.Clock();
 let lastErr=0;
 function animate(){requestAnimationFrame(animate);try{frame();}catch(err){console.error(err);try{renderer.render(scene,camera);}catch(e2){}const n=performance.now();if(n-lastErr>3000){lastErr=n;showToast('⚠️ Terjadi error kecil, game tetap berjalan.');}}}
 function frame(){
- const dt=Math.min(clock.getDelta(),.04);
+ const rawDt=clock.getDelta();
+ if(gamePaused){renderer.render(scene,camera);return;}
+ const dt=Math.min(rawDt,.04);
  updateShiftClock(dt);
  const forward=(keys.KeyS?1:0)-(keys.KeyW?1:0);
  const strafe=(keys.KeyD?1:0)-(keys.KeyA?1:0);
