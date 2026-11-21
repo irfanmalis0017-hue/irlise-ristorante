@@ -21,7 +21,7 @@ async function verifyAccess(request, env) {
   try {
     const header = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0])));
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1])));
-    const domain = String(env.ACCESS_TEAM_DOMAIN).replace(/^https?:\\/\\//, "").replace(/\\/$/, "");
+    const domain = String(env.ACCESS_TEAM_DOMAIN).replace("https://", "").replace("http://", "").replace(/\/$/, "");
     const issuer = "https://" + domain;
     const now = Math.floor(Date.now() / 1000);
     if (header.alg !== "RS256" || payload.iss !== issuer || !payload.exp || payload.exp <= now) return null;
