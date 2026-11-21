@@ -796,10 +796,34 @@ for(let x=-76;x<=76;x+=8) box(scene,'road center dash',x,-.155,22,.0+4.2,.025,.1
 for(const z of [17.3,26.7]) box(scene,'road edge line',0,-.15,z,160,.025,.12,mat(0xe9ecef),false,false);
 
 // Sidewalk trees and street lamps.
+// Shared exterior foliage materials keep draw calls and material allocations controlled.
+const treeBark=mat(0x684832,.94), treeLeafDark=mat(0x2f7045,.92),
+      treeLeafMid=mat(0x438b52,.9), treeLeafLight=mat(0x68a95e,.88),
+      shrubMat=mat(0x397b49,.94), planterMat=mat(0x9b988a,.88);
 function makeStreetTree(x,z){
- cylinder(scene,'street tree trunk',x,1.15,z,.22,.28,2.3,mat(0x79523a));
- sphere(scene,'tree canopy',x,2.8,z,1.25,mat(0x438a55)).scale.set(1,1.15,1);
- sphere(scene,'tree canopy highlight',x+.55,3.15,z+.12,.72,mat(0x5b9d5d));
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ cylinder(g,'street tree trunk',0,1.22,0,.2,.27,2.45,treeBark,12);
+ // Split branches and overlapping foliage volumes create a fuller, less spherical crown.
+ const branchA=cylinder(g,'tree branch',-.28,2.15,.02,.085,.12,1.05,treeBark,8);
+ branchA.rotation.z=-.48;
+ const branchB=cylinder(g,'tree branch',.3,2.18,-.04,.08,.12,1.0,treeBark,8);
+ branchB.rotation.z=.5;
+ const clusters=[
+  [-.58,2.95,.02,.76,treeLeafDark],[.34,3.05,.12,.82,treeLeafMid],
+  [0,3.48,-.22,.86,treeLeafMid],[.62,3.45,-.08,.65,treeLeafLight],
+  [-.25,3.62,.42,.62,treeLeafLight],[.05,2.86,.48,.68,treeLeafDark],
+  [-.7,3.38,-.32,.55,treeLeafMid]
+ ];
+ for(const [lx,ly,lz,r,m] of clusters){
+  const crown=sphere(g,'tree foliage cluster',lx,ly,lz,r,m);
+  crown.scale.set(1.05,.92,.98);
+ }
+ // Compact planted verge at the base visually anchors the tree to the sidewalk.
+ box(g,'tree planter base',0,.08,0,2.35,.16,1.55,planterMat,false);
+ for(let i=0;i<3;i++){
+  const bush=sphere(g,'tree base shrub',-.62+i*.62,.34,.48,.38,shrubMat);
+  bush.scale.set(1.2,.55,.8);
+ }
 }
 for(const x of [-42,-25,-8,9,26,43]) makeStreetTree(x,13.8);
 for(const x of [-36,-12,12,36]){
@@ -809,19 +833,34 @@ for(const x of [-36,-12,12,36]){
 }
 
 // Nearby low-poly shops and apartment blocks with lit windows.
+const exteriorGlass=new THREE.MeshPhysicalMaterial({
+ color:0xa9d4df,roughness:.18,metalness:.12,transparent:true,opacity:.58,
+ clearcoat:.8,clearcoatRoughness:.12
+});
+const facadeTrim=mat(0xe8dcc7,.72), facadeDark=mat(0x3a4650,.62);
 function makeBuilding(x,z,w,h,depth,color,label){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- const facade=mat(color), glass=mat(0x8fc6d8,.3), frame=mat(0xf0dfc5);
+ const facade=mat(color,.78), glass=exteriorGlass;
  box(g,label+' building',0,h/2,0,w,h,depth,facade);
- box(g,label+' roof trim',0,h+.08,0,w+.25,.16,depth+.25,mat(0x454f59));
+ box(g,label+' roof trim',0,h+.08,0,w+.25,.16,depth+.25,facadeDark);
+ box(g,label+' facade base',0,.22,depth/2+.035,w,.38,.12,facadeDark,false);
  const floors=Math.max(2,Math.floor(h/2.3));
  const cols=Math.max(2,Math.floor(w/2.2));
  for(let row=0;row<floors;row++) for(let col=0;col<cols;col++){
   const wx=-w/2+(col+.5)*w/cols, wy=1.25+row*(h-1.8)/floors;
-  box(g,label+' window frame',wx,wy,depth/2+.025,.95,.95,.08,frame,false);
-  box(g,label+' window glass',wx,wy,depth/2+.075,.78,.76,.035,glass,false);
+  box(g,label+' window frame',wx,wy,depth/2+.025,1.02,1.02,.09,facadeTrim,false);
+  box(g,label+' window glass',wx,wy,depth/2+.078,.82,.82,.035,glass,false);
+  box(g,label+' window mullion',wx,wy,depth/2+.103,.045,.82,.025,facadeTrim,false);
+  box(g,label+' window sill',wx,wy-.53,depth/2+.12,1.12,.09,.18,facadeTrim,false);
  }
- box(g,label+' storefront',0,.85,depth/2+.09,w*.72,1.55,.12,mat(0x344d59),false);
+ // Storefront glazing, sign band and restrained canopy detail.
+ box(g,label+' storefront',0,.88,depth/2+.09,w*.76,1.62,.13,glass,false);
+ box(g,label+' storefront sign band',0,1.82,depth/2+.17,w*.78,.34,.16,facadeDark,false);
+ box(g,label+' entrance frame',0,.9,depth/2+.18,.12,1.72,.12,facadeTrim,false);
+ box(g,label+' entrance canopy',0,2.12,depth/2+.42,w*.82,.12,.62,facadeTrim,false);
+ for(const sx of [-1,1]){
+  box(g,label+' canopy bracket',sx*w*.35,1.92,depth/2+.34,.09,.42,.09,facadeDark,false);
+ }
  return g;
 }
 makeBuilding(-34,39,13,13,8,0xd18a62,'bakery shop');
