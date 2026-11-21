@@ -810,7 +810,8 @@ function makeTable(x,z) {tablePositions.push([x,z]);
     if(dz!==0)box(g,'chair back',dx,.98,dz+(dz>0?.28:-.28),.7,.72,.13,materials.darkTeal);else box(g,'chair back',dx+(dx>0?.28:-.28),.98,dz,.13,.72,.7,materials.darkTeal);
   }
 }
-// Restoran baru dimulai tanpa meja dan kursi; pemain membeli set meja pertamanya dari toko.
+// Save lama tetap mempertahankan tiga meja bawaan; save baru memulai restoran dalam keadaan kosong.
+if((saveData.onboardingStep|0)>=2){makeTable(-4.8,1.5);makeTable(4.8,1.5);makeTable(-4.8,-2.2);}
 
 // Plants and lamps.
 function makePlant(x,z) {
@@ -1477,7 +1478,7 @@ const SAVE_VERSION=3;
 try{const raw0=localStorage.getItem(saveKey);if(raw0){const o0=JSON.parse(raw0);if(o0&&Number.isFinite(o0.coins)&&(o0.saveVersion||0)<SAVE_VERSION)localStorage.setItem(saveKey+'_backup_v'+(o0.saveVersion||0),raw0);}}catch(e){}
 let legacySave=false;
 let saveData={coins:5000,areaUnlocked:false,leftAreaUnlocked:false,items:{table:0,chair:0,stove:0},inventory:{},staff:[],level:1,xp:0,tutorialDone:false,onboardingStep:0,initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true};
-try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)) saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}}; if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
+try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)){saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}};if(!Number.isFinite(old.onboardingStep))saveData.onboardingStep=2;} if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
 let coins=saveData.coins, areaUnlocked=!!saveData.areaUnlocked, leftAreaUnlocked=!!saveData.leftAreaUnlocked, lastSale=0;
 let rep=Number.isFinite(saveData.rep)?saveData.rep:1, day=(saveData.day|0)||1, dayStartCoins=coins;
 if(!saveData.initializedV10){coins=10000;saveData.initializedV10=true;saveData.inventory={rice:10,chicken:5,vegetables:10,flour:10,oil:5,spices:10};saveData.staff=[];saveData.items={table:0,chair:0,stove:0};saveData.areaUnlocked=false;saveData.leftAreaUnlocked=false;areaUnlocked=false;leftAreaUnlocked=false;}
@@ -1577,12 +1578,12 @@ function updateTutorial(){
  const recipeStart={rice:1,egg:1,oil:1,spices:1,vegetables:1};
  const hasStarterIngredients=Object.entries(recipeStart).every(([id,q])=>(saveData.inventory[id]||0)>=q);
  if((saveData.items.table|0)>0&&hasStarterIngredients)saveData.onboardingStep=2;
+ if((saveData.onboardingStep|0)===2&&customers.length>0)saveData.onboardingStep=3;
  let msg;
  if((saveData.onboardingStep|0)===0){msg='Selamat datang, Bos! Restoran masih kosong. Buka TOKO lalu beli 1 set meja makan terlebih dahulu.';}
  else if((saveData.onboardingStep|0)===1){msg='Bagus! Sekarang buka kategori BAHAN dan beli beras, telur, minyak, bumbu, serta sayuran untuk memasak nasi goreng.';}
- else if((saveData.onboardingStep|0)===2){msg='Persiapan selesai! Restoran siap dibuka. Dekati kasir untuk menerima pesanan pertama.';}
- else 
- if(holdingDish)msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';
+ else if((saveData.onboardingStep|0)===2){msg='Persiapan selesai! Restoran siap dibuka. Pelanggan pertama akan segera datang.';}
+ else if(holdingDish)msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';
  else if(dishReady)msg='Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.';
  else if(cooking)msg='Sedang memasak. Tunggu sampai matang.';
  else if(kitchenQueue.length)msg=fridgeOpen?'Dekati kompor lalu tekan L untuk mulai memasak.':'Pesanan masuk dapur. Dekati kulkas lalu tekan K untuk membukanya.';
