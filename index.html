@@ -1580,9 +1580,9 @@ function updateTutorial(){
  if((saveData.items.table|0)>0&&hasStarterIngredients)saveData.onboardingStep=2;
  if((saveData.onboardingStep|0)===2&&customers.length>0)saveData.onboardingStep=3;
  let msg;
- if((saveData.onboardingStep|0)===0){msg='Selamat datang, Bos! Restoran masih kosong. Buka TOKO lalu beli 1 set meja makan terlebih dahulu.';}
- else if((saveData.onboardingStep|0)===1){msg='Bagus! Sekarang buka kategori BAHAN dan beli beras, telur, minyak, bumbu, serta sayuran untuk memasak nasi goreng.';}
- else if((saveData.onboardingStep|0)===2){msg='Persiapan selesai! Restoran siap dibuka. Pelanggan pertama akan segera datang.';}
+ if((saveData.onboardingStep|0)===0){msg=window.IR_LANG==='en'?'Welcome, Boss! Your restaurant is empty. Open the SHOP and buy your first dining table set.':'Selamat datang, Bos! Restoran masih kosong. Buka TOKO lalu beli 1 set meja makan terlebih dahulu.';}
+ else if((saveData.onboardingStep|0)===1){msg=window.IR_LANG==='en'?'Great! Open INGREDIENTS and buy rice, eggs, cooking oil, spices, and vegetables to prepare fried rice.':'Bagus! Sekarang buka kategori BAHAN dan beli beras, telur, minyak, bumbu, serta sayuran untuk memasak nasi goreng.';}
+ else if((saveData.onboardingStep|0)===2){msg=window.IR_LANG==='en'?'Setup complete! Your restaurant is ready. The first customers will arrive soon.':'Persiapan selesai! Restoran siap dibuka. Pelanggan pertama akan segera datang.';}
  else if(holdingDish)msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';
  else if(dishReady)msg='Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.';
  else if(cooking)msg='Sedang memasak. Tunggu sampai matang.';
@@ -1609,7 +1609,7 @@ function closeBusiness(){businessPanel.classList.remove('open');}
 // Shop catalogue: purchases increase persistent stock; equipment is tracked separately from ingredients.
 const marketCatalog={
  equipment:[
-  {id:'table',name:'Meja makan',icon:'🪑',price:1200,desc:'Meja tambahan untuk area makan.',action:'existingTable'},
+  {id:'table',name:'Set meja & kursi',icon:'🪑',price:1200,desc:'Satu meja makan lengkap dengan empat kursi pelanggan.',action:'existingTable'},
   {id:'chair',name:'Kursi pelanggan',icon:'💺',price:500,desc:'Kursi dekorasi di ruang makan.',action:'existingChair'},
   {id:'stove',name:'Kompor',icon:'🔥',price:1800,desc:'Kompor tambahan untuk dapur (dekorasi, belum menambah kapasitas masak).',action:'existingStove'},
   {id:'fridge',name:'Kulkas bahan',icon:'🧊',price:2200,desc:'Dekorasi dapur (belum berpengaruh ke gameplay).',once:true},
