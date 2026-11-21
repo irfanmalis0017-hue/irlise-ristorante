@@ -19,10 +19,12 @@ Modern Premium Realistic: warm interior lighting, natural wood and stone surface
 - Add a small number of non-shadow-casting warm point lights for dining-room fill.
 - Keep ACES tone mapping and the current renderer pipeline.
 
-### Phase 2 — Interior and kitchen detail
-- Improve visible table, chair, counter, stove, fridge, and prep-surface details.
-- Use shared geometries/materials where possible.
-- Do not alter object positions used by interactions or collision checks without a dedicated gameplay regression test.
+### Phase 2 — Interior and kitchen detail (initial pass implemented)
+- Added kitchen backsplash, extractor hood, stove controls, cabinet drawer fronts, and fridge shelves/interior light.
+- Added counter trim/kickplate and small prep-area props.
+- Added table plate rim, coaster, napkin, and cutlery details.
+- Decorative additions reuse existing geometry helpers and do not intentionally change gameplay anchors, interaction points, or collision checks.
+- Browser/device regression testing is still required.
 
 ### Phase 3 — Environment and reflections
 - Add a lightweight environment map with PMREM only after measuring memory and load cost.
