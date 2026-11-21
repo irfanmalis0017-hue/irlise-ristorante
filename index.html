@@ -950,8 +950,21 @@ function makePerson(o={}){
  }
  if(o.hat==='chef'){cylinder(head,'chef hat band',0,.3,0,.2,.2,.12,materials.white,20);_ell(head,'chef hat crown',0,.46,0,.22,.17,.2,materials.white);}
  if(o.cap!=null){const cm=mat(o.cap,.7);_ell(head,'cap dome',0,.15,-.04,.215,.17,.2,cm);_ell(head,'cap brim',0,.115,.2,.16,.016,.14,cm).rotation.x=.12;_ell(head,'cap logo',0,.19,.2,.035,.035,.01,mat(0xf3c75b,.5));}
- if(o.apron!=null){const am=mat(o.apron,.85);box(root,'apron bib',0,1.1,.155,.34,.42,.035,am);box(root,'apron skirt',0,.8,.15,.4,.32,.04,am);}
- if(o.tag)box(root,'name tag',.14,1.2,.158,.1,.07,.02,materials.yellow);
+ // Tailored clothing details: small reusable primitives add depth without changing rig or hitboxes.
+ const seamMat=mat(new THREE.Color(o.shirt??0x4b83b7).multiplyScalar(.78).getHex(),.82);
+ box(root,'shirt chest pocket',.105,1.285,.177,.105,.115,.018,seamMat,false);
+ box(root,'shirt pocket flap',.105,1.35,.19,.12,.025,.018,shirt,false);
+ for(let bi=0;bi<3;bi++)_ell(root,'shirt button',-.015,1.34-bi*.105,.183,.012,.012,.009,mat(0xe8dfcf,.5));
+ if(o.apron!=null){
+  const am=mat(o.apron,.85), strap=mat(new THREE.Color(o.apron).multiplyScalar(.82).getHex(),.9);
+  box(root,'apron bib',0,1.1,.155,.34,.42,.035,am);
+  box(root,'apron skirt',0,.8,.15,.4,.32,.04,am);
+  box(root,'apron left strap',-.12,1.36,.13,.055,.22,.035,strap).rotation.z=-.22;
+  box(root,'apron right strap',.12,1.36,.13,.055,.22,.035,strap).rotation.z=.22;
+  box(root,'apron pocket',0,.82,.176,.19,.12,.018,strap,false);
+  box(root,'apron pocket seam',0,.82,.188,.012,.12,.008,am,false);
+ }
+ if(o.tag)box(root,'name tag',.14,1.2,.19,.1,.07,.025,materials.yellow,false);
  g.userData={root,legs,arms,elbows,head,mats:{skin,hair,shirt}};
  if(o.scale)g.scale.setScalar(o.scale);
  return g;
