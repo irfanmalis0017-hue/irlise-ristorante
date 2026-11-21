@@ -26,10 +26,12 @@ Modern Premium Realistic: warm interior lighting, natural wood and stone surface
 - Decorative additions reuse existing geometry helpers and do not intentionally change gameplay anchors, interaction points, or collision checks.
 - Browser/device regression testing is still required.
 
-### Phase 3 — Environment and reflections
-- Add a lightweight environment map with PMREM only after measuring memory and load cost.
-- Improve windows, exterior storefronts, vegetation, road and pedestrian surroundings.
-- Keep a fallback when environment assets fail to load.
+### Phase 3 — Environment and reflections (initial pass implemented)
+- Reworked street trees with shared bark/foliage materials, split branches, layered canopy clusters, and compact planted bases.
+- Improved nearby building façades with shared physical glass, window mullions and sills, storefront glazing, sign bands, entrance framing, and canopies.
+- Kept the existing road layout, traffic paths, building placement, and gameplay boundaries unchanged.
+- PMREM/environment-map reflections remain deferred until memory and performance can be measured in a browser.
+- Browser/device regression testing is still required.
 
 ### Phase 4 — Characters and animation
 - Improve character proportions, clothing details, and animation transitions.
