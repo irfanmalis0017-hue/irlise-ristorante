@@ -115,6 +115,14 @@ function sendMessage(){
   addMessage(d.name,responseFor(d,text),"staff");
   input.value="";
 }
+function dispatchCommand(text, deptId, ticketId){
+  const target = departments.find(d=>d.id===deptId) || departments[0];
+  selected = target.id;
+  renderStaff();
+  addMessage("Founder","Perintah kerja #"+ticketId+": "+text,"founder");
+  addMessage(target.name,"Perintah #"+ticketId+" sudah saya terima. Saya akan meninjau instruksi ini dari bidang "+target.role.toLowerCase()+". Status tiket saat ini: Menunggu. Catatan: ini konfirmasi prototipe, belum berarti pekerjaan sudah dikerjakan oleh AI.","staff");
+}
+window.IRLISEOffice = { dispatchCommand };
 function startMeeting(){
   const topic=input.value.trim();
   if(!topic){input.focus();return;}
