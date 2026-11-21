@@ -697,6 +697,56 @@ fridgeIds.forEach((id,i)=>{const y=i<3?.62:1.62;const col=i%3;const x=6.45+col*.
 function refreshFridgeStock(){fridgeIds.forEach(id=>{const label=fridgeStockSprites[id];if(!label)return;const qty=saveData.inventory?.[id]||0;label.ctx.fillStyle='#26343b';label.ctx.fillRect(0,48,256,48);label.ctx.fillStyle='#f3c75b';label.ctx.font='bold 30px Arial';label.ctx.textAlign='center';label.ctx.fillText('× '+qty,128,84);label.texture.needsUpdate=true;const pkg=fridgeStockMeshes.getObjectByName('fridge package '+id);if(pkg)pkg.visible=qty>0;label.sp.visible=qty>0;});}
 
 
+// ===== Visual Upgrade 2.0 — Phase 2: premium interior details =====
+// Decorative-only meshes: keep all gameplay anchors, interaction points and collision logic unchanged.
+const detailGold=mat(0xb58b52,.38), detailCeramic=mat(0xd9d2c4,.58), detailDark=mat(0x26343b,.62), detailGlow=new THREE.MeshStandardMaterial({color:0xffe2a3,emissive:0xffb94d,emissiveIntensity:.45,roughness:.3});
+const detailSteel=mat(0x9ca8ad,.32);
+function detailBox(parent,name,x,y,z,sx,sy,sz,material){
+  return box(parent,name,x,y,z,sx,sy,sz,material,false,true);
+}
+// Warm stone backsplash behind the cooking line.
+for(let ix=0;ix<8;ix++) for(let iy=0;iy<2;iy++){
+  const x=3.35+ix*.48, y=1.72+iy*.43;
+  detailBox(scene,'kitchen backsplash tile',x,y,-6.79,.455,.405,.035,detailCeramic);
+  detailBox(scene,'backsplash grout accent',x,y,-6.765,.018,.405,.012,detailGold);
+}
+// Stainless extractor hood and compact duct above the two burners.
+detailBox(scene,'extractor hood canopy',4.8,2.38,-4.82,2.35,.22,1.05,materials.steel);
+detailBox(scene,'extractor hood front fascia',4.8,2.23,-4.28,2.18,.09,.08,detailDark);
+detailBox(scene,'extractor duct',4.8,2.83,-5.12,.72,.78,.62,materials.steel);
+detailBox(scene,'extractor control strip',4.8,2.39,-4.225,.9,.055,.025,detailGold);
+for(let i=0;i<3;i++) cylinder(scene,'extractor control dial',4.48+i*.32,2.39,-4.19,.045,.045,.035,detailDark,12);
+// Stove control knobs and subtle burner markings on the island's front edge.
+for(let i=0;i<2;i++){
+  const x=4.22+i*1.16;
+  cylinder(scene,'stove control knob',x,.83,-3.625,.105,.105,.07,detailSteel,16);
+  cylinder(scene,'stove knob center',x,.83,-3.582,.035,.035,.012,detailDark,12);
+  detailBox(scene,'stove control marker',x,.98,-3.62,.025,.08,.018,detailGold);
+}
+// Refined cabinet drawer faces and brass pulls; original cabinet volumes remain intact.
+for(let i=0;i<2;i++){
+  const x=4.0+i*1.5;
+  detailBox(scene,'kitchen drawer face',x,.34,-3.495,1.05,.28,.035,materials.wood2);
+  detailBox(scene,'kitchen drawer pull',x,.35,-3.455,.32,.035,.035,detailGold);
+}
+// Fridge shelves and a soft interior lamp, positioned clear of the stock packages.
+for(const y of [1.12,2.12]) detailBox(scene,'fridge glass shelf',6.6,y,-6.12,.78,.035,.48,detailSteel);
+detailBox(scene,'fridge interior light',6.6,2.54,-6.17,.5,.045,.045,detailGlow);
+const fridgeInteriorLight=new THREE.PointLight(0xc9efff,.32,2.2,2);fridgeInteriorLight.position.set(6.6,2.35,-6.05);fridgeInteriorLight.castShadow=false;scene.add(fridgeInteriorLight);
+// Counterfront framed panels and brass kick plate for a more crafted reception counter.
+detailBox(scene,'counter brass kickplate',0,.12,-4.445,5.9,.12,.045,detailGold);
+for(const x of [-2.65,-1.35,0,1.35,2.65]){
+  detailBox(scene,'counter front vertical trim',x,.64,-4.405,.035,.72,.025,detailGold);
+}
+detailBox(scene,'counter service ledge',0,1.43,-4.46,5.9,.055,.12,detailGold);
+// A small cutting board and utensil holder add depth to the prep area without blocking movement.
+detailBox(scene,'prep cutting board',6.05,1.305,-4.55,.72,.055,.48,materials.wood2);
+detailBox(scene,'prep board inset',6.05,1.336,-4.55,.58,.012,.34,detailCeramic);
+cylinder(scene,'utensil crock',3.55,1.48,-4.95,.14,.16,.36,materials.cream,18);
+for(let i=0;i<3;i++){
+  cylinder(scene,'utensil handle',3.48+i*.07,1.78,-4.95,.018,.018,.42,detailSteel,8);
+}
+
 // Dining tables and chairs.
 const tablePositions=[];
 function makeTable(x,z) {tablePositions.push([x,z]);
@@ -705,7 +755,12 @@ function makeTable(x,z) {tablePositions.push([x,z]);
   cylinder(g,'table foot',0,.08,0,.52,.52,.12,materials.trim);
   cylinder(g,'round table top',0,1.0,0,.88,.88,.16,materials.wood2,32);
   cylinder(g,'plate',-.18,1.1,0,.24,.24,.035,materials.white,24);
+  const plateRim=new THREE.Mesh(new THREE.TorusGeometry(.205,.012,6,28),detailGold);plateRim.name='plate brass rim';plateRim.rotation.x=Math.PI/2;plateRim.position.set(-.18,1.125,0);plateRim.castShadow=false;g.add(plateRim);
+  cylinder(g,'juice coaster',.36,1.105,.18,.145,.145,.025,detailGold,20);
   cylinder(g,'juice',.36,1.22,.18,.10,.10,.25,materials.red,16);
+  detailBox(g,'folded table napkin',.39,1.105,-.32,.22,.018,.16,materials.cream);
+  detailBox(g,'table cutlery handle',-.55,1.12,-.04,.025,.018,.26,detailSteel);
+  detailBox(g,'table cutlery grip',-.55,1.12,.105,.045,.025,.07,detailGold);
   for(const [dx,dz] of [[-1.18,0],[1.18,0],[0,-1.18],[0,1.18]]) {
     box(g,'chair seat',dx,.55,dz,.7,.16,.7,materials.teal);
     for(const [lx,lz] of [[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]]) box(g,'chair leg',dx+lx,.27,dz+lz,.09,.55,.09,materials.wood);
