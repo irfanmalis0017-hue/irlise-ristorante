@@ -110,6 +110,9 @@
   #settingsCard { max-height:calc(100vh - 36px); overflow:auto; }
   #settingsCard textarea { width:100%; margin:6px 0; padding:8px; border-radius:9px; border:1px solid rgba(255,255,255,.18); background:#0f1a22; color:#cfe0e8; font:12px ui-monospace,Menlo,Consolas,monospace; resize:vertical; }
   .setSec { margin:14px 0 4px; font-weight:800; font-size:13px; color:#f3c75b; }
+  .qualityOptions { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:7px 0 12px; }
+  .qualityBtn { border:1px solid rgba(255,255,255,.18); border-radius:9px; padding:9px 6px; background:#223640; color:#dce8ee; font:800 12px Inter,system-ui,sans-serif; cursor:pointer; }
+  .qualityBtn[aria-pressed="true"] { background:#b88752; border-color:#f0c58d; color:#17232b; box-shadow:inset 0 0 0 1px rgba(255,255,255,.18); }
   #saveMsg { min-height:16px; font-size:12px; color:#9be3b5; margin:2px 0 6px; }
   #verText { font-size:11px; color:#7f98a6; text-align:center; margin-top:6px; }
   #langScreen { position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 30%,#223646,#101a22); padding:20px; pointer-events:auto; }
@@ -154,6 +157,13 @@
   <h2>Pengaturan</h2><p>Atur permainan IRLISE RISTORANTE. Progres tersimpan otomatis.</p>
   <button class="settingAction" id="pauseToggle" type="button">⏸ Jeda permainan</button>
   <button class="settingAction" id="soundToggle" type="button">🔊 Suara: ON</button>
+  <div class="setSec" id="qualityTitle">Kualitas grafis</div>
+  <p id="qualityDescription">Pilih kualitas visual sesuai kemampuan perangkat.</p>
+  <div class="qualityOptions" role="group" aria-label="Kualitas grafis">
+   <button class="qualityBtn" type="button" data-quality="low" id="qualityLow">Low</button>
+   <button class="qualityBtn" type="button" data-quality="medium" id="qualityMedium">Medium</button>
+   <button class="qualityBtn" type="button" data-quality="high" id="qualityHigh">High</button>
+  </div>
   <button class="settingAction danger" id="restartLevelOne" type="button">↻ Restart dari Level 1</button>
   <button class="settingAction" id="langToggle" type="button"></button>
   <div class="setSec">Cadangan & pindah perangkat</div>
@@ -402,10 +412,44 @@ scene.background = new THREE.Color(0x9bc6d6);
 scene.fog = new THREE.Fog(0x9bc6d6, 48, 115);
 
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Graphics quality is stored separately from gameplay saves. Auto default is device-aware.
+const QUALITY_KEY='irlise_graphics_quality';
+const QUALITY_PRESETS={
+ low:{pixelRatio:1.15,shadowSize:1024,shadowRadius:2,exposure:1.12},
+ medium:{pixelRatio:1.5,shadowSize:1536,shadowRadius:2.5,exposure:1.15},
+ high:{pixelRatio:2,shadowSize:2048,shadowRadius:3,exposure:1.17}
+};
+function getDefaultQuality(){
+ const cores=navigator.hardwareConcurrency||4, memory=navigator.deviceMemory||4;
+ return (matchMedia('(pointer:coarse)').matches||cores<=4||memory<=4)?'low':'medium';
+}
+let graphicsQuality='medium';
+try{
+ const savedQuality=localStorage.getItem(QUALITY_KEY);
+ graphicsQuality=QUALITY_PRESETS[savedQuality]?savedQuality:getDefaultQuality();
+}catch(e){graphicsQuality=getDefaultQuality();}
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+function applyGraphicsQuality(level){
+ const preset=QUALITY_PRESETS[level]||QUALITY_PRESETS.medium;
+ graphicsQuality=QUALITY_PRESETS[level]?level:'medium';
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,preset.pixelRatio));
+ renderer.shadowMap.enabled=true;
+ sun.shadow.mapSize.set(preset.shadowSize,preset.shadowSize);
+ sun.shadow.radius=preset.shadowRadius;
+ sun.shadow.map?.dispose();
+ sun.shadow.map=null;
+ sun.shadow.needsUpdate=true;
+ renderer.toneMappingExposure=preset.exposure;
+ renderer.setSize(innerWidth,innerHeight);
+ try{localStorage.setItem(QUALITY_KEY,graphicsQuality);}catch(e){}
+ document.querySelectorAll('[data-quality]').forEach(btn=>{
+  btn.setAttribute('aria-pressed',String(btn.dataset.quality===graphicsQuality));
+ });
+}
+
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
@@ -1826,6 +1870,19 @@ const updateMusicBtn=()=>{mbtn.textContent=music.on?'🔊 Musik':'🔇 Musik';};
 // Pengaturan permainan: jeda menghentikan simulasi waktu, NPC, pelanggan, dan gerakan pemain.
 let gamePaused=false;
 const settingsOverlay=document.getElementById('settingsOverlay');
+const qualityTitle=document.getElementById('qualityTitle');
+const qualityDescription=document.getElementById('qualityDescription');
+if(window.IR_LANG==='en'){
+ qualityTitle.textContent='Graphics quality';
+ qualityDescription.textContent='Choose visual quality for your device.';
+}else{
+ qualityTitle.textContent='Kualitas grafis';
+ qualityDescription.textContent='Pilih kualitas visual sesuai kemampuan perangkat.';
+}
+document.querySelectorAll('[data-quality]').forEach(btn=>{
+ btn.addEventListener('click',()=>applyGraphicsQuality(btn.dataset.quality));
+});
+applyGraphicsQuality(graphicsQuality);
 const pauseShade=document.getElementById('pauseShade');
 const pauseToggle=document.getElementById('pauseToggle');
 const soundToggle=document.getElementById('soundToggle');
