@@ -1,0 +1,47 @@
+name: IRLISE Office Checks
+
+on:
+  push:
+    branches:
+      - irlise-office-3d
+  pull_request:
+    branches:
+      - irlise-office-3d
+
+jobs:
+  syntax-and-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Extract and check browser module
+        run: |
+          node -e "const fs=require('fs');const html=fs.readFileSync('index.html','utf8');const match=html.match(/<script type=\"module\">([\\s\\S]*?)<\\/script>/);if(!match)throw new Error('Browser module not found');fs.writeFileSync('/tmp/office-ui.mjs',match[1]);"
+          node --check /tmp/office-ui.mjs
+      - name: Check Cloudflare Pages API syntax
+        run: |
+          cp functions/api/tasks.js /tmp/tasks.mjs
+          node --check /tmp/tasks.mjs
+      - name: Verify core safeguards
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const api = fs.readFileSync('functions/api/tasks.js', 'utf8');
+          const sql = fs.readFileSync('migrations/0001_tasks.sql', 'utf8');
+          for (const [name, ok] of [
+            ['3D office module', html.includes('three.module.js')],
+            ['server sync client', html.includes("fetch('/api/tasks")],
+            ['local fallback', html.includes('irlise_office_jobs')],
+            ['Access JWT validation', api.includes('cf-access-jwt-assertion') && api.includes('crypto.subtle.verify')],
+            ['D1 binding', api.includes('env.DB')],
+            ['task schema', sql.includes('CREATE TABLE IF NOT EXISTS office_tasks')]
+          ]) {
+            if (!ok) throw new Error('Missing safeguard: ' + name);
+            console.log('PASS ' + name);
+          }
+          NODE
