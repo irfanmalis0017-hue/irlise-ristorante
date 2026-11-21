@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 1.9</title>
+<title>IRLISE RISTORANTE — Update 2.0</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -136,7 +136,7 @@
 <div id="loading"><div><div style="font-size:22px;font-weight:800">IRLISE RISTORANTE</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 1.9 — Bahasa & Save</span></div>
+  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 2.0 — Bahasa & Save</span></div>
   <div id="stats">
     <div class="panel stat" id="levelStat"><small>Level restoran</small><b id="levelValue">Lv 1</b><div class="xpbar"><i id="xpFill"></i></div><small id="xpText">0 / 50 XP</small></div>
     <div class="panel stat"><small>Uang pemain</small><b id="coinValue">10.000 koin</b></div>
@@ -271,7 +271,7 @@
  'Dekati pelanggan di kasir untuk berinteraksi.':'Get close to the customer at the counter to interact.',
  'Dekati pelanggan yang memesan (balon hijau) untuk menyajikan.':'Get close to the customer who ordered (green bubble) to serve.',
  'Gunakan K untuk buka kulkas, L untuk memasak, I untuk angkat, lalu J untuk menyajikan.':'Use K to open the fridge, L to cook, I to pick up, then J to serve.',
- 'IRLISE RISTORANTE Update 1.9 siap! Bahasa & cadangan save ada di ⚙ Pengaturan.':'IRLISE RISTORANTE Update 1.9 is ready! Language & save backup are in ⚙ Settings.',
+ 'IRLISE RISTORANTE Update 2.0 siap! Bahasa & cadangan save ada di ⚙ Pengaturan.':'IRLISE RISTORANTE Update 2.0 is ready! Language & save backup are in ⚙ Settings.',
  'Koin belum cukup untuk membeli ':'Not enough coins to buy ','Koin belum cukup untuk upgrade skill.':'Not enough coins to upgrade the skill.',
  'Koin belum cukup. Layani pesanan untuk mendapat uang!':'Not enough coins. Serve orders to earn money!',
  'Koki sedang bertugas dan akan memasak pesanan secara otomatis.':'A chef is on duty and cooks orders automatically.',
@@ -321,7 +321,7 @@
  'Es batu untuk minuman.':'Ice for drinks.','Jeruk untuk menu es jeruk.':'Oranges for iced orange.','Biji kopi untuk kopi susu.':'Coffee beans for milk coffee.','Susu untuk kopi susu.':'Milk for milk coffee.','Pisang untuk pisang goreng.':'Bananas for fried banana.',
  'Menyambut pelanggan dan menerima pesanan di meja kasir.':'Greets customers and takes orders at the counter.','Melayani percakapan dan konfirmasi pesanan pelanggan.':'Handles conversation and confirms customer orders.',
  '08.00–15.00':'08:00–15:00','15.00–22.00':'15:00–22:00',
- 'Restaurant Simulator • Update 1.9 — Bahasa & Save':'Restaurant Simulator • Update 1.9 — Language & Saves',
+ 'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.0 — Language & Saves',
  'Menyiapkan restoran 3D...':'Preparing the 3D restaurant...','Pastikan koneksi internet aktif untuk memuat mesin 3D.':'Make sure your internet connection is on to load the 3D engine.',
  'Level restoran':'Restaurant level','Uang pemain':'Your money','Reputasi':'Reputation','Jam kerja':'Work hours','KONTROL':'CONTROLS',
  'W A S D — Bergerak':'W A S D — Move','F — Layani pelanggan jika tidak ada kasir':'F — Serve customer if there is no cashier','I / J — Angkat & sajikan jika tanpa karyawan':'I / J — Pick up & serve if there is no staff',
@@ -2069,7 +2069,7 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-showToast('IRLISE RISTORANTE Update 1.9 siap! Bahasa & cadangan save ada di ⚙ Pengaturan.');
+showToast('IRLISE RISTORANTE Update 2.0 siap! Bahasa & cadangan save ada di ⚙ Pengaturan.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
