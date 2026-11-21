@@ -411,12 +411,23 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 
 const camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, .1, 220);
-const hemi = new THREE.HemisphereLight(0xfff4df, 0x607080, 2.0); scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xffe0ad, 3.0);
+const hemi = new THREE.HemisphereLight(0xfff1dc, 0x59616a, 1.65); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffe5c1, 2.55);
 sun.position.set(-7, 13, 8); sun.castShadow = true;
 sun.shadow.mapSize.set(2048,2048);
 sun.shadow.camera.left=-18; sun.shadow.camera.right=18; sun.shadow.camera.top=18; sun.shadow.camera.bottom=-18;
+sun.shadow.camera.near=1; sun.shadow.camera.far=48;
+sun.shadow.bias=-0.00008; sun.shadow.normalBias=0.035; sun.shadow.radius=3;
+sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun);
+
+// Warm local light pools create a premium dining-room mood. Shadow casting stays
+// disabled on these fill lights to avoid multiplying the frame's shadow cost.
+const warmLightPositions=[[-4.8,3.15,-2.6],[0,3.15,-2.6],[4.8,3.15,-2.6],[0,3.15,3.2]];
+for(const [lx,ly,lz] of warmLightPositions){
+  const light=new THREE.PointLight(0xffc987,.72,9,2);
+  light.position.set(lx,ly,lz);light.castShadow=false;scene.add(light);
+}
 
 const mat = (color, roughness=.82) => new THREE.MeshStandardMaterial({color, roughness});
 const materials = {
@@ -426,6 +437,109 @@ const materials = {
   black:mat(0x28343d), skin:mat(0xf1bd91), hair:mat(0x392c2a), shirt:mat(0x36a3a0),
   pants:mat(0x344a70), white:mat(0xffffff), yellow:mat(0xf3c75b)
 };
+
+// ===== VISUAL UPGRADE 2.0 — Phase 1: procedural PBR surfaces =====
+// Procedural CanvasTextures keep the first visual pass self-contained: no external
+// asset download, no gameplay/save changes, and modest texture memory usage.
+function makeSurfaceTexture(kind, size=512) {
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  const x=c.getContext('2d');
+  const palettes={
+    wood:['#68452f','#8a5b3c','#a9784e'],
+    stone:['#c9c1b4','#ded7ca','#b9b1a5'],
+    tile:['#d8d4cb','#e7e2d8','#c9c4ba'],
+    steel:['#69777d','#8d999d','#56636a'],
+    wall:['#e8dfd0','#f2eadc','#ddd3c4']
+  };
+  const p=palettes[kind]||palettes.stone;
+  x.fillStyle=p[0]; x.fillRect(0,0,size,size);
+  if(kind==='wood'){
+    for(let i=0;i<46;i++){
+      const y=(i/46)*size, wobble=(i%5)*2.5;
+      x.strokeStyle=i%3===0?'rgba(36,20,12,.24)':'rgba(230,190,145,.12)';
+      x.lineWidth=i%7===0?3:1;
+      x.beginPath();x.moveTo(0,y);
+      x.bezierCurveTo(size*.28,y+wobble,size*.62,y-wobble,size,y+(i%4)*1.5);x.stroke();
+    }
+    for(let i=0;i<9;i++){
+      const y=(i+.5)*size/9;
+      x.strokeStyle='rgba(40,24,15,.16)';x.lineWidth=2;
+      x.beginPath();x.moveTo(0,y);x.lineTo(size,y);x.stroke();
+    }
+  }else if(kind==='steel'){
+    for(let i=0;i<160;i++){
+      const y=i*size/160;
+      x.fillStyle=i%4===0?'rgba(255,255,255,.12)':'rgba(20,30,35,.045)';
+      x.fillRect(0,y,size,1.4);
+    }
+  }else if(kind==='wall'){
+    for(let i=0;i<1500;i++){
+      const v=(i*73)%size, w=(i*131)%size;
+      x.fillStyle=i%2?'rgba(255,255,255,.09)':'rgba(90,75,55,.035)';
+      x.fillRect(v,w,1.2,1.2);
+    }
+  }else{
+    // Fine stone grain and restrained marble-like veins.
+    for(let i=0;i<2200;i++){
+      const px=(i*97)%size,py=(i*193)%size;
+      x.fillStyle=i%2?'rgba(255,255,255,.12)':'rgba(65,55,45,.055)';
+      x.fillRect(px,py,1.5,1.5);
+    }
+    if(kind==='stone'){
+      for(let i=0;i<7;i++){
+        x.strokeStyle='rgba(112,103,91,.17)';x.lineWidth=1.5+(i%2);
+        x.beginPath();x.moveTo(-20,i*83+30);
+        x.bezierCurveTo(120,i*83-25,280,i*83+85,size+20,i*83+12);x.stroke();
+      }
+    }
+    if(kind==='tile'){
+      x.strokeStyle='rgba(255,255,255,.3)';x.lineWidth=2;
+      x.strokeRect(1,1,size-2,size-2);
+    }
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+  tex.needsUpdate=true;
+  return tex;
+}
+function makeRoughnessTexture(base, variation=18) {
+  const c=document.createElement('canvas');c.width=128;c.height=128;
+  const x=c.getContext('2d');x.fillStyle='rgb('+base+','+base+','+base+')';x.fillRect(0,0,128,128);
+  for(let i=0;i<900;i++){
+    const v=Math.max(0,Math.min(255,base+(((i*47)%variation)-variation/2)));
+    x.fillStyle='rgb('+v+','+v+','+v+')';x.fillRect((i*37)%128,(i*71)%128,2,2);
+  }
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.NoColorSpace;
+  t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return t;
+}
+const surfaceMaps={
+  wood:makeSurfaceTexture('wood'),
+  stone:makeSurfaceTexture('stone'),
+  tile:makeSurfaceTexture('tile'),
+  steel:makeSurfaceTexture('steel'),
+  wall:makeSurfaceTexture('wall')
+};
+materials.floor.map=surfaceMaps.stone;
+materials.floor.roughnessMap=makeRoughnessTexture(190,24);
+materials.floor.roughness=.72;
+materials.tile.map=surfaceMaps.tile;
+materials.tile.roughnessMap=makeRoughnessTexture(165,18);
+materials.tile.roughness=.58;
+materials.wall.map=surfaceMaps.wall;
+materials.wall.roughness=.9;
+materials.wood.map=surfaceMaps.wood;
+materials.wood.roughnessMap=makeRoughnessTexture(205,20);
+materials.wood.roughness=.7;
+materials.wood2.map=surfaceMaps.wood;
+materials.wood2.roughness=.64;
+materials.trim.map=surfaceMaps.wood;
+materials.trim.roughness=.68;
+materials.steel.map=surfaceMaps.steel;
+materials.steel.roughnessMap=makeRoughnessTexture(112,26);
+materials.steel.roughness=.38;
+materials.steel.metalness=.72;
+materials.steel.envMapIntensity=1.0;
 
 const sharedMats=new Set(Object.values(materials));
 function disposeObj(root){if(!root)return;root.traverse(o=>{if(o.geometry&&!o.isSprite&&!(o.geometry.userData&&o.geometry.userData.shared))o.geometry.dispose();const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(sharedMats.has(m))continue;if(m.map)m.map.dispose();m.dispose();}});}
