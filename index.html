@@ -1893,8 +1893,8 @@ soundToggle.addEventListener('click',()=>{mbtn.click();soundToggle.textContent=m
 document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
-// ===== Update 1.9: bahasa, cadangan save, autosave, layar pemeliharaan =====
-const GAME_VERSION='1.9.0';
+// ===== IRLISE RISTORANTE 2.0: visual upgrade =====
+const GAME_VERSION='2.0.0';
 (function(){
  const L=window.IR_LANG,T=window.TRX,$=id=>document.getElementById(id);
  $('verText').textContent=(L==='en'?'Game version ':'Versi game ')+GAME_VERSION;
