@@ -411,7 +411,6 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9bc6d6);
 scene.fog = new THREE.Fog(0x9bc6d6, 48, 115);
 
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 // Graphics quality is stored separately from gameplay saves. Auto default is device-aware.
 const QUALITY_KEY='irlise_graphics_quality';
 const QUALITY_PRESETS={
