@@ -90,6 +90,14 @@
   #levelUp b { display:block; font-size:26px; margin:2px 0 6px; }
   #levelUp span { font-size:13px; color:#dbe8ef; line-height:1.45; }
   #levelInfo { color:#f3e3b0 !important; }
+  #levelUp { max-height:min(72vh,620px); overflow:auto; }
+  .unlockGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:11px; text-align:left; }
+  .unlockItem { display:flex; align-items:center; gap:9px; min-width:0; padding:8px; border:1px solid rgba(243,199,91,.28); border-radius:10px; background:rgba(255,255,255,.06); }
+  .unlockIcon { display:grid; place-items:center; flex:0 0 36px; width:36px; height:36px; border-radius:9px; background:rgba(243,199,91,.14); font-size:22px; }
+  .unlockItem b { display:block; font-size:11px; line-height:1.25; }
+  .unlockItem small { display:block; margin-top:3px; color:#a9c6d8; font-size:9px; }
+  .marketEmpty { grid-column:1/-1; padding:18px 12px; border:1px dashed rgba(255,255,255,.2); border-radius:10px; color:#b8cbd4; text-align:center; font-size:12px; }
+  @media(max-width:420px){ .unlockGrid { grid-template-columns:1fr; } }
   .dangerBtn { margin-top:8px; width:100%; border:1px solid rgba(255,255,255,.2); border-radius:9px; padding:8px; background:transparent; color:#e7a79b; font:inherit; font-weight:700; cursor:pointer; }
   #marketInventory { white-space:pre-line; }
    #restaurantToggleBtn { position:fixed; right:16px; bottom:68px; z-index:8; pointer-events:auto; border:1px solid rgba(255,255,255,.25); border-radius:12px; padding:10px 14px; background:#267b59; color:#fff; font:800 13px Inter,system-ui,sans-serif; cursor:pointer; }
@@ -1559,9 +1567,12 @@ function onLevelUp(n){
  const bonus=500*Math.pow(2,n-2);
  coins+=bonus;
  const el=document.getElementById('levelUp');
- el.innerHTML='<small>NAIK LEVEL</small><b>Level '+n+'</b><span>Bonus level +'+rupiah(bonus)+' koin<br>'+(LEVEL_TEXT[n]||'')+'</span>';
+ const unlocked=levelUnlocks(n);
+ const cards=unlocked.map(item=>'<div class="unlockItem"><span class="unlockIcon">'+item.icon+'</span><div><b>'+item.name+'</b><small>'+item.category+'</small></div></div>').join('');
+ const en=window.IR_LANG==='en';
+ el.innerHTML='<small>'+(en?'LEVEL UP':'SELAMAT! LEVEL UP')+'</small><b>Level '+n+'</b><span>'+(en?'Level bonus: ':'Bonus level: ')+'+'+rupiah(bonus)+' '+(en?'coins':'koin')+'<br>'+(LEVEL_TEXT[n]||'')+'</span><div class="unlockGrid">'+(cards||'<div class="marketEmpty">'+(en?'No new items unlocked at this level.':'Belum ada item baru yang terbuka di level ini.')+'</div>')+'</div>';
  updateCoins();
- el.classList.add('show');clearTimeout(levelUpTimer);levelUpTimer=setTimeout(()=>el.classList.remove('show'),7000);
+ el.classList.add('show');clearTimeout(levelUpTimer);levelUpTimer=setTimeout(()=>el.classList.remove('show'),10000);
  updateMenuBoard();refreshBusinessLocks();if(marketPanel.classList.contains('open'))renderMarket();
  try{sfxDing();}catch(e){}
 }
@@ -1725,17 +1736,41 @@ const marketCatalog={
 let marketCategory='equipment';
 const marketPanel=document.getElementById('marketPanel');
 const marketItems=document.getElementById('marketItems');
+function marketItemLevel(item,category){
+ if(item.role)return hireLevel(item);
+ if(item.action==='existingTable')return KONFIG.levelMeja[saveData.items.table|0]||1;
+ if(item.action==='existingStove')return KONFIG.levelKompor;
+ if(category==='ingredients')return ingLevel[item.id]||1;
+ return 1;
+}
+function levelUnlocks(targetLevel){
+ const found=[];
+ for(const category of ['equipment','ingredients','employees']){
+  const seen=new Set();
+  for(const item of marketCatalog[category]){
+   if(marketItemLevel(item,category)!==targetLevel)continue;
+   if(category==='employees'){
+    const key=item.role+'_'+(item.shift||1);
+    if(seen.has(key))continue;
+    seen.add(key);
+    found.push({icon:item.icon,name:roleName(item.role)+' • Shift '+(item.shift||1),category:'Karyawan baru'});
+   }else found.push({icon:item.icon,name:item.name,category:category==='ingredients'?'Bahan restoran':'Perlengkapan restoran'});
+  }
+ }
+ for(const [lv,ids] of Object.entries(KONFIG.levelMenu))if(+lv===targetLevel){
+  ids.forEach(id=>{const m=menuCatalog[id];if(m)found.push({icon:m.icon||'🍽️',name:m.name,category:'Menu baru'});});
+ }
+ return found;
+}
 function renderMarket(){
  marketItems.innerHTML='';
  const cap=stockCap();
+ let visibleItems=0;
  marketCatalog[marketCategory].forEach(item=>{
+  const need=marketItemLevel(item,marketCategory);
+  if(level<need)return;
+  visibleItems++;
   const card=document.createElement('div');card.className='marketItem';
-  let need=1;
-  if(item.role)need=hireLevel(item);
-  else if(item.action==='existingTable')need=KONFIG.levelMeja[saveData.items.table|0]||1;
-  else if(item.action==='existingStove')need=KONFIG.levelKompor;
-  else if(marketCategory==='ingredients')need=ingLevel[item.id]||1;
-  const locked=level<need;
   const stock=saveData.inventory[item.id]||0;
   const full=marketCategory==='ingredients'&&stock+(item.quantity||1)>cap;
   const name=document.createElement('div');name.className='itemName';name.textContent=item.icon+' '+item.name;
@@ -1770,6 +1805,11 @@ function renderMarket(){
   }
   marketItems.append(card);
  });
+ if(!visibleItems){
+  const empty=document.createElement('div');empty.className='marketEmpty';
+  empty.textContent=window.IR_LANG==='en'?'No items available in this category yet.':'Belum ada item yang tersedia di kategori ini.';
+  marketItems.append(empty);
+ }
  renderInventory();refreshMaintenanceStatus();updateCoins();
 }
 function upgradeStaff(item){
