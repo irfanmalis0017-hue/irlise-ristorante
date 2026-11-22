@@ -338,10 +338,10 @@
  'Ruangan kiri dan Kantor Owner. Upgrade skill ke 3. Saatnya mengelola, bukan lagi kerja sendiri.':"Left building and the Owner's Office. Skill upgrade to 3. Time to manage, not work alone.",
  'Restoran makin ramai dan makin menguntungkan.':'The restaurant gets busier and more profitable.',
  'Level maksimum tercapai. Restoran impianmu!':'Maximum level reached. Your dream restaurant!','Level maksimum tercapai.':'Maximum level reached.',
- 'NAIK LEVEL':'LEVEL UP','Bonus level +':'Level bonus +','Gaji harian karyawan: ':'Daily staff wages: ','MAKS • ':'MAX • ',
+ 'NAIK LEVEL':'LEVEL UP','Bonus level +':'Level bonus +','Gaji bulanan karyawan: ':'Monthly staff wages: ','MAKS • ':'MAX • ',
  'Skill maks':'Skill max','Pecat':'Fire','Yakin?':'Sure?','Sudah direkrut':'Hired','Rekrut':'Hire','Dimiliki':'Owned','Kulkas penuh':'Fridge full',
  'Stok dimiliki: ':'Stock owned: ','Stok: ':'Stock: ','Karyawan: ':'Staff: ','Belum ada karyawan direkrut.':'No staff hired yet.','Inventaris barang masih kosong.':'Your inventory is empty.',
- 'Kapasitas kulkas per bahan: ':'Fridge capacity per ingredient: ',' • Gaji harian total: ':' • Total daily wages: ',' Gaji harian: ':' Daily wage: ',
+ 'Kapasitas kulkas per bahan: ':'Fridge capacity per ingredient: ',' • Total gaji bulanan: ':' • Total monthly wages: ',' Gaji bulanan: ':' Monthly wage: ',
  'Area makan penuh ✓':'Dining area full ✓','Semua kursi terpasang ✓':'All chairs placed ✓','Dapur penuh ✓':'Kitchen full ✓','Sudah terbuka ✓':'Unlocked ✓',
  'Meja makan':'Dining table','Kursi pelanggan':'Customer chair','Kulkas bahan':'Ingredient fridge','Meja persiapan':'Prep table','Set piring (6)':'Plate set (6)',
  'Meja tambahan untuk area makan.':'An extra table for the dining area.','Kursi dekorasi di ruang makan.':'A decorative chair for the dining area.',
@@ -1781,10 +1781,10 @@ function renderInventory(){
  refreshFridgeStock();
  const entries=Object.entries(saveData.inventory||{}).filter(([,qty])=>qty>0);
  const labels={table:'Meja',chair:'Kursi',stove:'Kompor',fridge:'Kulkas',prepTable:'Meja persiapan',plates:'Set piring',rice:'Beras',chicken:'Ayam',beef:'Daging sapi',vegetables:'Sayuran',flour:'Tepung',oil:'Minyak goreng',spices:'Bumbu',egg:'Telur',noodles:'Mi',tea:'Teh',ice:'Es batu',orange:'Jeruk',coffee:'Kopi',milk:'Susu',banana:'Pisang'};
- const stockText=entries.length?'Stok dimiliki: '+entries.map(([id,qty])=>(labels[id]||id)+' × '+qty).join(' • '):'Inventaris barang masih kosong.';const staffText=(saveData.staff||[]).length?'Karyawan: '+saveData.staff.map(x=>(x.role==='chef'?'Koki':x.role==='cashier'?'Kasir':'Pelayan')+' Shift '+x.shift+' (skill '+(x.skill||1)+')').join(' • '):'Belum ada karyawan direkrut.';document.getElementById('marketInventory').textContent=stockText+'\n'+staffText+'\nKapasitas kulkas per bahan: '+stockCap()+' • Gaji harian total: '+rupiah(totalWages())+' koin';
+ const stockText=entries.length?'Stok dimiliki: '+entries.map(([id,qty])=>(labels[id]||id)+' × '+qty).join(' • '):'Inventaris barang masih kosong.';const staffText=(saveData.staff||[]).length?'Karyawan: '+saveData.staff.map(x=>(x.role==='chef'?'Koki':x.role==='cashier'?'Kasir':'Pelayan')+' Shift '+x.shift+' (skill '+(x.skill||1)+')').join(' • '):'Belum ada karyawan direkrut.';document.getElementById('marketInventory').textContent=stockText+'\n'+staffText+'\nKapasitas kulkas per bahan: '+stockCap()+' • Total gaji bulanan: '+rupiah(totalWages())+' koin';
 }
 function purchaseMarketItem(item){
- // Rekrut karyawan: terkunci per level, dikenai gaji harian.
+ // Rekrut karyawan: terkunci per level, dikenai gaji bulanan.
  if(item.role){
   const need=hireLevel(item);
   if(level<need){showToast('🔒 '+roleName(item.role)+(item.shift===2?' Shift 2':'')+' terbuka di Level '+need+'.');return;}
@@ -1969,6 +1969,7 @@ const soundToggle=document.getElementById('soundToggle');
 function setPaused(value){gamePaused=!!value;pauseShade.classList.toggle('show',gamePaused);pauseToggle.textContent=gamePaused?'▶ Lanjutkan permainan':'⏸ Jeda permainan';}
 document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOverlay.classList.add('open');soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
 document.getElementById('restaurantToggleBtn').addEventListener('click',()=>{restaurantOpen=!restaurantOpen;refreshRestaurantButton();showToast(restaurantOpen?'Restoran dibuka! Pelanggan mulai berdatangan.':'Restoran ditutup. Pelanggan baru tidak akan datang.');persist();});
+refreshRestaurantButton();
 document.getElementById('closeSettings').addEventListener('click',()=>settingsOverlay.classList.remove('open'));
 const exitScreen=document.getElementById('exitScreen');
 document.getElementById('exitGame').addEventListener('click',()=>{
