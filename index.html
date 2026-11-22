@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.3</title>
+<title>IRLISE RISTORANTE — Update 2.3.1</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -206,6 +206,12 @@
   .playerGateActions button { border:0; border-radius:10px; padding:12px; font:700 14px Inter,system-ui,sans-serif; cursor:pointer; }
   #playerAccept { background:#5ed2ae; color:#10252b; }
   #playerGateStatus { min-height:17px; color:#f1bd82; font-size:12px; }
+  .playerIdentityCard { margin-top:18px; padding:18px; border:1px solid rgba(94,210,174,.35); border-radius:14px; background:rgba(5,15,22,.55); }
+  .playerIdentityCard small { display:block; color:#8faab8; font-size:10px; letter-spacing:1.5px; font-weight:800; }
+  .playerIdentityName { margin:7px 0 18px; color:#fff; font-size:22px; font-weight:800; overflow-wrap:anywhere; }
+  .playerIdentityId { margin-top:7px; color:#5ed2ae; font:800 22px ui-monospace,monospace; letter-spacing:1px; overflow-wrap:anywhere; }
+  .playerIdentityCard p { margin-bottom:0; font-size:12px; }
+  #playerEnter { background:#5ed2ae; color:#10252b; }
   #guidedTutorial { position:fixed; inset:0; z-index:75; display:none; pointer-events:none; color:#fff; }
   #guidedTutorial.open { display:block; }
   #guidedTutorial:before { content:""; position:absolute; inset:0; background:rgba(3,10,16,.28); }
@@ -224,7 +230,7 @@
 </style>
 </head>
 <body>
-<div id="playerGate" data-notr><div class="playerGateCard"><h2>Selamat datang di IRLISE!</h2><p>Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Lanjutkan</button></div><div id="playerGateStatus" role="status"></div></div></div>
+<div id="playerGate" data-notr><div class="playerGateCard"><h2 id="playerGateTitle">Selamat datang di IRLISE!</h2><p id="playerGateIntro">Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><div id="playerNameForm"><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Buat identitas pemain</button></div></div><div id="playerIdentity" style="display:none"><div class="playerIdentityCard"><small>IDENTITAS PEMAIN</small><div class="playerIdentityName" id="playerIdentityName"></div><small>PLAYER ID</small><div class="playerIdentityId" id="playerIdentityId"></div><p>ID ini unik dan akan tetap digunakan pada sesi bermain berikutnya.</p></div><div class="playerGateActions"><button id="playerEnter" type="button">Masuk ke game</button></div></div><div id="playerGateStatus" role="status"></div></div></div>
 <div id="guidedTutorial" data-notr aria-live="polite"><div id="guideCard"><div id="guideStep">PANDUAN 1/3</div><h2 id="guideTitle">Kenali kontrol</h2><div id="guideText">Gunakan tombol W A S D untuk berjalan di dalam restoran.</div><div id="guideActions"><button id="guideSkip" type="button">Lewati</button><button id="guideNext" type="button">Lanjut</button></div></div><svg id="guideArrow" viewBox="0 0 48 64" aria-hidden="true"><path d="M24 2 L24 46 M8 30 L24 48 L40 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div id="langScreen" data-notr><div class="langCard"><h1>IRLISE RISTORANTE</h1><p>Pilih bahasa • Choose your language</p><button type="button" data-lang="id">Bahasa Indonesia</button><button type="button" data-lang="en">English</button></div></div>
 <div id="maintScreen" data-notr role="alertdialog" aria-live="assertive"><div class="maintCard"><div class="maintIcon">🛠️</div><h2 id="maintTitle"></h2><p id="maintMsg"></p><small id="maintSub"></small></div></div>
@@ -538,17 +544,31 @@
  window.addEventListener('pagehide',end);
  window.__playerTrackingReady=new Promise(resolve=>{
   const old=read(),gate=$('playerGate');
-  if(old&&old.name&&old.player_key){start(old).finally(resolve);return;}
+  function showIdentity(profile){
+   const id='IRL-'+profile.player_key.slice(0,8).toUpperCase();
+   $('playerIdentityName').textContent=profile.name;
+   $('playerIdentityId').textContent=id;
+   $('playerGateTitle').textContent='Identitas pemain berhasil dibuat!';
+   $('playerGateIntro').textContent='Simpan Player ID ini. Identitas yang sama akan digunakan setiap kali kamu bermain.';
+   $('playerNameForm').style.display='none';
+   $('playerIdentity').style.display='block';
+   $('playerGateStatus').textContent='';
+  }
   gate.classList.add('open');
-  $('playerName').value=old&&old.name?old.name:'';
-  $('playerAccept').addEventListener('click',async()=>{
-   const name=$('playerName').value.trim().replace(/\s+/g,' ');
-   if(name.length<2||name.length>24){$('playerGateStatus').textContent='Nama harus 2–24 karakter.';return;}
-   const profile={name,player_key:old&&old.player_key?old.player_key:crypto.randomUUID().replace(/-/g,'')};
-   write(profile);$('playerAccept').disabled=true;$('playerGateStatus').textContent='Mendaftarkan pemain…';
-   await start(profile);gate.classList.remove('open');resolve();
-  });
-  $('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')$('playerAccept').click();});
+  if(old&&old.name&&old.player_key){
+   showIdentity(old);
+   start(old);
+  }else{
+   $('playerAccept').addEventListener('click',async()=>{
+    const name=$('playerName').value.trim().replace(/\s+/g,' ');
+    if(name.length<2||name.length>24){$('playerGateStatus').textContent='Nama harus 2–24 karakter.';return;}
+    const profile={name,player_key:crypto.randomUUID().replace(/-/g,'')};
+    write(profile);$('playerAccept').disabled=true;$('playerGateStatus').textContent='Membuat identitas pemain…';
+    await start(profile);showIdentity(profile);
+   });
+   $('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')$('playerAccept').click();});
+  }
+  $('playerEnter').addEventListener('click',()=>{gate.classList.remove('open');resolve();});
  });
 })();
 </script>
