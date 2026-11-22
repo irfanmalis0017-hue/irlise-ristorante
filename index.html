@@ -172,6 +172,7 @@
 </div>
 <button id="settingsBtn" type="button">⚙ PENGATURAN</button>
 <div id="pauseShade">GAME DIJEDA</div>
+<div id="exitScreen" role="dialog" aria-modal="true" aria-label="Keluar dari game" style="display:none;position:fixed;inset:0;z-index:90;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 30%,#223646,#101a22);color:#fff;text-align:center;pointer-events:auto"><div style="width:min(380px,100%)"><div style="font-size:52px">👋</div><h2 id="exitTitle">Kamu sudah keluar dari game</h2><p id="exitMessage" style="color:#b9cbd5;line-height:1.5">Progres permainan sudah disimpan. Kamu bisa menutup tab ini atau kembali bermain kapan saja.</p><button class="settingAction" id="returnGame" type="button" style="text-align:center">Kembali ke game</button><button class="settingAction danger" id="closeGameTab" type="button" style="text-align:center">Tutup tab</button></div></div>
 <div id="settingsOverlay" role="dialog" aria-modal="true" aria-label="Pengaturan game">
  <div id="settingsCard">
   <h2>Pengaturan</h2><p>Atur permainan IRLISE RISTORANTE. Progres tersimpan otomatis.</p>
@@ -192,6 +193,7 @@
   <textarea id="saveCode" rows="3" spellcheck="false" autocomplete="off"></textarea>
   <button class="settingAction" id="importSave" type="button">📥 Impor kode save</button>
   <div id="saveMsg" aria-live="polite"></div>
+  <button class="settingAction danger" id="exitGame" type="button">🚪 Keluar dari game</button>
   <button class="settingAction" id="closeSettings" type="button">Tutup pengaturan</button>
   <div id="verText"></div>
  </div>
@@ -1453,6 +1455,7 @@ function startCooking(){
  beginCooking(false);
 }
 function pickupDish(){
+ if(holdingDish||currentTicket){showToast('Antarkan hidangan yang sedang dibawa terlebih dahulu. Pemain hanya bisa membawa satu hidangan.');return;}
  if(!readyTickets.length){showToast('Belum ada hidangan matang.');return;}
  if(!nearPoint(4.8,-4.55,3.7)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
  currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;const plate=scene.getObjectByName('ready plate '+currentTicket.id);if(plate){scene.remove(plate);disposeObj(plate);}
@@ -1961,6 +1964,20 @@ const soundToggle=document.getElementById('soundToggle');
 function setPaused(value){gamePaused=!!value;pauseShade.classList.toggle('show',gamePaused);pauseToggle.textContent=gamePaused?'▶ Lanjutkan permainan':'⏸ Jeda permainan';}
 document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOverlay.classList.add('open');soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
 document.getElementById('closeSettings').addEventListener('click',()=>settingsOverlay.classList.remove('open'));
+const exitScreen=document.getElementById('exitScreen');
+document.getElementById('exitGame').addEventListener('click',()=>{
+ const en=window.IR_LANG==='en';
+ if(!confirm(en?'Exit the game now? Your progress will be saved.':'Keluar dari game sekarang? Progres permainan akan disimpan.'))return;
+ persist();settingsOverlay.classList.remove('open');setPaused(true);
+ if(music.ctx&&music.ctx.state==='running')music.ctx.suspend();
+ document.getElementById('exitTitle').textContent=en?'You have left the game':'Kamu sudah keluar dari game';
+ document.getElementById('exitMessage').textContent=en?'Your progress has been saved. You can close this tab or return to the game.':'Progres permainan sudah disimpan. Kamu bisa menutup tab ini atau kembali bermain kapan saja.';
+ document.getElementById('returnGame').textContent=en?'Return to game':'Kembali ke game';
+ document.getElementById('closeGameTab').textContent=en?'Close tab':'Tutup tab';
+ exitScreen.style.display='flex';
+});
+document.getElementById('returnGame').addEventListener('click',()=>{exitScreen.style.display='none';setPaused(false);if(music.on)ensureMusic();});
+document.getElementById('closeGameTab').addEventListener('click',()=>{persist();window.close();document.getElementById('exitMessage').textContent=window.IR_LANG==='en'?'The browser may block automatic tab closing. You can close this tab manually.':'Browser mungkin memblokir penutupan tab otomatis. Silakan tutup tab ini secara manual.';});
 pauseToggle.addEventListener('click',()=>setPaused(!gamePaused));
 soundToggle.addEventListener('click',()=>{mbtn.click();soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
 document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
