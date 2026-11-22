@@ -1058,14 +1058,14 @@ player.userData.speed=4.2;
 // Seated customers: each NPC is aligned to an actual chair and faces its table.
 // ===== Pelanggan banyak, pesanan banyak & antrean dapur (v1.4) =====
 const menuCatalog={
- ayam:{emoji:'🍗',name:'Ayam Geprek',price:650,cook:10,recipe:{rice:1,chicken:1,flour:1,oil:1,spices:1,vegetables:1}},
+ ayam:{emoji:'🍗',name:'Ayam Geprek',price:650,cook:5,recipe:{rice:1,chicken:1,flour:1,oil:1,spices:1,vegetables:1}},
  nasgor:{emoji:'🍳',name:'Nasi Goreng',price:750,cook:9,recipe:{rice:1,egg:1,oil:1,spices:1,vegetables:1}},
  mie:{emoji:'🍜',name:'Mie Goreng',price:700,cook:8,recipe:{noodles:1,egg:1,oil:1,spices:1,vegetables:1}},
  sate:{emoji:'🍢',name:'Sate Ayam',price:850,cook:11,recipe:{chicken:1,rice:1,spices:1,oil:1}},
  bakso:{emoji:'🍲',name:'Bakso',price:800,cook:10,recipe:{beef:1,noodles:1,vegetables:1,spices:1}},
  soto:{emoji:'🥣',name:'Soto Ayam',price:780,cook:10,recipe:{chicken:1,rice:1,egg:1,vegetables:1,spices:1}},
  pisang:{emoji:'🍌',name:'Pisang Goreng',price:450,cook:6,recipe:{banana:1,flour:1,oil:1}},
- tea:{emoji:'🧋',name:'Es Teh',price:250,cook:3,recipe:{tea:1,ice:1}},
+ tea:{emoji:'🧋',name:'Es Teh',price:250,cook:2,recipe:{tea:1,ice:1}},
  jeruk:{emoji:'🍊',name:'Es Jeruk',price:300,cook:3,recipe:{orange:1,ice:1}},
  kopi:{emoji:'☕',name:'Kopi Susu',price:350,cook:4,recipe:{coffee:1,milk:1,ice:1}}
 };
@@ -1443,7 +1443,7 @@ function beginCooking(automatic=false){
  if(idx<0){const m=menuCatalog[kitchenQueue[0].menuId];const missing=Object.entries(m.recipe).filter(([id,qty])=>(saveData.inventory[id]||0)<qty);setCookStatus('Stok bahan kurang — buka SHOP untuk belanja.');showToast('BAHAN KURANG untuk '+m.name+': '+missing.map(([id,qty])=>(ingredientNames[id]||id)+' kurang '+(qty-(saveData.inventory[id]||0))+' (butuh '+qty+')').join(', ')+'. Buka SHOP → Bahan-bahan untuk membeli.');return false;}
  const ticket=kitchenQueue.splice(idx,1)[0];ticket.id=++ticketSeq;const selected=menuCatalog[ticket.menuId];
  Object.entries(selected.recipe).forEach(([id,qty])=>saveData.inventory[id]-=qty);persist();renderInventory();renderMarket();refreshFridgeStock();
- const cookTime=(ticket.menuId==='tea'?5:ticket.menuId==='ayam'?10:selected.cook)*(automatic?chefSpeedFactor():1);
+ const cookTime=(ticket.menuId==='tea'?2:ticket.menuId==='ayam'?5:selected.cook)*(automatic?chefSpeedFactor():1);
  activeCooks.push({ticket,elapsed:0,duration:cookTime});cooking=true;setCookStatus('Memasak '+selected.name+' — '+cookTime+' detik');if(!automatic)showToast('Memasak '+selected.name+' dimulai!');return true;
 }
 function startCooking(){
@@ -2137,7 +2137,7 @@ function frame(){
 
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
  while(kitchenQueue.length&&activeCooks.length<2&&hasStaffOnDuty('chef')){if(!beginCooking(true))break;}
- // Complete the ayam-geprek cooking cycle after exactly 10 seconds.
+ // Complete each cooking cycle when its configured duration has elapsed.
  for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(4.25+(readyTickets.length%2)*1.0,1.42,-4.55);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
   cooking=activeCooks.length>0;dishReady=readyTickets.length>0;
   if(cooking){const status=activeCooks.map(j=>menuCatalog[j.ticket.menuId].name+' '+Math.max(0,j.duration-j.elapsed).toFixed(1)+'s').join(' • ');setCookStatus('Sedang dimasak: '+status);}else if(dishReady)setCookStatus('Hidangan siap antar: '+readyTickets.map(t=>menuCatalog[t.menuId].name).join(', '));
