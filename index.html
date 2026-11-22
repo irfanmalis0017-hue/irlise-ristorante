@@ -1212,7 +1212,7 @@ function openCashierOrder(){
 function acceptCashierOrder(fromCashier=false){
  const c=customers.find(x=>x.stage==='ordering');if(!c)return;
  cashierOrderPanel.style.display='none';
- const q=c.seat;c.stand=seatStand(q);
+ const q=c.seat;c.wait=0;c.stand=seatStand(q);
  c.path=[...findPath(cashierSpot,c.stand),V3(q.x,q.z)];c.stage='toSeat';
  showToast((fromCashier===true?'Kasir mengonfirmasi: ':'Pesanan diterima: ')+c.total+' menu, '+rupiah(orderTotal(c))+' koin. Pelanggan menuju meja.');
 }
@@ -1279,7 +1279,7 @@ function updateCustomers(dt){
  const ph=performance.now()/1000*7.5;
  for(const c of [...customers]){
   const g=c.g;
-  if(c.stage==='line'||c.stage==='ordering'){if(c.stage==='ordering'){c.wait+=dt;if(c.wait>PATIENCE_ORDER){leaveNow(c,true);refreshBadge(c);continue;}}
+  if(c.stage==='line'||c.stage==='ordering'){if(c.stage==='ordering'){c.wait+=dt;c.waitTotal+=dt;if(c.wait>PATIENCE_ORDER){leaveNow(c,true);refreshBadge(c);continue;}}
    if(c.path.length)stepAlong(g,c.path,1.8,dt,ph);
    else{
     const sp=slotPos(c.slot),dx=sp.x-g.position.x,dz=sp.z-g.position.z,dist=Math.hypot(dx,dz);
