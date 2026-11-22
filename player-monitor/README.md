@@ -4,7 +4,7 @@ Standalone admin web app (PWA) for monitoring IRLISE RISTORANTE play sessions. I
 
 ## Current MVP
 - Admin password login using the Cloudflare Pages secret `ADMIN_SECRET`.
-- D1 database for player names, consent timestamps, and play sessions.
+- D1 database for player display names, tracking-notice timestamps, and play sessions.
 - Player API endpoints: start, heartbeat, end.
 - Admin overview: online players, sessions today, total players, recent sessions and session duration.
 - PWA manifest and service worker. API requests are never cached.
@@ -46,11 +46,11 @@ If you later enable Preview deployments, configure the D1 binding for the Previe
 
 Optional: set a Pages environment variable `GAME_ORIGIN` only if the game is later served from a different origin than `https://irlise-ristorante.pages.dev`. The current default allows the existing production game origin.
 
-## Player data and consent
+## Player data and tracking notice
 
-Tracking is opt-in. Before the game sends any tracking request, it must clearly explain that the player's chosen display name, consent time, and play-session times will be recorded for the admin dashboard, and obtain affirmative consent.
+Player registration is automatic after the player enters a display name. The game shows a clear notice before registration that the chosen display name and play-session times are recorded for the admin dashboard. Do not collect precise location, device fingerprints, date of birth, or unrelated personal data.
 
-- `POST /api/player/start` JSON: `{"name":"Nama pemain","player_key":"random-stable-id","consent":true}`
+- `POST /api/player/start` JSON: `{"name":"Nama pemain","player_key":"random-stable-id"}`
   - Returns `{"ok":true,"session_id":"..." }`.
 - `POST /api/player/heartbeat` JSON: `{"session_id":"..." }` every 30 seconds while playing.
 - `POST /api/player/end` JSON: `{"session_id":"..." }` when the player exits or chooses to stop tracking.
