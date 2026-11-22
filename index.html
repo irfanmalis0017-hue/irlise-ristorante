@@ -304,10 +304,15 @@
     body.touch #settingsOverlay { padding:6px max(10px,env(safe-area-inset-right)); }
     body.touch #settingsCard { max-height:calc(100dvh - 12px); padding:14px; }
   }
+
+/* Character selection UI */
+#playerCharacterForm h3{margin:18px 0 6px;color:#f5f0df;font-size:20px}#playerCharacterForm>p{color:#b7cbd7;font-size:13px;line-height:1.5}
+.characterChoices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.characterChoice{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;padding:15px 8px;border:1px solid rgba(125,170,190,.3);border-radius:15px;background:rgba(5,15,22,.55);color:#f5f4e9;cursor:pointer;transition:transform .18s,border-color .18s,background .18s}.characterChoice:hover{transform:translateY(-3px);border-color:#5ed2ae}.characterChoice.selected{border:2px solid #5ed2ae;background:rgba(55,150,125,.2);box-shadow:0 0 0 3px rgba(94,210,174,.12)}.characterEmoji{font-size:45px;line-height:1.2}.characterChoice strong{font-size:14px}.characterChoice small{font-size:10px;color:#b7cbd7;text-align:center}.characterChoice:focus-visible{outline:2px solid #5ed2ae;outline-offset:3px}#playerCharacterConfirm:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:420px){.playerGateCard{padding:18px}.characterChoices{gap:8px}.characterChoice{padding:12px 5px}}
 </style>
 </head>
 <body>
-<div id="playerGate" data-notr><div class="playerGateCard"><h2 id="playerGateTitle">Selamat datang di IRLISE!</h2><p id="playerGateIntro">Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><div id="playerNameForm"><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Buat identitas pemain</button></div></div><div id="playerIdentity" style="display:none"><div class="playerIdentityCard"><small>IDENTITAS PEMAIN</small><div class="playerIdentityName" id="playerIdentityName"></div><small>PLAYER ID</small><div class="playerIdentityId" id="playerIdentityId"></div><p>ID ini unik dan akan tetap digunakan pada sesi bermain berikutnya.</p></div><div class="playerGateActions"><button id="playerEnter" type="button">Masuk ke game</button></div></div><div id="playerGateStatus" role="status"></div></div></div>
+<div id="playerGate" data-notr><div class="playerGateCard"><h2 id="playerGateTitle">Selamat datang di IRLISE!</h2><p id="playerGateIntro">Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><div id="playerNameForm"><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Buat identitas pemain</button></div></div><div id="playerCharacterForm" style="display:none"><h3>Pilih karakter kamu</h3><p>Pilih avatar yang akan menemanimu mengelola restoran.</p><div class="characterChoices"><button type="button" class="characterChoice" data-character="male"><span class="characterEmoji">👨🏻‍🍳</span><strong>Laki-laki</strong><small>Rambut gelap · Seragam teal</small></button><button type="button" class="characterChoice" data-character="female"><span class="characterEmoji">👩🏻‍🍳</span><strong>Perempuan</strong><small>Kuncir tinggi · Seragam teal</small></button></div><div class="playerGateActions"><button id="playerCharacterConfirm" type="button" disabled>Konfirmasi karakter</button></div></div><div id="playerIdentity" style="display:none"><div class="playerIdentityCard"><small>IDENTITAS PEMAIN</small><div class="playerIdentityName" id="playerIdentityName"></div><small>PLAYER ID</small><div class="playerIdentityId" id="playerIdentityId"></div><p>ID ini unik dan akan tetap digunakan pada sesi bermain berikutnya.</p></div><div class="playerGateActions"><button id="playerEnter" type="button">Masuk ke game</button></div></div><div id="playerGateStatus" role="status"></div></div></div>
 
 <div id="langScreen" data-notr><div class="langCard"><h1>IRLISE RISTORANTE</h1><p>Pilih bahasa • Choose your language</p><button type="button" data-lang="id">Bahasa Indonesia</button><button type="button" data-lang="en">English</button></div></div>
 <div id="maintScreen" data-notr role="alertdialog" aria-live="assertive"><div class="maintCard"><div class="maintIcon">🛠️</div><h2 id="maintTitle"></h2><p id="maintMsg"></p><small id="maintSub"></small></div></div>
@@ -620,35 +625,16 @@
  }
  window.addEventListener('pagehide',end);
  window.__playerTrackingReady=new Promise(resolve=>{
-  const old=read(),gate=$('playerGate');
-  function showIdentity(profile){
-   const id='IRL-'+profile.player_key.slice(0,8).toUpperCase();
-   $('playerIdentityName').textContent=profile.name;
-   $('playerIdentityId').textContent=id;
-   $('playerHudName').textContent=profile.name;
-   $('playerHudId').textContent=id;
-   $('playerGateTitle').textContent='Identitas pemain berhasil dibuat!';
-   $('playerGateIntro').textContent='Simpan Player ID ini. Identitas yang sama akan digunakan setiap kali kamu bermain.';
-   $('playerNameForm').style.display='none';
-   $('playerIdentity').style.display='block';
-   $('playerGateStatus').textContent='';
-  }
+  const old=read(),gate=$('playerGate');let profile=old&&old.name&&old.player_key?old:null,selected=profile&&profile.character||null;
+  function showIdentity(p){const id='IRL-'+p.player_key.slice(0,8).toUpperCase();$('playerIdentityName').textContent=p.name;$('playerIdentityId').textContent=id;$('playerHudName').textContent=p.name;$('playerHudId').textContent=id;$('playerGateTitle').textContent='Identitas pemain berhasil dibuat!';$('playerGateIntro').textContent='Nama dan Player ID kamu tersimpan. Identitas yang sama digunakan setiap kali bermain.';$('playerNameForm').style.display='none';$('playerCharacterForm').style.display='none';$('playerIdentity').style.display='block';$('playerGateStatus').textContent='';}
+  function chooseStep(){$('playerNameForm').style.display='none';$('playerIdentity').style.display='none';$('playerCharacterForm').style.display='block';$('playerGateTitle').textContent='Pilih karakter';$('playerGateIntro').textContent='Pilih avatar yang akan kamu gunakan di IRLISE RISTORANTE.';document.querySelectorAll('.characterChoice').forEach(b=>b.classList.toggle('selected',b.dataset.character===selected));$('playerCharacterConfirm').disabled=!selected;}
   gate.classList.add('open');
-  if(old&&old.name&&old.player_key){
-   showIdentity(old);
-   start(old);
-  }else{
-   $('playerAccept').addEventListener('click',async()=>{
-    const name=$('playerName').value.trim().replace(/\s+/g,' ');
-    if(name.length<2||name.length>24){$('playerGateStatus').textContent='Nama harus 2–24 karakter.';return;}
-    const profile={name,player_key:crypto.randomUUID().replace(/-/g,'')};
-    write(profile);$('playerAccept').disabled=true;$('playerGateStatus').textContent='Membuat identitas pemain…';
-    await start(profile);showIdentity(profile);
-   });
-   $('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')$('playerAccept').click();});
-  }
-  $('playerEnter').addEventListener('click',()=>{gate.classList.remove('open');resolve();});
- });
+  if(profile){start(profile);if(profile.character){showIdentity(profile);}else{chooseStep();}}
+  else{$('playerAccept').addEventListener('click',async()=>{const name=$('playerName').value.trim().replace(/\s+/g,' ');if(name.length<2||name.length>24){$('playerGateStatus').textContent='Nama harus 2–24 karakter.';return;}profile={name,player_key:crypto.randomUUID().replace(/-/g,''),character:null};write(profile);$('playerAccept').disabled=true;$('playerGateStatus').textContent='Membuat identitas pemain…';await start(profile);chooseStep();});$('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')$('playerAccept').click();});}
+  document.querySelectorAll('.characterChoice').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.character;document.querySelectorAll('.characterChoice').forEach(b=>b.classList.toggle('selected',b===btn));$('playerCharacterConfirm').disabled=false;}));
+  $('playerCharacterConfirm').addEventListener('click',()=>{if(!selected)return;profile=Object.assign({},profile,{character:selected});write(profile);window.__irliseCharacter=selected;showIdentity(profile);});
+  $('playerEnter').addEventListener('click',()=>{window.__irliseCharacter=profile&&profile.character||'male';gate.classList.remove('open');resolve();});
+ });;
 })();
 </script>
 <script type="module" onerror="window.__loadFail()">
@@ -1193,7 +1179,8 @@ const _sphGeo=new THREE.SphereGeometry(1,32,22);_sphGeo.userData.shared=true;
 function _ell(p,n,x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(_sphGeo,m);o.name=n;o.position.set(x,y,z);o.scale.set(sx,sy,sz);p.add(o);return o;}
 function makePerson(o={}){
  const skin=mat(o.skin??0xe7b58f,.7),hair=mat(o.hair??0x292522,.55),shirt=mat(o.shirt??0x4b83b7,.75),pants=mat(o.pants??0x34445b,.8),shoe=mat(o.shoe??0x20272d,.6);
- const eyeM=mat(0x1d1816,.4),white=mat(0xffffff,.4),blush=mat(0xd98979,.9),lip=mat(0x9a5148,.7);
+ const eyeM=mat(o.eye??0x1d1816,.4),white=mat(0xffffff,.4),blush=mat(0xd98979,.9),lip=mat(0x9a5148,.7);
+ const chibi=!!o.chibi; // gaya chibi: kepala besar, badan pendek, mata besar
  const g=new THREE.Group(),root=new THREE.Group();g.add(root);
  _ell(root,'hips',0,.93,0,.25,.15,.17,pants).castShadow=true;
  _ell(root,'belt',0,.985,0,.262,.03,.178,mat(0x20272d,.6));
@@ -1203,7 +1190,8 @@ function makePerson(o={}){
   _cap(th,'thigh',0,-.2,0,.105,.2,pants);
   const kn=new THREE.Group();kn.position.set(0,-.42,0);th.add(kn);
   _cap(kn,'shin',0,-.19,0,.085,.2,pants);
-  _ell(kn,'shoe',0,-.42,.06,.1,.065,.17,shoe);_ell(kn,'sole',0,-.465,.06,.105,.02,.175,white);
+  if(chibi){_ell(kn,'shoe',0,-.41,.07,.12,.085,.2,shoe);_ell(kn,'sole',0,-.465,.07,.125,.02,.205,mat(0x2c2522,.7));}
+  else{_ell(kn,'shoe',0,-.42,.06,.1,.065,.17,shoe);_ell(kn,'sole',0,-.465,.06,.105,.02,.175,white);}
   legs.push({th,kn});
  }
  const torso=_cap(root,'customer torso',0,1.2,0,.2,.26,shirt);torso.scale.set(1.2,1,.76);
@@ -1223,12 +1211,20 @@ function makePerson(o={}){
  _ell(head,'face',0,0,0,.2,.23,.19,skin).castShadow=true;
  for(const s of [-1,1]){
   _ell(head,'ear',s*.195,-.02,0,.04,.06,.035,skin);
-  _ell(head,'eye white',s*.075,.03,.158,.042,.05,.02,white);
-  _ell(head,'pupil',s*.075,.03,.172,.026,.034,.014,eyeM);
-  _ell(head,'eye glint',s*.083,.042,.184,.008,.01,.006,white);
-  _ell(head,'brow',s*.075,.105,.165,.05,.011,.012,hair).rotation.z=s*-.1;
+  if(chibi){
+   _ell(head,'eye white',s*.082,.02,.154,.05,.058,.02,white);
+   _ell(head,'pupil',s*.082,.02,.17,.042,.05,.016,eyeM);
+   _ell(head,'eye glint',s*.093,.036,.186,.012,.014,.006,white);
+   _ell(head,'eye glint small',s*.072,.0,.186,.006,.007,.005,white);
+   _ell(head,'brow',s*.085,.105,.165,.062,.017,.014,hair).rotation.z=s*-.12;
+  }else{
+   _ell(head,'eye white',s*.075,.03,.158,.042,.05,.02,white);
+   _ell(head,'pupil',s*.075,.03,.172,.026,.034,.014,eyeM);
+   _ell(head,'eye glint',s*.083,.042,.184,.008,.01,.006,white);
+   _ell(head,'brow',s*.075,.105,.165,.05,.011,.012,hair).rotation.z=s*-.1;
+  }
   _ell(head,'cheek',s*.125,-.06,.15,.035,.02,.01,blush);
-  if(o.style&&o.style!=='short')_ell(head,'lash',s*.075,.066,.17,.05,.007,.012,eyeM).rotation.z=s*-.15;
+  if(o.style&&o.style!=='short'&&o.style!=='messy')_ell(head,'lash',s*.075,.066,.17,.05,.007,.012,eyeM).rotation.z=s*-.15;
  }
  _ell(head,'nose',0,-.03,.185,.028,.032,.03,skin);
  const sm=new THREE.Mesh(new THREE.TorusGeometry(.04,.008,8,16,Math.PI),lip);sm.position.set(0,-.085,.177);sm.rotation.z=Math.PI;head.add(sm);
@@ -1242,7 +1238,14 @@ function makePerson(o={}){
   for(const s of [-1,1])_ell(head,'side hair',s*.17,.04,-.015,.05,.15,.15,hair);
   if(st==='long')_ell(head,'long hair',0,-.17,-.1,.21,.34,.1,hair);
   if(st==='bun')_ell(head,'bun',0,.3,-.07,.09,.09,.09,hair);
+  if(st==='messy'){ // rambut cokelat tebal dan agak berantakan, poni menyamping
+   _ell(head,'hair tuft',.04,.3,.02,.1,.07,.1,hair).rotation.z=-.4;
+   _ell(head,'hair swoop',.07,.2,.1,.14,.06,.09,hair).rotation.z=-.5;
+   _ell(head,'hair left lock',-.14,.17,.06,.07,.08,.08,hair);
+   _ell(head,'hair right lock',.15,.15,.05,.06,.08,.08,hair);
+  }
  }
+ if(chibi){root.scale.set(1,.8,1);head.position.y=1.86;head.scale.set(1.35,1.41,1.25);}
  if(o.hat==='chef'){cylinder(head,'chef hat band',0,.3,0,.2,.2,.12,materials.white,20);_ell(head,'chef hat crown',0,.46,0,.22,.17,.2,materials.white);}
  if(o.cap!=null){const cm=mat(o.cap,.7);_ell(head,'cap dome',0,.15,-.04,.215,.17,.2,cm);_ell(head,'cap brim',0,.115,.2,.16,.016,.14,cm).rotation.x=.12;_ell(head,'cap logo',0,.19,.2,.035,.035,.01,mat(0xf3c75b,.5));}
  // Tailored clothing details: small reusable primitives add depth without changing rig or hitboxes.
@@ -1277,7 +1280,8 @@ function seatPose(p){const u=p.userData;u.root.position.y=-.28;for(const l of u.
 // The model uses rounded forms, layered hair, a readable face and articulated limbs.
 const player=new THREE.Group(); scene.add(player); player.position.set(0,0,4.0);
 // Pemilik restoran: model manusia baru (topi teal, kemeja polo, celemek krem, tanda nama).
-const avatar=makePerson({skin:0xe9b58e,hair:0x2b2320,shirt:0x2f8f8b,pants:0x34445b,shoe:0x252a31,style:'short',apron:0xf3e5c9,tag:true,cap:0x287f80,collar:0xfff1d8,scale:1.12});
+const playerIsFemale=(()=>{try{return JSON.parse(localStorage.getItem('irlise_player_monitor_v1')||'{}').character==='female'}catch(e){return false}})();
+const avatar=makePerson({skin:0xe9b58e,hair:playerIsFemale?0x3a241f:0x2b2320,shirt:0x2f8f8b,pants:0x34445b,shoe:0x252a31,style:playerIsFemale?'long':'messy',apron:0xf3e5c9,tag:true,cap:playerIsFemale?null:0x287f80,collar:0xfff1d8,chibi:true,scale:1.12});
 player.add(avatar);standPose(avatar);
 player.userData.speed=4.2;
 // Seated customers: each NPC is aligned to an actual chair and faces its table.
