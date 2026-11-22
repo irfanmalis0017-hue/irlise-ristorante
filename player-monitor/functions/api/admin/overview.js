@@ -11,10 +11,10 @@ export async function onRequestGet({ request, env }) {
     ).first();
     const players = await env.DB.prepare("SELECT COUNT(*) AS total FROM players").first();
     const active = await env.DB.prepare(
-      "SELECT s.id, p.display_name, s.started_at, s.last_seen_at FROM sessions s JOIN players p ON p.id=s.player_id WHERE s.ended_at IS NULL AND s.last_seen_at >= datetime('now','-90 seconds') ORDER BY s.last_seen_at DESC LIMIT 100"
+      "SELECT s.id, p.display_name, s.started_at, s.last_seen_at, CAST((julianday('now')-julianday(s.started_at))*86400 AS INTEGER) AS duration_seconds FROM sessions s JOIN players p ON p.id=s.player_id WHERE s.ended_at IS NULL AND s.last_seen_at >= datetime('now','-90 seconds') ORDER BY s.last_seen_at DESC LIMIT 100"
     ).all();
     const recent = await env.DB.prepare(
-      "SELECT p.display_name, s.started_at, s.ended_at, s.last_seen_at FROM sessions s JOIN players p ON p.id=s.player_id ORDER BY s.started_at DESC LIMIT 20"
+      "SELECT p.display_name, s.started_at, s.ended_at, s.last_seen_at, CAST((julianday(COALESCE(s.ended_at,s.last_seen_at))-julianday(s.started_at))*86400 AS INTEGER) AS duration_seconds FROM sessions s JOIN players p ON p.id=s.player_id ORDER BY s.started_at DESC LIMIT 20"
     ).all();
     return Response.json({
       online: online?.total || 0,
