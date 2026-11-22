@@ -1,10 +1,10 @@
-<!-- IRLISE RISTORANTE v2.3.6 | Repair JavaScript syntax after control panel update -->
+<!-- IRLISE RISTORANTE v2.3.7 | Fix remaining stray newline escape breaking game startup -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.3.6</title>
+<title>IRLISE RISTORANTE — Update 2.3.7</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -1779,7 +1779,7 @@ function payWages(){
  return ' Uang tidak cukup untuk gaji ('+rupiah(w)+' koin), hanya terbayar '+rupiah(paid)+'. Karyawan kecewa, reputasi turun.';
 }
 (function(){const b=document.getElementById('tutorialSkip');if(b)b.addEventListener('click',()=>{try{localStorage.setItem('irlise_tutorial_skipped_v1','1');}catch(e){}const el=document.getElementById('tutorial');if(el)el.classList.remove('show');});})();
-\n(function(){const panel=document.getElementById('help'),btn=document.getElementById('helpToggle'),icon=document.getElementById('helpToggleIcon');if(!panel||!btn)return;btn.addEventListener('click',()=>{const closed=panel.classList.toggle('collapsed');btn.setAttribute('aria-expanded',String(!closed));if(icon)icon.textContent=closed?'+':'−';});})();
+(function(){const panel=document.getElementById('help'),btn=document.getElementById('helpToggle'),icon=document.getElementById('helpToggleIcon');if(!panel||!btn)return;btn.addEventListener('click',()=>{const closed=panel.classList.toggle('collapsed');btn.setAttribute('aria-expanded',String(!closed));if(icon)icon.textContent=closed?'+':'−';});})();
 function updateTutorial(){
  const el=document.getElementById('tutorial');if(!el)return;
  let skipped=false;try{skipped=localStorage.getItem('irlise_tutorial_skipped_v1')==='1';}catch(e){}
