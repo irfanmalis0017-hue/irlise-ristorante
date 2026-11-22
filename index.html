@@ -1142,29 +1142,8 @@ function leaveNow(c,angry){
  c.seat.taken=false;c.stage='leaving';
  for(let i=kitchenQueue.length-1;i>=0;i--)if(kitchenQueue[i].cust===c)kitchenQueue.splice(i,1);
 
- // Update 1.7: bersihkan tiket aktif jika pelanggan pergi di tengah proses.
- // Ini mencegah dapur/pelayan terkunci pada pelanggan yang sudah tidak ada.
- for(let i=activeCooks.length-1;i>=0;i--)if(activeCooks[i].ticket.cust===c)activeCooks.splice(i,1);
- const removedReady=readyTickets.filter(t=>t.cust===c);for(const t of removedReady){const p=scene.getObjectByName('ready plate '+t.id);if(p){scene.remove(p);disposeObj(p);}}readyTickets.splice(0,readyTickets.length,...readyTickets.filter(t=>t.cust!==c));
- if(currentTicket && currentTicket.cust===c){
-  currentTicket=null;
-  
-  dishReady=readyTickets.length>0;
-  if(holdingDish){
-   avatar.remove(holdingDish);
-   disposeObj(holdingDish);
-   holdingDish=null;
-  }
-  if(waiterDish){
-   if(waiterDish.parent)waiterDish.parent.remove(waiterDish);
-   disposeObj(waiterDish);
-   waiterDish=null;
-  }
-  {const wk=getWorker('staff');if(wk&&wk.userData.home){waiterMode='return';waiterPath=findPath(V3(wk.position.x,wk.position.z),wk.userData.home);}else{waiterMode='idle';waiterPath=[];}}
-  
-  if(typeof setCookStatus==='function')
-   setCookStatus('Pesanan dibatalkan karena pelanggan sudah pergi. Dapur siap menerima pesanan berikutnya.',true);
- }
+ // Pesanan yang sudah masuk proses masak atau siap saji tetap dipertahankan.
+ // Hidangan tersebut dapat dialihkan ke pelanggan lain yang memesan menu sama.
  if(angry){rep=Math.max(0,rep-.25);showToast('😠 Pelanggan marah karena menunggu lebih dari 30 detik lalu pergi. Reputasi turun.');persist();}
 }
 // Kursi: 4 kursi per meja.
