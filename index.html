@@ -1765,7 +1765,7 @@ function renderMarket(){
    const fire=document.createElement('button');fire.type='button';fire.className='fireBtn';fire.textContent='Pecat';
    fire.addEventListener('click',()=>{if(fire.dataset.sure!=='1'){fire.dataset.sure='1';fire.textContent='Yakin?';setTimeout(()=>{fire.dataset.sure='';fire.textContent='Pecat';},3000);return;}fireStaff(item);});
    const lower=document.createElement('button');lower.type='button';lower.textContent='Gaji −';lower.disabled=(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))<=Math.round((KONFIG.gajiBulanan[st.role]||0)*.5/50)*50;lower.addEventListener('click',()=>adjustStaffSalary(item,-1));
-   const raise=document.createElement('button');raise.type='button';raise.textContent='Gaji +';raise.disabled=(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))>=(KONFIG.gajiBulanan[st.role]||0)*2;raise.addEventListener('click',()=>adjustStaffSalary(item,1));
+   const raise=document.createElement('button');raise.type='button';raise.textContent='Gaji +';raise.disabled=(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))>=(KONFIG.gajiBulanan[st.role]||0)*2||(st.performance??75)<70;raise.title=(st.performance??75)<70?'Kinerja minimal 70% untuk kenaikan gaji':'';raise.addEventListener('click',()=>adjustStaffSalary(item,1));
    row.append(lab,lower,raise,up,fire);card.append(row);
   }
   marketItems.append(card);
@@ -1782,6 +1782,7 @@ function upgradeStaff(item){
 function adjustStaffSalary(item,direction){
  const st=(saveData.staff||[]).find(x=>x.id===item.id);if(!st)return;
  const base=KONFIG.gajiBulanan[st.role]||0;if(!base)return;
+ const performance=st.performance??75;if(direction>0&&performance<70){showToast('Kinerja karyawan minimal 70% untuk mendapatkan kenaikan gaji.');return;}
  const current=Number.isFinite(st.salary)?st.salary:base;
  const next=Math.round((current+direction*Math.max(100,Math.round(base*.1)))/50)*50;
  const min=Math.round(base*.5/50)*50,max=base*2;
