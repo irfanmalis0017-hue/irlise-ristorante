@@ -81,4 +81,4 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 - Naik skill tidak lagi menimpa gaji yang sudah diatur pemain: rasio penyesuaian gaji dipertahankan dan tetap dibatasi 50%–200% dari gaji dasar. Karyawan yang gajinya belum pernah diubah mendapat gaji yang sama seperti sebelumnya.
 - Kinerja karyawan baru memakai rumus yang sama dengan penghitungan harian (`50 + reputasi × 10`), tidak lagi mulai dari 75% lalu turun saat hari pertama ditutup.
 - Gaji bulanan yang tidak terbayar kini menjadi tunggakan (`saveData.wageDebt`) yang ditambahkan ke penggajian bulan berikutnya, dan ditampilkan di panel level. Save lama tetap terbaca karena field ini opsional (default 0), sehingga `SAVE_VERSION` tidak diubah.
-- `status.json` dan versi game (`2.2.0`) sengaja tidak diubah, jadi pemain tidak mendapat pemberitahuan versi baru dari perubahan ini.
+- Perubahan ini tidak menyentuh `status.json`, `GAME_VERSION` (saat ini `2.3.0` di branch ini), maupun `SAVE_VERSION`.
