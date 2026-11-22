@@ -34,4 +34,5 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 
 ### Restaurant progression updates
 - Customer order size scales with restaurant level: Level 1 = up to 2 menu items; Levels 2–3 = up to 3; Levels 4–5 = up to 4; Levels 6–7 = up to 5; Levels 8–10 = up to 6.
-- The morning-shift kitchen chef becomes available for recruitment at Level 2. The evening-shift recruitment unlock remains Level 6.
+- Level 2 recruitment unlocks: Morning Shift Chef, Evening Shift Waiter, Morning Shift Cashier, and Evening Shift Cashier. The player serves dishes during the morning while the hired chef cooks; during the evening, the player cooks while the hired waiter delivers dishes. Both cashiers automatically receive and confirm customer orders.
+- The Morning Shift Waiter becomes available at Level 4, and the Evening Shift Chef becomes available at Level 6, gradually completing both teams.
