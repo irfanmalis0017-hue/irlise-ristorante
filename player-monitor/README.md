@@ -1,42 +1,69 @@
 # IRLISE PLAYER MONITOR
 
-Standalone admin web app (PWA) for monitoring IRLISE RISTORANTE play sessions. This project lives in its own folder and is deployed separately from the game.
+Standalone admin web app (PWA) for monitoring IRLISE RISTORANTE play sessions. It is deployed as a separate Cloudflare Pages project; it does not replace or deploy the game website.
 
 ## Current MVP
 - Admin password login using the Cloudflare Pages secret `ADMIN_SECRET`.
 - D1 database for player names, consent timestamps, and play sessions.
 - Player API endpoints: start, heartbeat, end.
-- Admin overview: online players, sessions today, total players, recent sessions.
+- Admin overview: online players, sessions today, total players, recent sessions and session duration.
 - PWA manifest and service worker. API requests are never cached.
 
-## Cloudflare Pages setup
-Create a **separate Cloudflare Pages project** connected to this repository:
-- Production branch: `feature/player-monitor-web` while testing.
-- Root directory: `player-monitor`.
-- Build command: leave empty.
-- Build output directory: `public`.
-- Functions directory: `functions` (relative to the project root).
+## Deploy as a separate Cloudflare Pages project
 
-Create a D1 database, then bind it to the Pages project with the binding name **DB**. Apply `schema.sql` to that database using the Cloudflare D1 console or Wrangler.
+In Cloudflare Dashboard, open **Workers & Pages** and create a new Pages application using **Connect to Git**. Select repository `irfanmalis0017-hue/irlise-ristorante`.
 
-Add one Cloudflare Pages secret named **ADMIN_SECRET**. Use a long, random password (at least 32 characters). Do not put its value in GitHub or source files. The same secret signs the admin session cookie.
+Use these build settings:
 
-## API contract for the game integration
-All player tracking is opt-in. The game should show a clear notice and ask the player to enter a display name and agree before sending data.
+| Setting | Value |
+|---|---|
+| Project name | `irlise-player-monitor` |
+| Production branch | `feature/player-monitor-web` |
+| Root directory | `player-monitor` |
+| Framework preset | None |
+| Build command | `exit 0` |
+| Build output directory | `public` |
+
+The `functions` directory is at the project root (`player-monitor/functions`), alongside `public`. Do not move it inside `public`. Save and deploy. This creates a separate `*.pages.dev` site; it does not change the production game site.
+
+## Create and connect D1
+
+1. In Cloudflare Dashboard, open **Workers & Pages > D1 SQL Database** (or **Storage & databases > D1**) and create a database named `irlise-player-monitor-db`.
+2. Open the database's **Console** and execute the full contents of `schema.sql` from this folder.
+3. Open the new Pages project **irlise-player-monitor > Settings > Bindings**.
+4. Select **Add > D1 database**.
+5. Set **Variable name** to exactly `DB`, then select `irlise-player-monitor-db`.
+6. Save the binding and redeploy the Pages project so the Functions receive it.
+
+If you later enable Preview deployments, configure the D1 binding for the Preview environment separately. Use a separate test database for Preview rather than the live player database.
+
+## Configure the admin password secret
+
+1. Open the Pages project **Settings > Variables and Secrets** (the section may be labelled Environment variables depending on the dashboard layout).
+2. Under **Production**, add a secret named exactly `ADMIN_SECRET`.
+3. Set its value to a unique, random password of at least 32 characters. Store it in a password manager. Never commit this value to GitHub or put it in frontend code.
+4. Save and redeploy. The admin login uses this secret as its password and to sign an eight-hour HttpOnly session cookie.
+
+Optional: set a Pages environment variable `GAME_ORIGIN` only if the game is later served from a different origin than `https://irlise-ristorante.pages.dev`. The current default allows the existing production game origin.
+
+## Player data and consent
+
+Tracking is opt-in. Before the game sends any tracking request, it must clearly explain that the player's chosen display name, consent time, and play-session times will be recorded for the admin dashboard, and obtain affirmative consent.
 
 - `POST /api/player/start` JSON: `{"name":"Nama pemain","player_key":"random-stable-id","consent":true}`
-  - Returns `{"ok":true,"session_id":"..."}`.
-- `POST /api/player/heartbeat` JSON: `{"session_id":"..."}` every 30 seconds while playing.
-- `POST /api/player/end` JSON: `{"session_id":"..."}` when the player exits or chooses to stop tracking.
+  - Returns `{"ok":true,"session_id":"..." }`.
+- `POST /api/player/heartbeat` JSON: `{"session_id":"..." }` every 30 seconds while playing.
+- `POST /api/player/end` JSON: `{"session_id":"..." }` when the player exits or chooses to stop tracking.
 - Admin: `POST /api/admin/login`, `POST /api/admin/logout`, `GET /api/admin/overview`.
 
-The player key should be generated randomly by the game and stored locally; do not collect device fingerprints, precise location, or unrelated personal data. Online status is inferred from heartbeats in the last 90 seconds. A player who closes the tab without ending a session will automatically become offline after the timeout.
+The player key should be a random identifier generated by the game and stored locally; do not collect device fingerprints, precise location, or unrelated personal data. Online status is inferred from heartbeats received within the last 90 seconds. A player who closes the tab without ending a session becomes offline after that timeout.
 
-## Important next steps before public launch
-1. Add rate limiting and abuse protection to public player endpoints.
-2. Add retention/deletion controls for player records.
-3. Add proper 192x192 and 512x512 PNG icons if required by target install browsers.
-4. Test login, D1 binding, consent flow, offline timeout, and PWA install on real devices.
-5. Integrate the opt-in form and heartbeat calls into the game only after the dashboard is deployed and tested.
+## Before public launch
+
+- Add rate limiting and abuse protection to public player endpoints.
+- Add player data retention and deletion controls.
+- Add production-quality 192x192 and 512x512 PNG app icons if required by target install browsers.
+- Test login, D1 binding, consent, heartbeat, offline timeout, CORS and PWA installation on real devices.
+- Integrate the opt-in form and heartbeat calls into the game only after the dashboard has been deployed and tested.
 
 No game files in the repository root are modified by this branch.
