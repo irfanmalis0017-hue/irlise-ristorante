@@ -1528,13 +1528,13 @@ const staffCount=role=>{const sh=gameMinutes>=900?2:1;return Math.max(1,(saveDat
 const chefSpeedFactor=()=>KONFIG.skill.kecepatanKoki[staffSkill('chef')]/staffCount('chef');
 const waiterSpeedFactor=()=>KONFIG.skill.kecepatanPelayan[staffSkill('staff')]*(1+(staffCount('staff')-1)*.6);
 const cashierSpeedFactor=()=>KONFIG.skill.kecepatanKasir[staffSkill('cashier')];
-const hireLevel=item=>Math.max(KONFIG.levelRekrut[item.role]||1,item.shift===2?KONFIG.levelShift2:1);
+const hireLevel=item=>item.role==='cashier'?2:item.role==='chef'&&item.shift===1?2:item.role==='staff'&&item.shift===2?2:Math.max(KONFIG.levelRekrut[item.role]||1,item.shift===2?KONFIG.levelShift2:1);
 const LEVEL_TEXT={
- 2:'Meja tambahan pertama dan kursi. Kapasitas kulkas naik.',
- 3:'Rekrut Kasir. Menu baru: Pisang Goreng, Nasi Goreng, Mie Goreng, dan Es Jeruk.',
- 4:'Rekrut Pelayan. Menu baru: Kopi Susu. Meja kedua dan kompor.',
+ 2:'Rekrut Koki Pagi, Pelayan Sore, serta Kasir Pagi dan Sore. Meja tambahan pertama dan kapasitas kulkas naik.',
+ 3:'Menu baru: Pisang Goreng, Nasi Goreng, Mie Goreng, dan Es Jeruk.',
+ 4:'Pelayan Pagi terbuka untuk direkrut. Menu baru: Kopi Susu. Meja kedua dan kompor.',
  5:'Rekrut Koki. Menu baru: Sate, Bakso, dan Soto. Upgrade skill ke 2.',
- 6:'Karyawan Shift 2 dan Ruangan kanan.',
+ 6:'Koki Sore terbuka untuk direkrut. Ruangan kanan restoran terbuka.',
  7:'Pelanggan makin ramai. Kapasitas kulkas naik.',
  8:'Ruangan kiri dan Kantor Owner. Upgrade skill ke 3. Saatnya mengelola, bukan lagi kerja sendiri.',
  9:'Restoran makin ramai dan makin menguntungkan.',
