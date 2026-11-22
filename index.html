@@ -261,6 +261,47 @@
   @keyframes guideBounce { from{translate:0 -4px} to{translate:0 8px} }
   @media(max-width:650px){ #guideCard { top:10px; padding:12px; } #guideTitle{font-size:15px} #guideArrow{width:40px;height:54px} }
 
+  /* ===== Layout HP landscape / layar pendek: HUD, kontrol sentuh, dan panel dirapikan ===== */
+  #hudBtns { display:contents; }
+  @media (orientation:landscape) and (max-height:520px) {
+    body.touch #brand { top:max(6px,env(safe-area-inset-top)); left:max(8px,env(safe-area-inset-left)); max-width:150px; padding:5px 8px; border-radius:10px; }
+    body.touch #brand strong { font-size:11px; line-height:1.2; }
+    body.touch #brand .playerHudLabel { font-size:7px; letter-spacing:.8px; margin-bottom:0; }
+    body.touch #brand .playerHudIdLabel { margin-top:4px; }
+    body.touch #brand #playerHudId { font-size:9px; letter-spacing:.5px; }
+    body.touch #stats { top:max(6px,env(safe-area-inset-top)); right:max(8px,env(safe-area-inset-right)); left:auto; bottom:auto; display:flex; flex-direction:row; gap:4px; }
+    body.touch #stats .stat, body.touch #stats .stat#levelStat { min-width:0; padding:4px 7px; border-radius:9px; }
+    body.touch #stats .stat small { font-size:7px; letter-spacing:.04em; white-space:nowrap; }
+    body.touch #stats .stat b { font-size:11px; white-space:nowrap; }
+    body.touch #stats .xpbar { height:3px; margin:2px 0; }
+    body.touch #missionBtn { top:72px; left:max(8px,env(safe-area-inset-left)); padding:5px 9px; font-size:10px; border-radius:9px; }
+    body.touch #missionPanel { top:6px; left:max(8px,env(safe-area-inset-left)); width:min(340px,calc(100vw - 20px)); max-height:calc(100dvh - 12px); }
+    body.touch #hudBtns { position:fixed; top:54px; right:max(8px,env(safe-area-inset-right)); z-index:8; display:flex; align-items:center; gap:6px; pointer-events:none; }
+    body.touch #restaurantToggleBtn, body.touch #settingsBtn { position:static; padding:6px 10px; font-size:10px; border-radius:9px; }
+    body.touch #joy { left:max(14px,env(safe-area-inset-left)); bottom:50px; width:92px; height:92px; }
+    body.touch #joyKnob { width:40px; height:40px; margin:-20px 0 0 -20px; }
+    body.touch #actBtns { right:max(8px,env(safe-area-inset-right)); bottom:8px; grid-template-columns:repeat(4,46px); gap:5px; }
+    body.touch .actBtn { height:44px; border-radius:10px; font-size:8px; }
+    body.touch .actBtn b { font-size:15px; }
+    body.touch #shopLauncher { left:max(10px,env(safe-area-inset-left)); bottom:8px; padding:6px 10px; gap:6px; border-radius:10px; font-size:11px; }
+    body.touch #shopLauncher .shopIcon { font-size:15px; }
+    body.touch #tutorial { top:auto; bottom:48px; width:clamp(220px,calc(100vw - 420px),400px); padding:8px 11px; border-radius:12px; }
+    body.touch #tutorial .tutHead { margin-bottom:5px; }
+    body.touch #tutorial .tutHead b { font-size:10px; white-space:nowrap; }
+    body.touch #tutorial .tutStep { font-size:8px; padding:2px 7px; white-space:nowrap; }
+    body.touch #tutorialDots { margin-bottom:7px; }
+    body.touch #tutorialText { font-size:11px; line-height:1.35; }
+    body.touch #tutorial .tutFoot { margin-top:7px; }
+    body.touch #tutorialKeys kbd { min-width:22px; padding:2px 5px; font-size:10px; }
+    body.touch #tutorialSkip { padding:5px 10px; font-size:9px; }
+    body.touch #toast { bottom:8px; max-width:calc(100vw - 420px); padding:6px 10px; font-size:11px; }
+    body.touch #cookStatus { top:108px; left:max(8px,env(safe-area-inset-left)); transform:none; min-width:0; width:max-content; max-width:200px; padding:6px 10px; font-size:10px; text-align:left; }
+    body.touch #levelUp { top:50%; max-height:calc(100dvh - 24px); }
+    body.touch #marketPanel { width:min(560px,calc(100vw - 24px)); max-height:calc(100dvh - 12px); padding:11px; }
+    body.touch #businessPanel { max-height:calc(100dvh - 12px); overflow:auto; }
+    body.touch #settingsOverlay { padding:6px max(10px,env(safe-area-inset-right)); }
+    body.touch #settingsCard { max-height:calc(100dvh - 12px); padding:14px; }
+  }
 </style>
 </head>
 <body>
@@ -286,8 +327,8 @@
   <div id="tutorial" class="panel"><div class="tutHead"><b>PANDUAN PEMULA</b><span id="tutorialStep" class="tutStep">LANGKAH 1/4</span></div><div id="tutorialDots"><i></i><i></i><i></i><i></i></div><span id="tutorialText"></span><div class="tutFoot"><div id="tutorialKeys"></div><button id="tutorialSkip" type="button">LEWATI PANDUAN</button></div></div>
   <div id="levelUp" class="panel"></div>
 </div>
-<button id="restaurantToggleBtn" type="button">BUKA RESTORAN</button>
-<button id="settingsBtn" type="button">⚙ PENGATURAN</button>
+<div id="hudBtns"><button id="restaurantToggleBtn" type="button">BUKA RESTORAN</button>
+<button id="settingsBtn" type="button">⚙ PENGATURAN</button></div>
 <div id="pauseShade">GAME DIJEDA</div>
 <div id="exitScreen" role="dialog" aria-modal="true" aria-label="Keluar dari game" style="display:none;position:fixed;inset:0;z-index:90;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 30%,#223646,#101a22);color:#fff;text-align:center;pointer-events:auto"><div style="width:min(380px,100%)"><div style="font-size:52px">👋</div><h2 id="exitTitle">Kamu sudah keluar dari game</h2><p id="exitMessage" style="color:#b9cbd5;line-height:1.5">Progres permainan sudah disimpan. Kamu bisa menutup tab ini atau kembali bermain kapan saja.</p><button class="settingAction" id="returnGame" type="button" style="text-align:center">Kembali ke game</button><button class="settingAction danger" id="closeGameTab" type="button" style="text-align:center">Tutup tab</button></div></div>
 <div id="settingsOverlay" role="dialog" aria-modal="true" aria-label="Pengaturan game">
