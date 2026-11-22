@@ -1784,8 +1784,8 @@ function renderMarket(){
   const buy=document.createElement('button');buy.type='button';
   const owned=item.role?(saveData.staff||[]).some(x=>x.id===item.id):false;
   const has=item.once&&(saveData.inventory[item.id]||0)>0;
-  buy.textContent=locked?'🔒 Level '+need:item.role?(owned?'Sudah direkrut':'Rekrut'):(has?'Dimiliki':(full?'Kulkas penuh':'Beli'));
-  buy.disabled=locked||coins<item.price||(!!item.role&&owned)||!!has||full;
+  buy.textContent=item.role?(owned?'Sudah direkrut':'Rekrut'):(has?'Dimiliki':(full?'Kulkas penuh':'Beli'));
+  buy.disabled=coins<item.price||(!!item.role&&owned)||!!has||full;
   buy.addEventListener('click',()=>purchaseMarketItem(item));
   foot.append(price,buy);card.append(name,desc,foot);
   if(item.role&&owned){
