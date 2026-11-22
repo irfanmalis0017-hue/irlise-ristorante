@@ -2174,7 +2174,17 @@ const GAME_VERSION='2.2.0';
  const maint=$('maintScreen'),bar=$('updateBar');
  $('updText').textContent=L==='en'?'A new version is available.':'Versi baru tersedia.';
  $('updBtn').textContent=L==='en'?'Reload':'Muat ulang';
- $('updBtn').addEventListener('click',()=>{persist();location.reload();});
+ // Notifikasi update: cukup sekali klik. Versi server yang sudah dikonfirmasi disimpan,
+ // jadi banner tidak muncul lagi sampai ada versi baru yang berbeda.
+ const UPD_ACK_KEY='irlise_ristorante_update_ack';
+ let latestVersion='',ackedVersion='';
+ try{ackedVersion=localStorage.getItem(UPD_ACK_KEY)||'';}catch(e){}
+ $('updBtn').addEventListener('click',()=>{
+  ackedVersion=latestVersion||ackedVersion;
+  try{if(ackedVersion)localStorage.setItem(UPD_ACK_KEY,ackedVersion);}catch(e){}
+  bar.classList.remove('show');
+  persist();location.reload();
+ });
  const DEF={id:['Developer sedang update','Mohon bersabar, progresmu aman dan sudah tersimpan.','Game akan lanjut otomatis setelah update selesai.'],en:['The developer is updating','Please be patient — your progress is safe and already saved.','The game will resume automatically once the update is done.']};
  async function check(){
   try{
@@ -2188,7 +2198,9 @@ const GAME_VERSION='2.2.0';
    }else if(GATE.maint){
     maint.classList.remove('show');GATE.maint=false;showToast(L==='en'?'Update finished! Enjoy the game.':'Update selesai! Selamat bermain lagi.');
    }
-   if(j&&j.version&&j.version!==GAME_VERSION&&!on)bar.classList.add('show');
+   if(j&&j.version)latestVersion=String(j.version);
+   if(j&&j.version&&j.version!==GAME_VERSION&&!on&&String(j.version)!==ackedVersion)bar.classList.add('show');
+   else bar.classList.remove('show');
   }catch(e){}
  }
  check();setInterval(check,60000);
