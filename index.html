@@ -1161,7 +1161,7 @@ function drawBadge(b,text,green,angry=false){const k=text+(green?'1':'0')+(angry
 function refreshBadge(c){
  const b=c.badge;let text='',show=true,green=false;
  if(c.stage==='ordering')text='🧾';
- else if(c.stage==='seated'){text=c.remaining.map(id=>menuCatalog[id].emoji).join('');green=!!((holdingDish&&currentTicket&&c.remaining.includes(currentTicket.menuId))||readyTickets.some(t=>c.remaining.includes(t.menuId)));}
+ else if(c.stage==='seated'){text=c.remaining.map(id=>menuCatalog[id].emoji).join('');green=!!(([currentTicket,secondTicket].some(t=>t&&c.remaining.includes(t.menuId)))||readyTickets.some(t=>c.remaining.includes(t.menuId)));}
  else if(c.stage==='eating')text='😋';
  else show=false;
  const angry=(c.stage==='ordering'||c.stage==='seated')&&c.wait>=20;if(angry)text='😠 '+text;
@@ -1174,7 +1174,7 @@ function spawnCustomer(){
  const g=makePerson({shirt:pickOne(custShirts),hair:pickOne(custHairs),skin:pickOne(custSkins),pants:pickOne(custPants),style,hijab:pickOne(custShirts),scale:.95+Math.random()*.1});
  g.position.set((Math.random()<.5?-1:1)*(4.5+Math.random()*3),0,9.8);scene.add(g);standPose(g);
  const badge=makeBadge();g.add(badge.sp);
- const total=2+Math.floor(Math.random()*3),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
+ const total=1+Math.floor(Math.random()*2),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
  seat.taken=true;
  customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,waitTotal:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.2,3.2)]});
  return true;
@@ -1369,7 +1369,7 @@ function showToast(msg){toast.textContent=TRX(msg);toast.classList.add('show');c
 // Kitchen workflow: open fridge, cook for 10 seconds, pick up, then serve.
 const cookStatus=document.getElementById('cookStatus');
 const ingredientNames={rice:'beras',chicken:'ayam',flour:'tepung',oil:'minyak',spices:'bumbu',vegetables:'sayuran',egg:'telur',noodles:'mi',tea:'teh',ice:'es batu',orange:'jeruk',coffee:'kopi',milk:'susu',banana:'pisang'};
-let fridgeOpen=false,cooking=false,cookStarted=0,cookElapsed=0,dishReady=false,holdingDish=null,currentCookTime=10;
+let fridgeOpen=false,cooking=false,cookStarted=0,cookElapsed=0,dishReady=false,holdingDish=null,holdingDish2=null,secondTicket=null,currentCookTime=10;
 function nearPoint(x,z,r=3.2){return Math.hypot(player.position.x-x,player.position.z-z)<=r;}
 function setCookStatus(message,show=true){message=TRX(message);if(cookStatus.textContent!==message)cookStatus.textContent=message;if(cookStatus.classList.contains('show')!==show)cookStatus.classList.toggle('show',show);}
 function createAyamGeprekPlate(menuId='ayam'){
@@ -1455,18 +1455,20 @@ function startCooking(){
  beginCooking(false);
 }
 function pickupDish(){
- if(holdingDish||currentTicket){showToast('Antarkan hidangan yang sedang dibawa terlebih dahulu. Pemain hanya bisa membawa satu hidangan.');return;}
+ if(currentTicket&&secondTicket){showToast('Kamu sudah membawa maksimal 2 hidangan. Antar salah satunya terlebih dahulu.');return;}
  if(!readyTickets.length){showToast('Belum ada hidangan matang.');return;}
  if(!nearPoint(4.8,-4.55,3.7)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
- currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;const plate=scene.getObjectByName('ready plate '+currentTicket.id);if(plate){scene.remove(plate);disposeObj(plate);}
- holdingDish=createAyamGeprekPlate(currentOrderMenuId);holdingDish.scale.setScalar(.55);holdingDish.position.set(0,1.2,.5);avatar.add(holdingDish);
- dishReady=readyTickets.length>0;setCookStatus('Membawa '+menuCatalog[currentOrderMenuId].name+' — antar ke pelanggan yang memesan.');showToast(menuCatalog[currentOrderMenuId].name+' diangkat. Antar ke pelanggan yang memesan!');
+ const ticket=readyTickets.shift();const plate=scene.getObjectByName('ready plate '+ticket.id);if(plate){scene.remove(plate);disposeObj(plate);}
+ const dish=createAyamGeprekPlate(ticket.menuId);dish.scale.setScalar(.48);
+ if(!currentTicket){currentTicket=ticket;currentOrderMenuId=ticket.menuId;holdingDish=dish;dish.position.set(-.22,1.2,.5);avatar.add(dish);}
+ else{secondTicket=ticket;holdingDish2=dish;dish.position.set(.28,1.2,.5);avatar.add(dish);}
+ dishReady=readyTickets.length>0;const carried=[currentTicket,secondTicket].filter(Boolean).map(t=>menuCatalog[t.menuId].name);setCookStatus('Membawa '+carried.join(' + ')+' — antar ke pelanggan.');showToast(menuCatalog[ticket.menuId].name+' diangkat. Kapasitas tangan maksimal 2 hidangan.');
 }
 function serveDish(){
  if(!holdingDish||!currentTicket){showToast('Belum ada makanan di tangan. Tekan I untuk mengangkat pesanan.');return;}
  const c=customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(player.position.x-a.seat.x,player.position.z-a.seat.z)-Math.hypot(player.position.x-b.seat.x,player.position.z-b.seat.z))[0];
  if(!c||!nearPoint(c.seat.x,c.seat.z,3.6)){showToast('Dekati pelanggan yang memesan '+menuCatalog[currentTicket.menuId].name+'.');return;}
- avatar.remove(holdingDish);disposeObj(holdingDish);holdingDish=null;deliverTo(c,currentTicket);dishReady=readyTickets.length>0;
+ avatar.remove(holdingDish);disposeObj(holdingDish);holdingDish=null;deliverTo(c,currentTicket);if(secondTicket&&holdingDish2){currentTicket=secondTicket;currentOrderMenuId=secondTicket.menuId;secondTicket=null;holdingDish=holdingDish2;holdingDish2=null;holdingDish.position.set(0,1.2,.5);setCookStatus('Masih membawa '+menuCatalog[currentTicket.menuId].name+' — lanjutkan pengantaran.');}dishReady=readyTickets.length>0;
 }
 const businessPanel=document.getElementById('businessPanel');
 const coinValue=document.getElementById('coinValue');
