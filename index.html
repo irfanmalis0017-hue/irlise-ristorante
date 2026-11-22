@@ -1346,10 +1346,12 @@ function collidesAt(x,z){
   const dx=x-qx,dz=z-qz;
   if(dx*dx+dz*dz<r*r)return true;
  }
+ // Moving vehicles keep the original player clearance.
+ const vehicleR=.24;
  // Moving vehicles are solid too; avoid stepping into their current footprint.
  for(const car of trafficCars){
   const cx=car.group.position.x, cz=car.group.position.z;
-  if(Math.abs(x-cx)<1.72+r && Math.abs(z-cz)<.82+r)return true;
+  if(Math.abs(x-cx)<1.72+vehicleR && Math.abs(z-cz)<.82+vehicleR)return true;
  }
  // Keep the player inside the solid side/back walls while allowing the front exit.
  if(z>6.55){if(z>10.2||Math.abs(x)>9.5||(Math.abs(x)>1.7&&z<7.9))return true;}
