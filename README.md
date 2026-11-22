@@ -45,3 +45,31 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 - Use the in-game **BUKA RESTORAN / TUTUP RESTORAN** control to stop new customer arrivals or reopen the restaurant during the workday.
 - Staff wages are monthly and are charged at the end of every 30 in-game days, not every day.
 - Monthly wages: Chef 2,000 coins; Waiter 1,500 coins; Cashier 1,200 coins. The Level 2 team of one chef, one waiter, and two cashiers costs 5,900 coins per in-game month.
+
+
+## Major Update 2.2 — Employee Management & Engineering
+
+### New employee departments
+- Operations: chefs, waiters, and cashiers continue to support the morning and evening shifts.
+- Administration: Admin Keuangan supports monthly payroll and financial summaries; Admin HRD provides an employee performance overview.
+- Engineering: Teknisi Maintenance and Engineering Supervisor maintain restaurant facility condition.
+- New roles unlock progressively: Admin Keuangan at Level 4, Technician at Level 5, Admin HRD at Level 6, and Engineering Supervisor at Level 8.
+
+### Salary and employee development
+- Every employee has an individual monthly salary saved with the game.
+- The owner can raise or lower each employee's salary in 10% steps, within 50%–200% of the role's base salary.
+- Skill upgrades increase the employee's monthly salary; existing skill levels and staff saves are preserved.
+- Employee performance is shown as a management indicator based on the restaurant's reputation. Salary decisions remain under the player's control.
+- Monthly payroll uses each employee's current salary and is charged every 30 in-game days.
+
+### Engineering and maintenance
+- Restaurant equipment has a saved condition percentage.
+- Without engineering staff, facility condition gradually decreases at each daily closing.
+- A Maintenance Technician and Engineering Supervisor improve facility condition automatically at daily closing.
+- The owner can perform manual maintenance for 350 coins to restore condition to 100%.
+- Poor facility condition slows cooking: 20% slower below 60%, and 50% slower below 30%.
+
+### Preview / release gate
+- These new management and maintenance systems are committed to the 2.2 development branch only.
+- They have not yet been verified in Cloudflare Preview gameplay. Test hiring/unlocking each department, salary adjustments and payroll, save/load compatibility, equipment condition changes, technician effects, and cooking-time penalties before release.
+- Keep this PR unmerged and production 2.1 unchanged until the owner approves release.
