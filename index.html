@@ -1480,7 +1480,8 @@ function serveDish(){
 }
 const businessPanel=document.getElementById('businessPanel');
 const coinValue=document.getElementById('coinValue');
-const saveKey='fromZeroToCEO_save_v10';
+const legacySaveKey='fromZeroToCEO_save_v10';
+const saveKey='irlise_ristorante_save_v10';
 const MAX_LEVEL=10,MAX_SKILL=3;
 // ===== KONFIG: semua angka keseimbangan game ada di sini, ubah sesuai selera =====
 const KONFIG={
@@ -1500,10 +1501,22 @@ const KONFIG={
 };
 const SAVE_VERSION=3;
 // Cadangan otomatis sebelum migrasi: save versi lama disalin dulu sebelum ditimpa format baru.
-try{const raw0=localStorage.getItem(saveKey);if(raw0){const o0=JSON.parse(raw0);if(o0&&Number.isFinite(o0.coins)&&(o0.saveVersion||0)<SAVE_VERSION)localStorage.setItem(saveKey+'_backup_v'+(o0.saveVersion||0),raw0);}}catch(e){}
+try{const raw0=localStorage.getItem(saveKey)||localStorage.getItem(legacySaveKey);if(raw0){const o0=JSON.parse(raw0);if(o0&&typeof o0==='object'&&!Array.isArray(o0)&&Number.isFinite(o0.coins)){if((o0.saveVersion||0)<SAVE_VERSION)localStorage.setItem(saveKey+'_backup_v'+(o0.saveVersion||0),raw0);if(!localStorage.getItem(saveKey))localStorage.setItem(saveKey,raw0);}}}catch(e){}
 let legacySave=false;
 let saveData={coins:KONFIG.koinAwal,areaUnlocked:false,leftAreaUnlocked:false,items:{table:0,chair:0,stove:0},inventory:{rice:10,egg:10,oil:5,spices:10,vegetables:10,banana:10,flour:10,tea:10,ice:10},staff:[],level:1,xp:0,tutorialDone:false,initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true};
-try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)) saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}}; if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
+try {
+ const rawSave=localStorage.getItem(saveKey)||localStorage.getItem(legacySaveKey);
+ const old=JSON.parse(rawSave||'null');
+ if(old&&typeof old==='object'&&!Array.isArray(old)&&Number.isFinite(old.coins)&&old.coins>=0){
+  const safeItems={...saveData.items};
+  if(old.items&&typeof old.items==='object'&&!Array.isArray(old.items))for(const k of ['table','chair','stove'])if(Number.isFinite(old.items[k])&&old.items[k]>=0)safeItems[k]=Math.floor(old.items[k]);
+  const safeInventory={...saveData.inventory};
+  if(old.inventory&&typeof old.inventory==='object'&&!Array.isArray(old.inventory))for(const [k,v] of Object.entries(old.inventory))if(/^[a-z][a-z0-9_]{0,31}$/.test(k)&&Number.isFinite(v)&&v>=0)safeInventory[k]=Math.floor(v);
+  saveData={...saveData,...old,items:safeItems,inventory:safeInventory};
+  legacySave=!old.initializedV16;
+  for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];
+ }
+} catch(e) { console.warn('Save lama tidak dapat dibaca; progres awal tetap digunakan.',e); }
 let coins=saveData.coins, areaUnlocked=!!saveData.areaUnlocked, leftAreaUnlocked=!!saveData.leftAreaUnlocked, lastSale=0;
 let rep=Number.isFinite(saveData.rep)?saveData.rep:1, day=(saveData.day|0)||1, dayStartCoins=coins;
 if(!saveData.initializedV10){coins=10000;saveData.initializedV10=true;saveData.inventory={rice:10,chicken:5,vegetables:10,flour:10,oil:5,spices:10};saveData.staff=[];saveData.items={table:0,chair:0,stove:0};saveData.areaUnlocked=false;saveData.leftAreaUnlocked=false;areaUnlocked=false;leftAreaUnlocked=false;}
@@ -1512,9 +1525,9 @@ if(!saveData.initializedV12){saveData.inventory=saveData.inventory||{};for(const
 // Update 1.4: bahan untuk menu baru (tidak menimpa stok yang sudah ada).
 if(!saveData.initializedV14){saveData.inventory=saveData.inventory||{};for(const [id,q] of [['beef',5],['orange',10],['coffee',10],['milk',10],['banana',10]])if(!(id in saveData.inventory))saveData.inventory[id]=q;saveData.initializedV14=true;}
 if(!saveData.initializedV15){leftAreaUnlocked=false;saveData.leftAreaUnlocked=false;saveData.initializedV15=true;}
-saveData.staff=Array.isArray(saveData.staff)?saveData.staff:[];
+saveData.staff=Array.isArray(saveData.staff)?saveData.staff.filter(st=>st&&['cashier','staff','chef'].includes(st.role)&&(st.shift===1||st.shift===2)).slice(0,24):[];
 // Migrasi staf versi lama: pertahankan karyawan lama sebagai slot pertama agar tetap bisa di-upgrade atau diberhentikan.
-saveData.staff=saveData.staff.map(st=>{if(!st||!st.role||!st.shift)return st;const slot=st.slot||1;const id=st.id&&st.id.includes('_slot')?st.id:(st.role+'_shift'+st.shift+'_slot'+slot);return {...st,slot,id,skill:st.skill||1};});
+saveData.staff=saveData.staff.map(st=>{const slot=Number.isInteger(st.slot)&&st.slot>0?st.slot:1;const id=typeof st.id==='string'&&st.id.length<100&&st.id.includes('_slot')?st.id:(st.role+'_shift'+st.shift+'_slot'+slot);const skill=Number.isInteger(st.skill)?Math.max(1,Math.min(MAX_SKILL,st.skill)):1;return {...st,slot,id,skill};});
 // ===== Update 1.6: Sistem level, XP, gaji harian, skill karyawan, tutorial =====
 // Level lama (legacy): save dari versi sebelumnya langsung dianggap Level maksimum agar progres tidak hilang.
 if(legacySave){saveData.level=MAX_LEVEL;saveData.xp=KONFIG.xpPerLevel[MAX_LEVEL];saveData.tutorialDone=true;saveData.staff=saveData.staff.map(s=>({...s,skill:s.skill||1}));}
@@ -1677,7 +1690,7 @@ document.getElementById('missionBtn').addEventListener('click',()=>{document.get
 document.getElementById('missionClose').addEventListener('click',()=>document.getElementById('missionPanel').classList.remove('open'));
 renderDailyMissions();
 
-function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,items:saveData.items,inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,saveVersion:SAVE_VERSION,rep,day};try{localStorage.setItem(saveKey,JSON.stringify(saveData));}catch(e){} updateCoins();}
+function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,items:saveData.items||{table:0,chair:0,stove:0},inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,saveVersion:SAVE_VERSION,rep,day};try{const raw=JSON.stringify(saveData);localStorage.setItem(saveKey,raw);/* Keep the previous key in sync so rollback to an older deployed build does not lose progress. */localStorage.setItem(legacySaveKey,raw);}catch(e){console.warn('Autosave gagal. Periksa ruang penyimpanan browser.',e);} updateCoins();}
 function updateCoins(){const dv=document.getElementById('dayValue'),rv=document.getElementById('repValue');if(dv)dv.textContent=String(day).padStart(2,'0');if(rv)rv.textContent='★ '+rep.toFixed(1);updateLevelHud();const formatted=coins.toLocaleString('id-ID')+' koin';coinValue.textContent=formatted;const mb=document.getElementById('marketBalance');if(mb)mb.textContent=formatted;}
 function spend(amount){if(coins<amount){showToast('Koin belum cukup. Layani pesanan untuk mendapat uang!');return false;}coins-=amount;persist();return true;}
 function openBusiness(){refreshBusinessLocks();businessPanel.classList.add('open');}
@@ -1948,7 +1961,8 @@ if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refre
 
 // ===== Backsound (v1.4): musik santai buatan WebAudio, tanpa file eksternal =====
 const music={ctx:null,master:null,send:null,noise:null,on:true,t:0,step:0};
-try{if(localStorage.getItem('fromZeroToCEO_music')==='off')music.on=false;}catch(e){}
+const legacyMusicKey='fromZeroToCEO_music',musicKey='irlise_ristorante_music';
+try{const savedMusic=localStorage.getItem(musicKey)??localStorage.getItem(legacyMusicKey);if(savedMusic==='off')music.on=false;else if(savedMusic==='on')music.on=true;}catch(e){}
 const mbtn=document.createElement('button');mbtn.id='musicBtn';mbtn.type='button';document.body.appendChild(mbtn);
 const updateMusicBtn=()=>{mbtn.textContent=music.on?'🔊 Musik':'🔇 Musik';};updateMusicBtn();
 // Pengaturan permainan: jeda menghentikan simulasi waktu, NPC, pelanggan, dan gerakan pemain.
@@ -1979,7 +1993,7 @@ document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!con
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
 // ===== IRLISE RISTORANTE 2.0: visual upgrade =====
-const GAME_VERSION='2.1.0';
+const GAME_VERSION='2.2.0';
 (function(){
  const L=window.IR_LANG,T=window.TRX,$=id=>document.getElementById(id);
  $('verText').textContent=(L==='en'?'Game version ':'Versi game ')+GAME_VERSION;
@@ -1995,13 +2009,17 @@ const GAME_VERSION='2.1.0';
  });
  $('importSave').addEventListener('click',()=>{
   const bad='Kode save tidak valid atau rusak.',raw=($('saveCode').value||'').trim();
-  if(!raw.startsWith('IRLISE1.')){say(bad);return;}
+  if(raw.length>1500000||!raw.startsWith('IRLISE1.')){say(bad);return;}
   let o;try{o=JSON.parse(decodeURIComponent(escape(atob(raw.slice(8)))));}catch(e){say(bad);return;}
-  const ok=o&&typeof o==='object'&&Number.isFinite(o.coins)&&o.coins>=0&&o.coins<1e12&&(o.staff===undefined||Array.isArray(o.staff))&&(o.items===undefined||typeof o.items==='object')&&(o.inventory===undefined||typeof o.inventory==='object')&&(o.level===undefined||(o.level>=1&&o.level<=MAX_LEVEL));
+  const record=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
+  const bounded=(v,min,max)=>v===undefined||(Number.isSafeInteger(v)&&v>=min&&v<=max);
+  const validStaff=s=>s===undefined||(Array.isArray(s)&&s.length<=24&&s.every(w=>record(w)&&['cashier','staff','chef'].includes(w.role)&&(w.shift===1||w.shift===2)&&bounded(w.skill,1,MAX_SKILL)&&bounded(w.slot,1,100)&&(w.id===undefined||(typeof w.id==='string'&&w.id.length<=100))));
+  const validCounts=v=>v===undefined||(record(v)&&Object.entries(v).every(([k,n])=>/^[a-z][a-z0-9_]{0,31}$/.test(k)&&bounded(n,0,1000000)));
+  const ok=record(o)&&Number.isSafeInteger(o.coins)&&o.coins>=0&&o.coins<1e12&&bounded(o.level,1,MAX_LEVEL)&&bounded(o.xp,0,1e9)&&bounded(o.day,1,1e7)&&(o.rep===undefined||(typeof o.rep==='number'&&Number.isFinite(o.rep)&&o.rep>=0&&o.rep<=5))&&validStaff(o.staff)&&validCounts(o.items)&&validCounts(o.inventory)&&(o.dailyMissions===undefined||record(o.dailyMissions));
   if(!ok){say(bad);return;}
-  if(!confirm('Impor akan menimpa progres saat ini. Lanjutkan?'))return;
+  if(!confirm('Impor akan menimpa progres saat ini. Cadangan progres lama dibuat otomatis. Lanjutkan?'))return;
   o.initializedV16=true;resetting=true;
-  try{localStorage.setItem(saveKey+'_backup_before_import',localStorage.getItem(saveKey)||'');localStorage.setItem(saveKey,JSON.stringify(o));}catch(e){resetting=false;say(bad);return;}
+  try{const previous=localStorage.getItem(saveKey)||localStorage.getItem(legacySaveKey)||'';localStorage.setItem(saveKey+'_backup_before_import',previous);localStorage.setItem(saveKey,JSON.stringify(o));localStorage.setItem(legacySaveKey,JSON.stringify(o));}catch(e){resetting=false;say('Penyimpanan penuh atau tidak tersedia. Progres tidak diubah.');return;}
   say('Save berhasil dipulihkan. Memuat ulang...');setTimeout(()=>location.reload(),600);
  });
  // Autosave berkala + saat tab disembunyikan / ditutup
@@ -2078,7 +2096,7 @@ function ensureMusic(){
  if(music.ctx.state==='suspended')music.ctx.resume();
 }
 mbtn.addEventListener('click',()=>{
- music.on=!music.on;try{localStorage.setItem('fromZeroToCEO_music',music.on?'on':'off');}catch(e){}
+ music.on=!music.on;try{const value=music.on?'on':'off';localStorage.setItem(musicKey,value);localStorage.setItem(legacyMusicKey,value);}catch(e){}
  updateMusicBtn();
  if(music.on)ensureMusic();else if(music.ctx)music.ctx.suspend();
 });
