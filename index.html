@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.1</title>
+<title>IRLISE RISTORANTE — Update 2.2</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -128,7 +128,7 @@
   #updateBar { position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:40; display:none; gap:10px; align-items:center; padding:9px 12px; border-radius:12px; background:#f3c75b; color:#1b2630; font:700 13px Inter,system-ui,sans-serif; pointer-events:auto; box-shadow:0 8px 24px rgba(0,0,0,.35); }
   #updateBar.show { display:flex; } #updateBar button { border:0; border-radius:8px; padding:6px 10px; background:#1b2630; color:#fff; font:700 12px inherit; cursor:pointer; }
 
-  /* ===== Update 2.1: Daily Missions ===== */
+  /* ===== Update 2.2: Daily Missions ===== */
   #missionBtn{position:fixed;top:86px;left:16px;z-index:9;pointer-events:auto;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;background:linear-gradient(135deg,#9a713d,#d8ae61);color:#17232b;font:800 13px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.25)}
   #missionPanel{position:fixed;top:132px;left:16px;z-index:25;width:min(340px,calc(100vw - 32px));max-height:min(65vh,520px);overflow:auto;display:none;pointer-events:auto;color:#fff;background:rgba(18,29,39,.97);border:1px solid rgba(243,199,91,.45);border-radius:15px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
   #missionPanel.open{display:block}
@@ -156,7 +156,7 @@
 <div id="loading"><div><div style="font-size:22px;font-weight:800">IRLISE RISTORANTE</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 2.1 — Misi Harian</span></div>
+  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 2.2 — Misi Harian</span></div>
   <div id="stats">
     <div class="panel stat" id="levelStat"><small>Level restoran</small><b id="levelValue">Lv 1</b><div class="xpbar"><i id="xpFill"></i></div><small id="xpText">0 / 50 XP</small></div>
     <div class="panel stat"><small>Uang pemain</small><b id="coinValue">10.000 koin</b></div>
@@ -297,7 +297,7 @@
  'Dekati pelanggan di kasir untuk berinteraksi.':'Get close to the customer at the counter to interact.',
  'Dekati pelanggan yang memesan (balon hijau) untuk menyajikan.':'Get close to the customer who ordered (green bubble) to serve.',
  'Gunakan K untuk buka kulkas, L untuk memasak, I untuk angkat, lalu J untuk menyajikan.':'Use K to open the fridge, L to cook, I to pick up, then J to serve.',
- 'IRLISE RISTORANTE Update 2.1 siap! Selesaikan Misi Harian untuk mendapat hadiah.':'IRLISE RISTORANTE Update 2.1 is ready! Complete Daily Missions to earn rewards.',
+ 'IRLISE RISTORANTE Update 2.2 siap! Selesaikan Misi Harian untuk mendapat hadiah.':'IRLISE RISTORANTE Update 2.2 is ready! Complete Daily Missions to earn rewards.',
  'Koin belum cukup untuk membeli ':'Not enough coins to buy ','Koin belum cukup untuk upgrade skill.':'Not enough coins to upgrade the skill.',
  'Koin belum cukup. Layani pesanan untuk mendapat uang!':'Not enough coins. Serve orders to earn money!',
  'Koki sedang bertugas dan akan memasak pesanan secara otomatis.':'A chef is on duty and cooks orders automatically.',
@@ -347,7 +347,7 @@
  'Es batu untuk minuman.':'Ice for drinks.','Jeruk untuk menu es jeruk.':'Oranges for iced orange.','Biji kopi untuk kopi susu.':'Coffee beans for milk coffee.','Susu untuk kopi susu.':'Milk for milk coffee.','Pisang untuk pisang goreng.':'Bananas for fried banana.',
  'Menyambut pelanggan dan menerima pesanan di meja kasir.':'Greets customers and takes orders at the counter.','Melayani percakapan dan konfirmasi pesanan pelanggan.':'Handles conversation and confirms customer orders.',
  '08.00–15.00':'08:00–15:00','15.00–22.00':'15:00–22:00',
- 'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.1 — Daily Missions',
+ 'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.2 — Daily Missions',
  'Menyiapkan restoran 3D...':'Preparing the 3D restaurant...','Pastikan koneksi internet aktif untuk memuat mesin 3D.':'Make sure your internet connection is on to load the 3D engine.',
  'Level restoran':'Restaurant level','Uang pemain':'Your money','Reputasi':'Reputation','Jam kerja':'Work hours','KONTROL':'CONTROLS',
  'W A S D — Bergerak':'W A S D — Move','F — Layani pelanggan jika tidak ada kasir':'F — Serve customer if there is no cashier','I / J — Angkat & sajikan jika tanpa karyawan':'I / J — Pick up & serve if there is no staff',
@@ -1627,7 +1627,7 @@ function updateTutorial(){
  const b=document.getElementById('resetGame');let armed=false,tm;
  b.addEventListener('click',()=>{
   if(!armed){armed=true;b.textContent='Yakin? Semua progres dihapus. Klik lagi untuk lanjut.';clearTimeout(tm);tm=setTimeout(()=>{armed=false;b.textContent='Mulai ulang dari awal';},4000);return;}
-  resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();
+  resetting=true;try{localStorage.removeItem(saveKey);localStorage.removeItem(legacySaveKey);}catch(e){}location.reload();
  });
 })();
 
@@ -1989,7 +1989,7 @@ document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOve
 document.getElementById('closeSettings').addEventListener('click',()=>settingsOverlay.classList.remove('open'));
 pauseToggle.addEventListener('click',()=>setPaused(!gamePaused));
 soundToggle.addEventListener('click',()=>{mbtn.click();soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
-document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
+document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);localStorage.removeItem(legacySaveKey);}catch(e){}location.reload();});
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
 // ===== IRLISE RISTORANTE 2.0: visual upgrade =====
@@ -2172,7 +2172,7 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-showToast('IRLISE RISTORANTE Update 2.1 siap! Misi Harian tersedia.');
+showToast('IRLISE RISTORANTE Update 2.2 siap! Misi Harian tersedia.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
