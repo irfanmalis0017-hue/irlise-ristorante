@@ -58,6 +58,7 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 ### Salary and employee development
 - Every employee has an individual monthly salary saved with the game.
 - The owner can raise or lower each employee's salary in 10% steps, within 50%–200% of the role's base salary.
+- Salary raises require a performance indicator of at least 70%; salary reductions remain available within the same salary limits.
 - Skill upgrades increase the employee's monthly salary; existing skill levels and staff saves are preserved.
 - Employee performance is shown as a management indicator based on the restaurant's reputation. Salary decisions remain under the player's control.
 - Monthly payroll uses each employee's current salary and is charged every 30 in-game days.
