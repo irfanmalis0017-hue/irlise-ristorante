@@ -96,6 +96,24 @@
   #tutorial { position:absolute; top:132px; left:50%; transform:translateX(-50%); width:max-content; max-width:min(420px,calc(100vw - 32px)); display:none; text-align:center; font-size:13px; line-height:1.45; border-color:#f3c75b; }
   #tutorial.show { display:block; }
   #tutorial b { display:block; color:#f3c75b; font-size:11px; letter-spacing:.08em; margin-bottom:3px; }
+  /* Panduan pemula: kartu, progres langkah, dan chip tombol. */
+  #tutorial { width:min(440px,calc(100vw - 32px)); max-width:none; text-align:left; padding:13px 15px; border-radius:16px; border:1px solid rgba(243,199,91,.55); background:linear-gradient(160deg,rgba(26,44,57,.95),rgba(13,22,30,.95)); box-shadow:0 12px 36px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.08); animation:tutIn .35s ease both; }
+  #tutorial .tutHead { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px; }
+  #tutorial .tutHead b { display:flex; align-items:center; gap:7px; margin:0; }
+  #tutorial .tutHead b:before { content:""; width:8px; height:8px; border-radius:50%; background:#f3c75b; box-shadow:0 0 9px rgba(243,199,91,.9); }
+  #tutorial .tutStep { font-size:10px; font-weight:800; letter-spacing:.08em; color:#0f1a22; background:#f3c75b; border-radius:999px; padding:3px 9px; }
+  #tutorialDots { display:flex; gap:5px; margin-bottom:11px; }
+  #tutorialDots i { flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,.14); transition:background .3s; }
+  #tutorialDots i.done { background:#f3c75b; }
+  #tutorialDots i.now { background:linear-gradient(90deg,#f3c75b,#ffe9a8); animation:tutPulse 1.4s ease-in-out infinite; }
+  #tutorialText { font-size:14px; line-height:1.5; color:#edf4f8; }
+  #tutorial .tutFoot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  #tutorialKeys { display:flex; align-items:center; gap:5px; min-height:26px; color:#8faab8; }
+  #tutorialKeys kbd { min-width:26px; padding:3px 7px; text-align:center; font:800 12px ui-monospace,Consolas,monospace; color:#fff; background:#2b4150; border:1px solid rgba(255,255,255,.22); border-bottom-width:3px; border-radius:7px; }
+  #tutorialSkip { margin:0 0 0 auto; padding:7px 13px; border:1px solid rgba(255,255,255,.28); border-radius:999px; background:transparent; color:#cfe0ea; font-size:11px; letter-spacing:.06em; transition:background .15s,color .15s; }
+  #tutorialSkip:hover { background:rgba(255,255,255,.12); color:#fff; }
+  @keyframes tutIn { from{opacity:0;transform:translate(-50%,-8px);} to{opacity:1;transform:translate(-50%,0);} }
+  @keyframes tutPulse { 50%{opacity:.55;} }
   #levelUp { position:absolute; top:30%; left:50%; transform:translate(-50%,-50%) scale(.92); opacity:0; transition:opacity .3s,transform .3s; text-align:center; width:max-content; max-width:min(380px,calc(100vw - 32px)); border-color:#f3c75b; }
   #levelUp.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
   #levelUp small { display:block; color:#f3c75b; letter-spacing:.12em; font-size:11px; }
@@ -183,6 +201,8 @@
     #missionBtn { top:clamp(112px,19vh,158px); left:10px; padding:7px 9px; font-size:10px; }
     #missionPanel { top:clamp(150px,24vh,195px); left:10px; width:min(340px,calc(100vw - 20px)); max-height:55dvh; }
     #tutorial { top:clamp(160px,27vh,225px); width:calc(100vw - 28px); max-width:none; padding:10px 12px; font-size:11px; line-height:1.35; }
+    #tutorialText { font-size:12px; line-height:1.4; }
+    #tutorial .tutFoot { margin-top:9px; }
     #settingsBtn { top:clamp(112px,19vh,158px); right:10px; bottom:auto; padding:7px 9px; font-size:10px; }
     #settingsOverlay { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
     #settingsCard { width:min(420px,100%); max-height:85dvh; overflow:auto; padding:15px; }
@@ -263,7 +283,7 @@
   <div id="help" class="panel"><button id="helpToggle" type="button" aria-expanded="true"><span>KONTROL</span><span id="helpToggleIcon">−</span></button><div id="helpContent">W A S D — Bergerak<br>F — Layani pelanggan jika tidak ada kasir<br>I / J — Angkat & sajikan jika tanpa karyawan<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div></div>
   <div id="crosshair"></div>
   <div id="toast" class="panel">Selamat datang, Bos!</div>
-  <div id="tutorial" class="panel"><b>PANDUAN PEMULA</b><span id="tutorialText"></span><button id="tutorialSkip" type="button">LEWATI PANDUAN</button></div>
+  <div id="tutorial" class="panel"><div class="tutHead"><b>PANDUAN PEMULA</b><span id="tutorialStep" class="tutStep">LANGKAH 1/4</span></div><div id="tutorialDots"><i></i><i></i><i></i><i></i></div><span id="tutorialText"></span><div class="tutFoot"><div id="tutorialKeys"></div><button id="tutorialSkip" type="button">LEWATI PANDUAN</button></div></div>
   <div id="levelUp" class="panel"></div>
 </div>
 <button id="restaurantToggleBtn" type="button">BUKA RESTORAN</button>
@@ -1786,17 +1806,21 @@ function updateTutorial(){
  const el=document.getElementById('tutorial');if(!el)return;
  let skipped=false;try{skipped=localStorage.getItem('irlise_tutorial_skipped_v1')==='1';}catch(e){}
  if(saveData.tutorialDone||level>1||skipped){el.classList.remove('show');return;}
- let msg;
- if(holdingDish)msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';
- else if(dishReady)msg='Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.';
- else if(cooking)msg='Sedang memasak. Tunggu sampai matang.';
- else if(kitchenQueue.length){const m=menuCatalog[kitchenQueue[0].menuId];const missing=Object.entries(m.recipe).filter(([id,qty])=>(saveData.inventory[id]||0)<qty);msg=missing.length?'LANGKAH 3/4 — Bahan belum cukup: '+missing.map(([id,qty])=>(ingredientNames[id]||id)+' (butuh '+qty+', stok '+(saveData.inventory[id]||0)+')').join(', ')+'. Buka SHOP → Bahan-bahan untuk membeli.':'Pesanan siap dimasak. Dekati kulkas, tekan K, lalu dekati kompor dan tekan L.';}
- else if(customers.some(c=>c.stage==='ordering'))msg='Pelanggan menunggu di kasir. Dekati kasir lalu tekan F untuk menerima pesanan.';
- else if(customers.some(c=>c.stage==='line'))msg='Pelanggan pertama datang! Tunggu sampai ia tiba di kasir, lalu tekan F untuk menerima pesanan.';
+ let msg,step=2,keys=[];
+ if(holdingDish){step=4;keys=['J'];msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';}
+ else if(dishReady){step=4;keys=['I'];msg='Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.';}
+ else if(cooking){step=3;msg='Sedang memasak. Tunggu sampai matang.';}
+ else if(kitchenQueue.length){step=3;const m=menuCatalog[kitchenQueue[0].menuId];const missing=Object.entries(m.recipe).filter(([id,qty])=>(saveData.inventory[id]||0)<qty);if(!missing.length)keys=['K','L'];msg=missing.length?'Bahan belum cukup: '+missing.map(([id,qty])=>(ingredientNames[id]||id)+' (butuh '+qty+', stok '+(saveData.inventory[id]||0)+')').join(', ')+'. Buka SHOP → Bahan-bahan untuk membeli.':'Pesanan siap dimasak. Dekati kulkas, tekan K, lalu dekati kompor dan tekan L.';}
+ else if(customers.some(c=>c.stage==='ordering')){keys=['F'];msg='Pelanggan menunggu di kasir. Dekati kasir lalu tekan F untuk menerima pesanan.';}
+ else if(customers.some(c=>c.stage==='line')){keys=['F'];msg='Pelanggan pertama datang! Tunggu sampai ia tiba di kasir, lalu tekan F untuk menerima pesanan.';}
  else if(customers.some(c=>c.stage==='toSeat'))msg='Pelanggan sedang menuju meja...';
- else if((saveData.legacyStarterTables|0)+(saveData.items.table|0)===0)msg='LANGKAH 1/4 — Restoran masih kosong. Gunakan W A S D menuju kasir, tekan E, lalu beli meja pertama. Modal awal: 2.000 koin.';
-  else msg='LANGKAH 2/4 — Meja pertama sudah terpasang. Tunggu pelanggan datang, lalu layani pesanan pertamanya.';
- document.getElementById('tutorialText').textContent=msg;el.classList.add('show');
+ else if((saveData.legacyStarterTables|0)+(saveData.items.table|0)===0){step=1;keys=['W','A','S','D','›','E'];msg='Restoran masih kosong. Gunakan W A S D menuju kasir, tekan E, lalu beli meja pertama. Modal awal: 2.000 koin.';}
+  else msg='Meja pertama sudah terpasang. Tunggu pelanggan datang, lalu layani pesanan pertamanya.';
+ document.getElementById('tutorialText').textContent=msg;
+ const stepEl=document.getElementById('tutorialStep');if(stepEl)stepEl.textContent='LANGKAH '+step+'/4';
+ const dots=document.getElementById('tutorialDots');if(dots)Array.prototype.forEach.call(dots.children,(d,i)=>{d.className=i<step-1?'done':(i===step-1?'now':'');});
+ const kb=document.getElementById('tutorialKeys');if(kb&&kb.dataset.k!==keys.join('')){kb.dataset.k=keys.join('');kb.textContent='';keys.forEach(k=>{const n=document.createElement(k==='›'?'span':'kbd');n.textContent=k;kb.appendChild(n);});}
+ el.classList.add('show');
 }
 (function(){
  const b=document.getElementById('resetGame');let armed=false,tm;
