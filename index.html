@@ -836,7 +836,7 @@ function makeTable(x,z) {tablePositions.push([x,z]);
     if(dz!==0)box(g,'chair back',dx,.98,dz+(dz>0?.28:-.28),.7,.72,.13,materials.darkTeal);else box(g,'chair back',dx+(dx>0?.28:-.28),.98,dz,.13,.72,.7,materials.darkTeal);
   }
 }
-makeTable(-4.8,1.5); makeTable(4.8,1.5); makeTable(-4.8,-2.2);
+// Starter furniture is created only from saved ownership or the player's first purchase.
 
 // Plants and lamps.
 function makePlant(x,z) {
