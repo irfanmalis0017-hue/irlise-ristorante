@@ -1326,8 +1326,9 @@ function updatePedestrians(time){
 // the player's radius, allowing smooth axis-by-axis sliding along furniture.
 const solidRects = [
  // Small starter restaurant walls and service counter.
- {x:-8,z:-4.65,hx:.28,hz:2.4},{x:-8,z:4.95,hx:.28,hz:2.1},{x:8,z:-4.65,hx:.28,hz:2.4},{x:8,z:4.95,hx:.28,hz:2.1},{x:0,z:-7,hx:8.2,hz:.28},{x:-4.7,z:7,hx:3.3,hz:.22},{x:4.7,z:7,hx:3.3,hz:.22},
- {x:-16,z:0,hx:.24,hz:7.2},{x:16,z:0,hx:.24,hz:7.2},{x:-12,z:-7,hx:3.9,hz:.22},{x:12,z:-7,hx:3.9,hz:.22},{x:-12,z:7,hx:3.9,hz:.22},{x:12,z:7,hx:3.9,hz:.22},
+ // Wall colliders follow actual wall thickness; player clearance is handled by the player radius.
+ {x:-8,z:-4.65,hx:.175,hz:2.35},{x:-8,z:4.95,hx:.175,hz:2.05},{x:8,z:-4.65,hx:.175,hz:2.35},{x:8,z:4.95,hx:.175,hz:2.05},{x:0,z:-7,hx:8,hz:.175},{x:-4.7,z:7,hx:3.3,hz:.15},{x:4.7,z:7,hx:3.3,hz:.15},
+ {x:-16,z:0,hx:.15,hz:7},{x:16,z:0,hx:.15,hz:7},{x:-12,z:-7,hx:4,hz:.15},{x:12,z:-7,hx:4,hz:.15},{x:-12,z:7,hx:4,hz:.15},{x:12,z:7,hx:4,hz:.15},
  {x:0,z:-5.1,hx:3.65,hz:.82},{x:4.8,z:-4.55,hx:1.95,hz:1.0},
  {x:6.6,z:-5.9,hx:.62,hz:.62},
  ...[[-4.8,1.5],[4.8,1.5],[-4.8,-2.2]].map(([x,z])=>({x,z,hx:.82,hz:.82})),
@@ -1337,7 +1338,7 @@ const solidRects = [
  {x:8,z:.3,hx:.22,hz:2.6},{x:-8,z:.3,hx:.22,hz:2.6}
 ];
 function collidesAt(x,z){
- const r=.34;
+ const r=.24;
  for(const o of solidRects){
   const qx=Math.max(o.x-o.hx,Math.min(x,o.x+o.hx));
   const qz=Math.max(o.z-o.hz,Math.min(z,o.z+o.hz));
@@ -1351,12 +1352,12 @@ function collidesAt(x,z){
  }
  // Keep the player inside the solid side/back walls while allowing the front exit.
  if(z>6.55){if(z>10.2||Math.abs(x)>9.5||(Math.abs(x)>1.7&&z<7.9))return true;}
- else if(x < (leftAreaUnlocked?-15.5:-7.55) || x > (areaUnlocked?15.5:7.55) || z < -6.55)return true;
+ else if(x < (leftAreaUnlocked?-15.6:-7.58) || x > (areaUnlocked?15.6:7.58) || z < -6.58)return true;
  return false;
 }
 function movePlayerWithCollision(dx,dz){
- const nx=THREE.MathUtils.clamp(player.position.x+dx,leftAreaUnlocked?-15.5:-7.45,areaUnlocked?15.5:7.45);
- const nz=THREE.MathUtils.clamp(player.position.z+dz,-6.45,10.1);
+ const nx=THREE.MathUtils.clamp(player.position.x+dx,leftAreaUnlocked?-15.6:-7.58,areaUnlocked?15.6:7.58);
+ const nz=THREE.MathUtils.clamp(player.position.z+dz,-6.58,10.1);
  // Resolve axes independently so the player can slide along an obstacle.
  if(!collidesAt(nx,player.position.z))player.position.x=nx;
  if(!collidesAt(player.position.x,nz))player.position.z=nz;
