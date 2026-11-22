@@ -1174,7 +1174,7 @@ function spawnCustomer(){
  const g=makePerson({shirt:pickOne(custShirts),hair:pickOne(custHairs),skin:pickOne(custSkins),pants:pickOne(custPants),style,hijab:pickOne(custShirts),scale:.95+Math.random()*.1});
  g.position.set((Math.random()<.5?-1:1)*(4.5+Math.random()*3),0,9.8);scene.add(g);standPose(g);
  const badge=makeBadge();g.add(badge.sp);
- const total=1+Math.floor(Math.random()*2),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
+ const maxOrderItems=level===1?2:level<=3?3:level<=5?4:level<=7?5:6;const total=1+Math.floor(Math.random()*maxOrderItems),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
  seat.taken=true;
  customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,waitTotal:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.2,3.2)]});
  return true;
@@ -1481,7 +1481,7 @@ const KONFIG={
  bonusXpPesananLengkap:5,
  levelMenu:{1:['ayam','tea'],3:['pisang','nasgor','mie','jeruk'],4:['kopi'],5:['sate','bakso','soto']},
  levelMeja:[1,4], levelKursi:1, levelKompor:4,
- levelRekrut:{cashier:3,staff:4,chef:5}, levelShift2:6,
+ levelRekrut:{cashier:3,staff:4,chef:2}, levelShift2:6,
  levelRuanganKanan:6, levelRuanganKiri:8,
  batasKokiPerShift:2, batasPelayanPerShift:4,
  gajiHarian:{cashier:1200,staff:1500,chef:2000},
