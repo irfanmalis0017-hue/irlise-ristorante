@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS players (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   player_key TEXT NOT NULL UNIQUE,
   display_name TEXT NOT NULL,
-  consent_at TEXT NOT NULL,
+  consent_at TEXT,
+  tracking_notice_at TEXT NOT NULL DEFAULT (datetime('now')),
   first_seen_at TEXT NOT NULL DEFAULT (datetime('now')),
   last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
