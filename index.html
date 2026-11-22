@@ -3,7 +3,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>IRLISE RISTORANTE — Update 2.3.7</title>
 <style>
   :root { color-scheme: dark; }
@@ -241,10 +241,71 @@
   @keyframes guideBounce { from{translate:0 -4px} to{translate:0 8px} }
   @media(max-width:650px){ #guideCard { top:10px; padding:12px; } #guideTitle{font-size:15px} #guideArrow{width:40px;height:54px} }
 
+
+  /* ===== Character select (gate step) ===== */
+  #playerGate { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); }
+  .playerGateCard { margin:auto; }
+  .playerGateCard.charStep { width:min(620px,100%); }
+  #playerChar { display:none; }
+  .playerGateCard.charStep #playerChar { display:block; }
+  .chLayout { display:grid; grid-template-columns:1fr; gap:10px; margin-top:6px; }
+  .chPreview { display:grid; place-items:center; border-radius:14px; background:radial-gradient(circle at 50% 35%,#2c4558,#101d29); border:1px solid rgba(125,170,190,.2); padding:8px; }
+  #chSvg { width:min(150px,38vw); height:auto; max-height:210px; display:block; }
+  .chRow { margin:8px 0; }
+  .chRow > span { display:block; margin-bottom:6px; font-size:12px; color:#dce8ef; }
+  .chBtns { display:flex; flex-wrap:wrap; gap:8px; }
+  .chSw { width:40px; height:40px; border-radius:50%; padding:0; border:2px solid rgba(255,255,255,.28); background:var(--c); cursor:pointer; touch-action:manipulation; }
+  .chSw[aria-pressed="true"] { border-color:#f3c75b; box-shadow:0 0 0 3px rgba(243,199,91,.35); }
+  .chPill { min-height:40px; padding:0 11px; border-radius:999px; border:1px solid rgba(255,255,255,.25); background:#223646; color:#fff; font:700 12.5px Inter,system-ui,sans-serif; cursor:pointer; touch-action:manipulation; }
+  .chPill[aria-pressed="true"] { background:#f3c75b; color:#1b2630; border-color:#f3c75b; }
+  #charStart { background:#5ed2ae; color:#10252b; }
+  #playerEditChar { background:#344956; color:#fff; }
+  @media (max-height:700px) { #chSvg { width:min(120px,30vw); } }
+  @media (max-height:760px) { .chActions { position:sticky; bottom:0; z-index:2; padding:12px 0 2px; margin-top:0; background:linear-gradient(180deg,rgba(16,29,41,0),#101d29 38%); } }
+  @media (min-width:560px) and (max-height:560px) {
+    .chLayout { grid-template-columns:170px 1fr; grid-template-areas:"prev opts" "act opts"; align-items:center; column-gap:16px; }
+    .chPreview { grid-area:prev; } .chOpts { grid-area:opts; } .chActions { grid-area:act; margin-top:0; align-self:start; }
+    .playerGateCard.charStep > p { display:none; }
+    .chRow { margin:5px 0; } .chSw { width:36px; height:36px; } .chPill { min-height:36px; }
+    .playerGateCard.charStep { padding:16px; }
+    .playerGateCard.charStep h2 { font-size:19px; }
+    .playerGateCard.charStep p { margin:4px 0 6px; }
+  }
+
+  /* ===== Mobile stability ===== */
+  html, body { overscroll-behavior:none; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; -webkit-text-size-adjust:100%; touch-action:manipulation; }
+  body { -webkit-user-select:none; user-select:none; }
+  input, textarea { -webkit-user-select:text; user-select:text; }
+  @supports (height:100dvh) { html, body { height:100dvh; } }
+  /* Phone in landscape: left column = identity/mission/shop/joystick, right column = stats on top + buttons at the bottom, tutorial in the middle. */
+  @media (orientation:landscape) and (max-height:520px) {
+    body.touch #brand { top:max(8px,env(safe-area-inset-top)); left:max(10px,env(safe-area-inset-left)); width:auto; max-width:150px; padding:6px 9px; }
+    body.touch #brand strong { font-size:12px; }
+    body.touch #brand .playerHudLabel { font-size:8px; }
+    body.touch #brand .playerHudIdLabel { margin-top:5px; }
+    body.touch #brand #playerHudId { font-size:10px; }
+    body.touch #stats { top:max(8px,env(safe-area-inset-top)); right:max(10px,env(safe-area-inset-right)); left:auto; bottom:auto; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px; width:auto; max-width:calc(100vw - 190px - env(safe-area-inset-left) - env(safe-area-inset-right)); }
+    body.touch .stat, body.touch #stats .stat { min-width:0; padding:5px 8px; border-radius:10px; }
+    body.touch .stat small { font-size:8px; letter-spacing:.04em; }
+    body.touch .stat b { font-size:12px; }
+    body.touch #stats .xpbar { height:3px; margin:2px 0 1px; }
+    body.touch #missionBtn { top:calc(max(8px,env(safe-area-inset-top)) + 72px); left:max(10px,env(safe-area-inset-left)); padding:6px 9px; font-size:10px; }
+    body.touch #missionPanel { top:calc(max(8px,env(safe-area-inset-top)) + 108px); left:max(10px,env(safe-area-inset-left)); max-height:calc(100dvh - 130px); }
+    body.touch #joy { left:max(14px,env(safe-area-inset-left)); bottom:max(12px,env(safe-area-inset-bottom)); width:104px; height:104px; }
+    body.touch #joyKnob { width:44px; height:44px; margin:-22px 0 0 -22px; }
+    body.touch #shopLauncher { left:max(10px,env(safe-area-inset-left)); bottom:calc(max(12px,env(safe-area-inset-bottom)) + 116px); padding:6px 10px; font-size:11px; }
+    body.touch #actBtns { right:max(10px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); grid-template-columns:repeat(4,50px); gap:5px; }
+    body.touch .actBtn { height:46px; border-radius:11px; font-size:9px; }
+    body.touch .actBtn b { font-size:15px; }
+    body.touch #restaurantToggleBtn { right:max(10px,env(safe-area-inset-right)); bottom:calc(max(12px,env(safe-area-inset-bottom)) + 108px); padding:7px 10px; font-size:10px; }
+    body.touch #settingsBtn { right:max(10px,env(safe-area-inset-right)); top:auto; bottom:calc(max(12px,env(safe-area-inset-bottom)) + 148px); padding:7px 10px; font-size:10px; }
+    body.touch #tutorial { top:auto; bottom:max(10px,env(safe-area-inset-bottom)); left:calc(max(14px,env(safe-area-inset-left)) + 118px); right:calc(max(10px,env(safe-area-inset-right)) + 228px); transform:none; width:auto; min-width:0; max-width:400px; margin:0 auto; padding:8px 10px; font-size:10px; line-height:1.35; max-height:42dvh; overflow:auto; }
+    body.touch #marketPanel, body.touch #businessPanel, body.touch #levelUp, body.touch #settingsCard { max-height:calc(100dvh - 20px); }
+  }
 </style>
 </head>
 <body>
-<div id="playerGate" data-notr><div class="playerGateCard"><h2 id="playerGateTitle">Selamat datang di IRLISE!</h2><p id="playerGateIntro">Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><div id="playerNameForm"><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Buat identitas pemain</button></div></div><div id="playerIdentity" style="display:none"><div class="playerIdentityCard"><small>IDENTITAS PEMAIN</small><div class="playerIdentityName" id="playerIdentityName"></div><small>PLAYER ID</small><div class="playerIdentityId" id="playerIdentityId"></div><p>ID ini unik dan akan tetap digunakan pada sesi bermain berikutnya.</p></div><div class="playerGateActions"><button id="playerEnter" type="button">Masuk ke game</button></div></div><div id="playerGateStatus" role="status"></div></div></div>
+<div id="playerGate" data-notr><div class="playerGateCard"><h2 id="playerGateTitle">Selamat datang di IRLISE!</h2><p id="playerGateIntro">Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><div id="playerNameForm"><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Buat identitas pemain</button></div></div><div id="playerIdentity" style="display:none"><div class="playerIdentityCard"><small>IDENTITAS PEMAIN</small><div class="playerIdentityName" id="playerIdentityName"></div><small>PLAYER ID</small><div class="playerIdentityId" id="playerIdentityId"></div><p>ID ini unik dan akan tetap digunakan pada sesi bermain berikutnya.</p></div><div class="playerGateActions"><button id="playerEnter" type="button">Masuk ke game</button><button id="playerEditChar" type="button" style="display:none">Ubah karakter</button></div></div><div id="playerChar"><div class="chLayout"><div class="chPreview"><svg id="chSvg" viewBox="0 0 120 170" role="img" aria-label="Pratinjau karakter"></svg></div><div class="chOpts"><div class="chRow"><span>Gaya rambut</span><div class="chBtns" data-k="style"></div></div><div class="chRow"><span>Warna kulit</span><div class="chBtns" data-k="skin"></div></div><div class="chRow" id="chHairRow"><span>Warna rambut</span><div class="chBtns" data-k="hair"></div></div><div class="chRow"><span>Warna seragam &amp; topi</span><div class="chBtns" data-k="shirt"></div></div></div><div class="playerGateActions chActions"><button id="charStart" type="button">Mulai bermain</button></div></div></div><div id="playerGateStatus" role="status"></div></div></div>
 
 <div id="langScreen" data-notr><div class="langCard"><h1>IRLISE RISTORANTE</h1><p>Pilih bahasa • Choose your language</p><button type="button" data-lang="id">Bahasa Indonesia</button><button type="button" data-lang="en">English</button></div></div>
 <div id="maintScreen" data-notr role="alertdialog" aria-live="assertive"><div class="maintCard"><div class="maintIcon">🛠️</div><h2 id="maintTitle"></h2><p id="maintMsg"></p><small id="maintSub"></small></div></div>
@@ -286,6 +347,7 @@
    <button class="qualityBtn" type="button" data-quality="high" id="qualityHigh">High</button>
   </div>
   <button class="settingAction danger" id="restartLevelOne" type="button">↻ Restart dari Level 1</button>
+  <button class="settingAction" id="changeChar" type="button">🧑‍🍳 Ganti karakter</button>
   <button class="settingAction" id="langToggle" type="button"></button>
   <div class="setSec">Cadangan & pindah perangkat</div>
   <p>Progres tersimpan otomatis di browser ini. Ekspor kode save untuk memindahkan progres ke perangkat lain atau sebagai cadangan.</p>
@@ -452,7 +514,7 @@
  'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.2 — Build From Zero',
  'Menyiapkan restoran 3D...':'Preparing the 3D restaurant...','Pastikan koneksi internet aktif untuk memuat mesin 3D.':'Make sure your internet connection is on to load the 3D engine.',
  'Level restoran':'Restaurant level','Uang pemain':'Your money','Reputasi':'Reputation','Jam kerja':'Work hours','KONTROL':'CONTROLS',
- 'W A S D — Bergerak':'W A S D — Move','F — Layani pelanggan jika tidak ada kasir':'F — Serve customer if there is no cashier','I / J — Angkat & sajikan jika tanpa karyawan':'I / J — Pick up & serve if there is no staff',
+ '🧑‍🍳 Ganti karakter':'🧑‍🍳 Change character','W A S D — Bergerak':'W A S D — Move','F — Layani pelanggan jika tidak ada kasir':'F — Serve customer if there is no cashier','I / J — Angkat & sajikan jika tanpa karyawan':'I / J — Pick up & serve if there is no staff',
  'K — Buka / tutup kulkas':'K — Open / close the fridge','L — Masak manual jika tanpa koki (10 detik)':'L — Cook manually if there is no chef (10 sec)','Mouse — Putar kamera • Shift — Berlari':'Mouse — Rotate camera • Shift — Run',
  'E — Menu bisnis dekat kasir':'E — Business menu near the counter','Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.':'Get close to the fridge, stove and customers to interact.',
  'Selamat datang, Bos!':'Welcome, Boss!','PANDUAN PEMULA':'BEGINNER GUIDE','⚙ PENGATURAN':'⚙ SETTINGS','GAME DIJEDA':'GAME PAUSED','Pengaturan':'Settings',
@@ -556,6 +618,54 @@
   fetch(API+'/end',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:id}),keepalive:true}).catch(()=>{});
  }
  window.addEventListener('pagehide',end);
+
+ // ----- Pemilihan karakter (v2.3.8): disimpan terpisah dari save game -----
+ const CK='irlise_character_v1', CPEND='irlise_character_pending';
+ const STYLES=['short','long','bun','hijab'];
+ const SKINS=[0xf3d2b3,0xe9b58e,0xc98f6c,0x8d5a3b];
+ const HAIRS=[0x17191d,0x2b2320,0x49352c,0x8a5a2b,0xc9a45c,0x7a2f2f];
+ const SHIRTS=[0x2f8f8b,0x4b83b7,0xb5483f,0x7a5aa6,0x5a9a4e,0xd08b2c,0x3a3f46];
+ const DEF={style:'short',skin:0xe9b58e,hair:0x2b2320,shirt:0x2f8f8b};
+ const okCol=v=>Number.isInteger(v)&&v>=0&&v<=0xffffff;
+ const readChar=()=>{try{const c=JSON.parse(localStorage.getItem(CK)||'null');return c&&STYLES.includes(c.style)&&okCol(c.skin)&&okCol(c.hair)&&okCol(c.shirt)?{style:c.style,skin:c.skin,hair:c.hair,shirt:c.shirt}:null;}catch(e){return null;}};
+ const hx=v=>'#'+(v>>>0).toString(16).padStart(6,'0');
+ const shade=(v,f)=>hx((Math.round(((v>>16)&255)*f)<<16)|(Math.round(((v>>8)&255)*f)<<8)|Math.round((v&255)*f));
+ let cur=Object.assign({},readChar()||DEF);
+ window.__irliseChar=readChar();
+ function chSvg(c){
+  const sk=hx(c.skin),hr=hx(c.hair),sh=hx(c.shirt),shd=shade(c.shirt,.78);let s='';
+  if(c.style==='long')s+='<path d="M34 54Q30 112 42 124L78 124Q90 112 86 54Z" fill="'+hr+'"/>';
+  if(c.style==='hijab')s+='<path d="M31 56Q29 16 60 16Q91 16 89 56L96 98Q60 112 24 98Z" fill="'+sh+'"/>';
+  s+='<rect x="43" y="124" width="14" height="32" rx="6" fill="#34445b"/><rect x="63" y="124" width="14" height="32" rx="6" fill="#34445b"/>';
+  s+='<ellipse cx="50" cy="158" rx="10" ry="5" fill="#252a31"/><ellipse cx="70" cy="158" rx="10" ry="5" fill="#252a31"/>';
+  s+='<rect x="22" y="84" width="14" height="36" rx="7" fill="'+sh+'"/><rect x="84" y="84" width="14" height="36" rx="7" fill="'+sh+'"/>';
+  s+='<circle cx="29" cy="123" r="6" fill="'+sk+'"/><circle cx="91" cy="123" r="6" fill="'+sk+'"/>';
+  s+='<rect x="34" y="80" width="52" height="50" rx="14" fill="'+sh+'"/><path d="M48 80L60 92L72 80Z" fill="#fff1d8"/>';
+  s+='<rect x="45" y="96" width="30" height="36" rx="6" fill="#f3e5c9"/><rect x="66" y="100" width="8" height="5" rx="1" fill="#f3c75b"/>';
+  s+='<rect x="54" y="72" width="12" height="12" rx="4" fill="'+sk+'"/><ellipse cx="60" cy="52" rx="22" ry="25" fill="'+sk+'"/>';
+  if(c.style!=='hijab'){
+   s+='<path d="M37 50Q35 22 60 22Q85 22 83 50Q76 36 60 36Q44 36 37 50Z" fill="'+hr+'"/>';
+   if(c.style==='bun')s+='<circle cx="60" cy="16" r="9" fill="'+hr+'"/>';
+   s+='<path d="M36 38Q60 6 84 38Z" fill="'+sh+'"/><ellipse cx="60" cy="38" rx="27" ry="4.5" fill="'+shd+'"/>';
+  }
+  s+='<circle cx="51" cy="54" r="2.6" fill="#1d1816"/><circle cx="69" cy="54" r="2.6" fill="#1d1816"/>';
+  s+='<ellipse cx="45" cy="62" rx="4" ry="2.4" fill="#d98979" opacity=".7"/><ellipse cx="75" cy="62" rx="4" ry="2.4" fill="#d98979" opacity=".7"/>';
+  s+='<path d="M54 66Q60 71 66 66" fill="none" stroke="#9a5148" stroke-width="2" stroke-linecap="round"/>';
+  return s;
+ }
+ function buildChar(){
+  const mk=(k,arr)=>{const box=document.querySelector('#playerChar [data-k="'+k+'"]');box.innerHTML='';arr.forEach(v=>{const b=document.createElement('button');b.type='button';b.dataset.v=String(v);
+   if(k==='style'){b.className='chPill';b.textContent={short:'Pendek',long:'Panjang',bun:'Cepol',hijab:'Hijab'}[v];}
+   else{b.className='chSw';b.style.setProperty('--c',hx(v));b.setAttribute('aria-label',(k==='skin'?'Warna kulit ':k==='hair'?'Warna rambut ':'Warna seragam ')+hx(v));}
+   box.appendChild(b);});};
+  mk('style',STYLES);mk('skin',SKINS);mk('hair',HAIRS);mk('shirt',SHIRTS);
+ }
+ function syncChar(){
+  document.querySelectorAll('#playerChar button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(String(cur[b.parentElement.dataset.k])===b.dataset.v)));
+  $('chHairRow').style.display=cur.style==='hijab'?'none':'';
+  $('chSvg').innerHTML=chSvg(cur);
+ }
+ buildChar();
  window.__playerTrackingReady=new Promise(resolve=>{
   const old=read(),gate=$('playerGate');
   function showIdentity(profile){
@@ -571,9 +681,20 @@
    $('playerGateStatus').textContent='';
   }
   gate.classList.add('open');
+  function openChar(){
+   $('playerNameForm').style.display='none';$('playerIdentity').style.display='none';
+   $('playerGateTitle').textContent='Pilih karakter kamu';
+   $('playerGateIntro').textContent='Ini tampilan pemilik restoran yang kamu mainkan. Bisa diganti kapan saja lewat Pengaturan.';
+   $('playerGateStatus').textContent='';
+   gate.querySelector('.playerGateCard').classList.add('charStep');
+   syncChar();gate.scrollTop=0;
+  }
+  function finish(){gate.classList.remove('open');resolve();}
   if(old&&old.name&&old.player_key){
    showIdentity(old);
    start(old);
+   $('playerEditChar').style.display=readChar()?'block':'none';
+   try{if(localStorage.getItem(CPEND)==='1')openChar();}catch(e){}
   }else{
    $('playerAccept').addEventListener('click',async()=>{
     const name=$('playerName').value.trim().replace(/\s+/g,' ');
@@ -584,7 +705,10 @@
    });
    $('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')$('playerAccept').click();});
   }
-  $('playerEnter').addEventListener('click',()=>{gate.classList.remove('open');resolve();});
+  $('playerEnter').addEventListener('click',()=>{if(readChar())finish();else openChar();});
+  $('playerEditChar').addEventListener('click',openChar);
+  $('playerChar').addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(!b)return;const k=b.parentElement.dataset.k;cur[k]=k==='style'?b.dataset.v:Number(b.dataset.v);syncChar();});
+  $('charStart').addEventListener('click',()=>{try{localStorage.setItem(CK,JSON.stringify(cur));localStorage.removeItem(CPEND);}catch(e){}window.__irliseChar=Object.assign({},cur);finish();});
  });
 })();
 </script>
@@ -616,7 +740,7 @@ try{
  const savedQuality=localStorage.getItem(QUALITY_KEY);
  graphicsQuality=QUALITY_PRESETS[savedQuality]?savedQuality:getDefaultQuality();
 }catch(e){graphicsQuality=getDefaultQuality();}
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1214,7 +1338,8 @@ function seatPose(p){const u=p.userData;u.root.position.y=-.28;for(const l of u.
 // The model uses rounded forms, layered hair, a readable face and articulated limbs.
 const player=new THREE.Group(); scene.add(player); player.position.set(0,0,4.0);
 // Pemilik restoran: model manusia baru (topi teal, kemeja polo, celemek krem, tanda nama).
-const avatar=makePerson({skin:0xe9b58e,hair:0x2b2320,shirt:0x2f8f8b,pants:0x34445b,shoe:0x252a31,style:'short',apron:0xf3e5c9,tag:true,cap:0x287f80,collar:0xfff1d8,scale:1.12});
+const CH=window.__irliseChar||{style:'short',skin:0xe9b58e,hair:0x2b2320,shirt:0x2f8f8b};
+const avatar=makePerson({skin:CH.skin,hair:CH.hair,shirt:CH.shirt,pants:0x34445b,shoe:0x252a31,style:CH.style,hijab:CH.shirt,apron:0xf3e5c9,tag:true,cap:CH.style==='hijab'?null:CH.shirt,collar:0xfff1d8,scale:1.12});
 player.add(avatar);standPose(avatar);
 player.userData.speed=4.2;
 // Seated customers: each NPC is aligned to an actual chair and faces its table.
@@ -1521,11 +1646,14 @@ let yaw=0, pitch=.23, dragging=false, lastX=0,lastY=0;
 const keys={};
 addEventListener('keydown',e=>{if(e.code==='Escape'&&settingsOverlay.classList.contains('open')){settingsOverlay.classList.remove('open');return;}if(settingsOverlay.classList.contains('open')||GATE.maint)return;keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
 addEventListener('keyup',e=>keys[e.code]=false);
-addEventListener('blur',()=>{for(const k in keys)keys[k]=false;dragging=false;});canvas.addEventListener('pointercancel',()=>dragging=false);
-canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointerup',()=>dragging=false);
+let camPid=null;
+function resetInput(){for(const k in keys)keys[k]=false;dragging=false;camPid=null;const jk=document.getElementById('joyKnob');if(jk)jk.style.transform='';}
+addEventListener('blur',resetInput);
+const camEnd=e=>{if(e.pointerId===camPid){camPid=null;dragging=false;}};
+canvas.addEventListener('pointercancel',camEnd);canvas.addEventListener('pointerup',camEnd);canvas.addEventListener('lostpointercapture',camEnd);
+canvas.addEventListener('pointerdown',e=>{if(camPid!==null)return;camPid=e.pointerId;dragging=true;lastX=e.clientX;lastY=e.clientY;try{canvas.setPointerCapture(e.pointerId);}catch(_){}});
 canvas.addEventListener('pointermove',e=>{
- if(!dragging)return;
+ if(!dragging||e.pointerId!==camPid)return;
  const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
  yaw-=dx*.006;pitch=Math.max(-.05,Math.min(.65,pitch+dy*.004));
 });
@@ -2260,6 +2388,7 @@ const GAME_VERSION='2.3.0';
  $('saveCode').placeholder=L==='en'?'Paste your save code here':'Tempel kode save di sini';
  const lt=$('langToggle');lt.textContent=L==='en'?'🌐 Language: English':'🌐 Bahasa: Indonesia';
  lt.addEventListener('click',()=>{persist();try{localStorage.setItem('irlise_lang',L==='en'?'id':'en');}catch(e){}location.reload();});
+ document.getElementById('changeChar').addEventListener('click',()=>{persist();try{localStorage.setItem('irlise_character_pending','1');}catch(e){}location.reload();});
  const msg=$('saveMsg'),say=t=>{msg.textContent=T(t);};
  $('exportSave').addEventListener('click',()=>{
   persist();const code='IRLISE1.'+btoa(unescape(encodeURIComponent(JSON.stringify(saveData))));
@@ -2387,9 +2516,10 @@ if(('ontouchstart' in window)||matchMedia('(pointer:coarse)').matches){
  const joyMove=ev=>{const r=joy.getBoundingClientRect(),R=r.width/2;let dx=ev.clientX-(r.left+R),dy=ev.clientY-(r.top+R);const len=Math.hypot(dx,dy);if(len>R){dx*=R/len;dy*=R/len;}
   knob.style.transform='translate('+dx+'px,'+dy+'px)';const nx=dx/R,ny=dy/R;keys.KeyA=nx<-.3;keys.KeyD=nx>.3;keys.KeyW=ny<-.3;keys.KeyS=ny>.3;};
  const joyEnd=()=>{jid=null;knob.style.transform='';keys.KeyA=keys.KeyD=keys.KeyW=keys.KeyS=false;};
- joy.addEventListener('pointerdown',ev=>{jid=ev.pointerId;joy.setPointerCapture(jid);joyMove(ev);});
+ joy.addEventListener('pointerdown',ev=>{jid=ev.pointerId;try{joy.setPointerCapture(jid);}catch(_){}joyMove(ev);});
  joy.addEventListener('pointermove',ev=>{if(ev.pointerId===jid)joyMove(ev);});
- joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);
+ joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);joy.addEventListener('lostpointercapture',joyEnd);
+ ui.addEventListener('contextmenu',e=>e.preventDefault());
 }
 const clock=new THREE.Clock();
 let lastErr=0;
@@ -2444,10 +2574,32 @@ loading.classList.add('hidden');
 // Guided tutorial overlay removed by request.
 showToast('IRLISE RISTORANTE Update 2.3 siap! Misi Harian tersedia.');
 
-addEventListener('resize',()=>{
- camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
- renderer.setSize(innerWidth,innerHeight);
+// ===== Stabilitas mobile: ukuran layar, rotasi, tab di-background, WebGL context hilang =====
+function fitScreen(){
+ const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),a=w/h;
+ camera.aspect=a;
+ camera.fov=a<1?Math.min(76,58+(1/a-1)*9):58; // layar portrait sempit: lebarkan sudut pandang
+ camera.updateProjectionMatrix();
+ renderer.setSize(w,h);
+}
+let fitT=0;const fitSoon=()=>{fitScreen();clearTimeout(fitT);fitT=setTimeout(fitScreen,250);};
+addEventListener('resize',fitSoon);
+addEventListener('orientationchange',()=>{fitSoon();setTimeout(fitScreen,600);});
+if(window.visualViewport)visualViewport.addEventListener('resize',fitSoon);
+fitScreen();
+addEventListener('contextmenu',e=>{if(document.body.classList.contains('touch'))e.preventDefault();});
+const saveNow=()=>{try{persist();}catch(_){}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){saveNow();resetInput();}});
+addEventListener('pagehide',saveNow);
+canvas.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();saveNow();
+ loading.classList.remove('hidden');loading.innerHTML='<div><div style="font-size:20px;font-weight:800">Grafis terputus</div><small>Memulihkan tampilan game…</small></div>';
 });
+canvas.addEventListener('webglcontextrestored',()=>{
+ let n=0;try{n=+sessionStorage.getItem('irlise_ctx_reload')||0;sessionStorage.setItem('irlise_ctx_reload',String(n+1));}catch(_){}
+ if(n<3)location.reload();
+});
+setTimeout(()=>{try{sessionStorage.removeItem('irlise_ctx_reload');}catch(_){}},30000);
 </script>
 </body>
 </html>
