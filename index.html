@@ -1145,10 +1145,10 @@ function leaveNow(c,angry){
  // Update 1.7: bersihkan tiket aktif jika pelanggan pergi di tengah proses.
  // Ini mencegah dapur/pelayan terkunci pada pelanggan yang sudah tidak ada.
  for(let i=activeCooks.length-1;i>=0;i--)if(activeCooks[i].ticket.cust===c)activeCooks.splice(i,1);
- readyTickets.splice(0,readyTickets.length,...readyTickets.filter(t=>t.cust!==c));
+ const removedReady=readyTickets.filter(t=>t.cust===c);for(const t of removedReady){const p=scene.getObjectByName('ready plate '+t.id);if(p){scene.remove(p);disposeObj(p);}}readyTickets.splice(0,readyTickets.length,...readyTickets.filter(t=>t.cust!==c));
  if(currentTicket && currentTicket.cust===c){
   currentTicket=null;
-  if(holdingDish){cooking=false;cookStarted=0;}
+  
   dishReady=readyTickets.length>0;
   if(holdingDish){
    avatar.remove(holdingDish);
@@ -1161,11 +1161,11 @@ function leaveNow(c,angry){
    waiterDish=null;
   }
   {const wk=getWorker('staff');if(wk&&wk.userData.home){waiterMode='return';waiterPath=findPath(V3(wk.position.x,wk.position.z),wk.userData.home);}else{waiterMode='idle';waiterPath=[];}}
-  for(const t of readyTickets){const p=scene.getObjectByName('ready plate '+t.id);if(p){scene.remove(p);disposeObj(p);}}
+  
   if(typeof setCookStatus==='function')
    setCookStatus('Pesanan dibatalkan karena pelanggan sudah pergi. Dapur siap menerima pesanan berikutnya.',true);
  }
- if(angry){rep=Math.max(0,rep-.15);showToast('Pelanggan kesal menunggu terlalu lama dan pergi. Reputasi turun.');persist();}
+ if(angry){rep=Math.max(0,rep-.25);showToast('😠 Pelanggan marah karena menunggu lebih dari 30 detik lalu pergi. Reputasi turun.');persist();}
 }
 // Kursi: 4 kursi per meja.
 const seatList=[];
@@ -1176,14 +1176,15 @@ const seatStand=q=>V3(q.x+q.ux*.85,q.z+q.uz*.85);
 // Balon pesanan di atas kepala pelanggan.
 function makeBadge(){const cv=document.createElement('canvas');cv.width=256;cv.height=128;const cx=cv.getContext('2d');const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,depthTest:false}));sp.scale.set(1.5,.75,1);sp.position.set(0,2.65,0);sp.visible=false;sp.renderOrder=10;return {sp,cx,tex,key:''};}
-function drawBadge(b,text,green){const k=text+(green?'1':'0');if(b.key===k)return;b.key=k;const x=b.cx;x.clearRect(0,0,256,128);x.fillStyle=green?'rgba(40,127,92,.95)':'rgba(25,39,48,.92)';x.beginPath();if(x.roundRect)x.roundRect(8,8,240,112,24);else x.rect(8,8,240,112);x.fill();x.font=(text.length>6?'44px':'64px')+' Arial';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(text,128,64);b.tex.needsUpdate=true;}
+function drawBadge(b,text,green,angry=false){const k=text+(green?'1':'0')+(angry?'A':'');if(b.key===k)return;b.key=k;const x=b.cx;x.clearRect(0,0,256,128);x.fillStyle=angry?'rgba(175,45,45,.96)':green?'rgba(40,127,92,.95)':'rgba(25,39,48,.92)';x.beginPath();if(x.roundRect)x.roundRect(8,8,240,112,24);else x.rect(8,8,240,112);x.fill();x.font=(text.length>6?'44px':'64px')+' Arial';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(text,128,64);b.tex.needsUpdate=true;}
 function refreshBadge(c){
  const b=c.badge;let text='',show=true,green=false;
  if(c.stage==='ordering')text='🧾';
  else if(c.stage==='seated'){text=c.remaining.map(id=>menuCatalog[id].emoji).join('');green=!!((holdingDish&&currentTicket&&c.remaining.includes(currentTicket.menuId))||readyTickets.some(t=>c.remaining.includes(t.menuId)));}
  else if(c.stage==='eating')text='😋';
  else show=false;
- b.sp.visible=show;if(show)drawBadge(b,text,green);
+ const angry=(c.stage==='ordering'||c.stage==='seated')&&c.wait>=20;if(angry)text='😠 '+text;
+ b.sp.visible=show;if(show)drawBadge(b,text,green,angry);
 }
 
 function spawnCustomer(){
@@ -1194,7 +1195,7 @@ function spawnCustomer(){
  const badge=makeBadge();g.add(badge.sp);
  const total=2+Math.floor(Math.random()*3),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
  seat.taken=true;
- customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.2,3.2)]});
+ customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,waitTotal:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.2,3.2)]});
  return true;
 }
 const slotPos=i=>V3(i===0?-2.2:-2.8,-3.55+1.0*i);
@@ -1225,8 +1226,8 @@ document.getElementById('rejectOrder').addEventListener('click',rejectCashierOrd
 // Pembayaran per hidangan + bonus untuk pesanan banyak.
 function deliverTo(c,ticket=currentTicket){
  if(!ticket||!c.remaining.includes(ticket.menuId))return false;
- const m=menuCatalog[ticket.menuId];const ri=c.remaining.indexOf(ticket.menuId);if(ri>=0)c.remaining.splice(ri,1);c.wait=0;coins+=m.price;c.served++;c.paid+=m.price;recordDailyMission('dishes',1);recordDailyMission('revenue',m.price);currentTicket=null;const xpGain=awardXp(Math.round(m.price/100));saveData.tutorialDone=true;
- if(c.served>=c.total){recordDailyMission('orders',1);rep=Math.min(5,rep+.04);const xpBonus=awardXp(KONFIG.bonusXpPesananLengkap);const tip=Math.round(c.paid*.1/10)*10;coins+=tip;c.paid+=tip;c.stage='eating';c.timer=0;showToast('Pesanan lengkap! '+m.name+' +'+m.price+' • bonus pesanan banyak +'+tip+' koin • +'+(xpGain+xpBonus)+' XP');setCookStatus('Pelanggan puas — total '+rupiah(c.paid)+' koin',true);}
+ const m=menuCatalog[ticket.menuId];const ri=c.remaining.indexOf(ticket.menuId);if(ri>=0)c.remaining.splice(ri,1);coins+=m.price;c.served++;c.paid+=m.price;recordDailyMission('dishes',1);recordDailyMission('revenue',m.price);currentTicket=null;const xpGain=awardXp(Math.round(m.price/100));saveData.tutorialDone=true;
+ if(c.served>=c.total){recordDailyMission('orders',1);const satisfaction=c.waitTotal<=10?.12:c.waitTotal<=20?.07:c.waitTotal<=30?.02:-.05;rep=Math.max(0,Math.min(5,rep+satisfaction));const xpBonus=awardXp(KONFIG.bonusXpPesananLengkap);const tip=Math.round(c.paid*.1/10)*10;coins+=tip;c.paid+=tip;c.stage='eating';c.timer=0;showToast('Pesanan lengkap! '+m.name+' +'+m.price+' • bonus pesanan banyak +'+tip+' koin • +'+(xpGain+xpBonus)+' XP');setCookStatus('Penilaian pelanggan: '+(satisfaction>=.1?'Sangat puas':satisfaction>=.05?'Puas':satisfaction>=0?'Cukup puas':'Kurang puas')+' • reputasi '+rep.toFixed(2)+' ★',true);}
  else{showToast(m.name+' diantar! +'+m.price+' koin • +'+xpGain+' XP ('+c.served+'/'+c.total+')');setCookStatus(m.name+' disajikan. Sisa pesanan pelanggan: '+(c.total-c.served),true);}
  persist();renderInventory();renderMarket();sfxCoin();return true;
 }
@@ -1257,8 +1258,10 @@ function updateStaff(dt){
    if(waiterMode==='toFood'){
     const plate=scene.getObjectByName('ready plate '+currentTicket.id);if(plate){scene.remove(plate);disposeObj(plate);}
     if(!currentTicket){waiterMode='idle';waiterPath=[];return;}
+    const target=customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
+    if(!target){readyTickets.unshift(currentTicket);currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);return;}
     waiterDish=createAyamGeprekPlate(currentOrderMenuId);waiterDish.scale.setScalar(.42);waiterDish.position.set(0,1.18,.42);waiter.add(waiterDish);
-    waiterMode='toGuest';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),seatStand(currentTicket.cust.seat));showToast('Pelayan mengambil pesanan matang.');
+    waiterMode='toGuest';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),seatStand(target.seat));showToast('Pelayan mengambil '+menuCatalog[currentOrderMenuId].name+'.');
    }else if(waiterMode==='toGuest'){
     const c=customers.filter(x=>x.stage==='seated'&&currentTicket&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
     if(c){if(waiterDish){waiter.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}deliverTo(c,currentTicket);waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
@@ -1286,7 +1289,7 @@ function updateCustomers(dt){
    }
   }else if(c.stage==='toSeat'){
    if(stepAlong(g,c.path,1.8,dt,ph)){c.stage='seated';c.wait=0;g.rotation.y=c.seat.yaw;seatPose(g);for(const id of c.items)kitchenQueue.push({cust:c,menuId:id});showToast('Pelanggan duduk & memesan '+c.total+' menu — antrean dapur: '+kitchenQueue.length);}
-  }else if(c.stage==='seated'){const mine=currentTicket&&currentTicket.cust===c;if(mine)c.wait=Math.max(0,c.wait-dt*2);else c.wait+=dt;if(c.wait>PATIENCE_SEAT){leaveNow(c,true);refreshBadge(c);continue;}
+  }else if(c.stage==='seated'){c.wait+=dt;c.waitTotal+=dt;if(c.wait>PATIENCE_SEAT){leaveNow(c,true);refreshBadge(c);continue;}
   }else if(c.stage==='eating'){
    c.timer+=dt;
    if(c.timer>6){leaveNow(c,false);
