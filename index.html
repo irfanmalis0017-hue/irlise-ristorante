@@ -1488,7 +1488,7 @@ const KONFIG={
  xpPerLevel:[0,0,50,140,280,480,740,1060,1450,1900,2400], // XP minimum tiap level (indeks = level)
  bonusXpPesananLengkap:5,
  levelMenu:{1:['tea','pisang','nasgor'],3:['mie','jeruk'],4:['ayam','kopi'],5:['sate','bakso','soto']},
- levelMeja:[2,4], levelKursi:2, levelKompor:4,
+ levelMeja:[1,4], levelKursi:1, levelKompor:4,
  levelRekrut:{cashier:3,staff:4,chef:5}, levelShift2:6,
  levelRuanganKanan:6, levelRuanganKiri:8,
  batasKokiPerShift:2, batasPelayanPerShift:4,
@@ -1609,9 +1609,10 @@ function updateTutorial(){
  else if(cooking)msg='Sedang memasak. Tunggu sampai matang.';
  else if(kitchenQueue.length)msg=fridgeOpen?'Dekati kompor lalu tekan L untuk mulai memasak.':'Pesanan masuk dapur. Dekati kulkas lalu tekan K untuk membukanya.';
  else if(customers.some(c=>c.stage==='ordering'))msg='Pelanggan menunggu di kasir. Dekati kasir lalu tekan F untuk menerima pesanan.';
+ else if(customers.some(c=>c.stage==='line'))msg='Pelanggan pertama datang! Tunggu sampai ia tiba di kasir, lalu tekan F untuk menerima pesanan.';
  else if(customers.some(c=>c.stage==='toSeat'))msg='Pelanggan sedang menuju meja...';
  else if((saveData.legacyStarterTables|0)+(saveData.items.table|0)===0)msg='LANGKAH 1/4 — Restoran masih kosong. Gunakan W A S D menuju kasir, tekan E, lalu beli meja pertama. Modal awal: 2.000 koin.';
-  else msg='LANGKAH 2/4 — Meja siap! Tunggu pelanggan pertama datang...';
+  else msg='LANGKAH 2/4 — Meja pertama sudah terpasang. Tunggu pelanggan datang, lalu layani pesanan pertamanya.';
  document.getElementById('tutorialText').textContent=msg;el.classList.add('show');
 }
 (function(){
