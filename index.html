@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.1</title>
+<title>IRLISE RISTORANTE — Update 2.2</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -156,7 +156,7 @@
 <div id="loading"><div><div style="font-size:22px;font-weight:800">IRLISE RISTORANTE</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 2.1 — Misi Harian</span></div>
+  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 2.2 — Restoran dari Nol</span></div>
   <div id="stats">
     <div class="panel stat" id="levelStat"><small>Level restoran</small><b id="levelValue">Lv 1</b><div class="xpbar"><i id="xpFill"></i></div><small id="xpText">0 / 50 XP</small></div>
     <div class="panel stat"><small>Uang pemain</small><b id="coinValue">10.000 koin</b></div>
@@ -347,7 +347,7 @@
  'Es batu untuk minuman.':'Ice for drinks.','Jeruk untuk menu es jeruk.':'Oranges for iced orange.','Biji kopi untuk kopi susu.':'Coffee beans for milk coffee.','Susu untuk kopi susu.':'Milk for milk coffee.','Pisang untuk pisang goreng.':'Bananas for fried banana.',
  'Menyambut pelanggan dan menerima pesanan di meja kasir.':'Greets customers and takes orders at the counter.','Melayani percakapan dan konfirmasi pesanan pelanggan.':'Handles conversation and confirms customer orders.',
  '08.00–15.00':'08:00–15:00','15.00–22.00':'15:00–22:00',
- 'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.1 — Daily Missions',
+ 'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.2 — Build From Zero',
  'Menyiapkan restoran 3D...':'Preparing the 3D restaurant...','Pastikan koneksi internet aktif untuk memuat mesin 3D.':'Make sure your internet connection is on to load the 3D engine.',
  'Level restoran':'Restaurant level','Uang pemain':'Your money','Reputasi':'Reputation','Jam kerja':'Work hours','KONTROL':'CONTROLS',
  'W A S D — Bergerak':'W A S D — Move','F — Layani pelanggan jika tidak ada kasir':'F — Serve customer if there is no cashier','I / J — Angkat & sajikan jika tanpa karyawan':'I / J — Pick up & serve if there is no staff',
@@ -1484,7 +1484,7 @@ const saveKey='fromZeroToCEO_save_v10';
 const MAX_LEVEL=10,MAX_SKILL=3;
 // ===== KONFIG: semua angka keseimbangan game ada di sini, ubah sesuai selera =====
 const KONFIG={
- koinAwal:1000,
+ koinAwal:2000,
  xpPerLevel:[0,0,50,140,280,480,740,1060,1450,1900,2400], // XP minimum tiap level (indeks = level)
  bonusXpPesananLengkap:5,
  levelMenu:{1:['tea','pisang','nasgor'],3:['mie','jeruk'],4:['ayam','kopi'],5:['sate','bakso','soto']},
@@ -1501,9 +1501,9 @@ const KONFIG={
 const SAVE_VERSION=3;
 // Cadangan otomatis sebelum migrasi: save versi lama disalin dulu sebelum ditimpa format baru.
 try{const raw0=localStorage.getItem(saveKey);if(raw0){const o0=JSON.parse(raw0);if(o0&&Number.isFinite(o0.coins)&&(o0.saveVersion||0)<SAVE_VERSION)localStorage.setItem(saveKey+'_backup_v'+(o0.saveVersion||0),raw0);}}catch(e){}
-let legacySave=false;
+let legacySave=false,hasStoredSave=false;
 let saveData={coins:KONFIG.koinAwal,areaUnlocked:false,leftAreaUnlocked:false,items:{table:0,chair:0,stove:0},inventory:{rice:10,egg:10,oil:5,spices:10,vegetables:10,banana:10,flour:10,tea:10,ice:10},staff:[],level:1,xp:0,tutorialDone:false,initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true};
-try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)) saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}}; if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
+try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)){hasStoredSave=true;saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}};} if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
 let coins=saveData.coins, areaUnlocked=!!saveData.areaUnlocked, leftAreaUnlocked=!!saveData.leftAreaUnlocked, lastSale=0;
 let rep=Number.isFinite(saveData.rep)?saveData.rep:1, day=(saveData.day|0)||1, dayStartCoins=coins;
 if(!saveData.initializedV10){coins=10000;saveData.initializedV10=true;saveData.inventory={rice:10,chicken:5,vegetables:10,flour:10,oil:5,spices:10};saveData.staff=[];saveData.items={table:0,chair:0,stove:0};saveData.areaUnlocked=false;saveData.leftAreaUnlocked=false;areaUnlocked=false;leftAreaUnlocked=false;}
@@ -1512,6 +1512,9 @@ if(!saveData.initializedV12){saveData.inventory=saveData.inventory||{};for(const
 // Update 1.4: bahan untuk menu baru (tidak menimpa stok yang sudah ada).
 if(!saveData.initializedV14){saveData.inventory=saveData.inventory||{};for(const [id,q] of [['beef',5],['orange',10],['coffee',10],['milk',10],['banana',10]])if(!(id in saveData.inventory))saveData.inventory[id]=q;saveData.initializedV14=true;}
 if(!saveData.initializedV15){leftAreaUnlocked=false;saveData.leftAreaUnlocked=false;saveData.initializedV15=true;}
+// Update 2.2: brand-new restaurants start empty; existing saves keep their original starter furniture.
+if(!saveData.initializedV21){saveData.legacyStarterTables=hasStoredSave?3:0;saveData.initializedV21=true;}
+if(!Number.isFinite(saveData.legacyStarterTables))saveData.legacyStarterTables=hasStoredSave?3:0;
 saveData.staff=Array.isArray(saveData.staff)?saveData.staff:[];
 // Migrasi staf versi lama: pertahankan karyawan lama sebagai slot pertama agar tetap bisa di-upgrade atau diberhentikan.
 saveData.staff=saveData.staff.map(st=>{if(!st||!st.role||!st.shift)return st;const slot=st.slot||1;const id=st.id&&st.id.includes('_slot')?st.id:(st.role+'_shift'+st.shift+'_slot'+slot);return {...st,slot,id,skill:st.skill||1};});
@@ -1607,7 +1610,8 @@ function updateTutorial(){
  else if(kitchenQueue.length)msg=fridgeOpen?'Dekati kompor lalu tekan L untuk mulai memasak.':'Pesanan masuk dapur. Dekati kulkas lalu tekan K untuk membukanya.';
  else if(customers.some(c=>c.stage==='ordering'))msg='Pelanggan menunggu di kasir. Dekati kasir lalu tekan F untuk menerima pesanan.';
  else if(customers.some(c=>c.stage==='toSeat'))msg='Pelanggan sedang menuju meja...';
- else msg='Menunggu pelanggan pertama datang...';
+ else if((saveData.legacyStarterTables|0)+(saveData.items.table|0)===0)msg='LANGKAH 1/4 — Restoran masih kosong. Gunakan W A S D menuju kasir, tekan E, lalu beli meja pertama. Modal awal: 2.000 koin.';
+  else msg='LANGKAH 2/4 — Meja siap! Tunggu pelanggan pertama datang...';
  document.getElementById('tutorialText').textContent=msg;el.classList.add('show');
 }
 (function(){
@@ -1823,14 +1827,15 @@ document.querySelectorAll('.marketTab').forEach(tab=>tab.addEventListener('click
 }));
 document.getElementById('closeShop').addEventListener('click',closeBusiness);
 document.getElementById('sellOrder').addEventListener('click',()=>showToast('Gunakan K untuk buka kulkas, L untuk memasak, I untuk angkat, lalu J untuk menyajikan.'));
-const tableSlots=[[0,0],[2.6,3.6]],chairSlots=[[-7.2,3.5],[-7.2,-1.3],[7.2,-1.3],[7.2,3.5]],stoveSlots=[[2.5,-2.1],[-6.6,-5.2]];
+const tableSlots=[[-4.8,1.5],[4.8,1.5],[-4.8,-2.2],[0,0],[2.6,3.6]],chairSlots=[[-7.2,3.5],[-7.2,-1.3],[7.2,-1.3],[7.2,3.5]],stoveSlots=[[2.5,-2.1],[-6.6,-5.2]];
 function placeTable(i){const [x,z]=tableSlots[i];makeTable(x,z);solidRects.push({x,z,hx:.82,hz:.82},...[[-1.18,0],[1.18,0],[0,-1.18],[0,1.18]].map(([dx,dz])=>({x:x+dx,z:z+dz,hx:.39,hz:.39})));}
 function placeChair(i){const [x,z]=chairSlots[i];box(scene,'purchased chair seat',x,.55,z,.7,.16,.7,materials.teal);box(scene,'purchased chair back',x,.98,z+.28,.7,.72,.13,materials.darkTeal);for(const [dx,dz] of [[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]])box(scene,'purchased chair leg',x+dx,.27,z+dz,.09,.55,.09,materials.wood);solidRects.push({x,z,hx:.42,hz:.42});}
 function placeStove(i){const [x,z]=stoveSlots[i];box(scene,'purchased stove base',x,.62,z,1.35,1.15,1.2,materials.steel);box(scene,'purchased stove top',x,1.23,z,1.42,.14,1.26,materials.black);for(const dx of [-.38,.38])cylinder(scene,'purchased stove burner',x+dx,1.33,z,.25,.25,.08,materials.yellow,20);solidRects.push({x,z,hx:.82,hz:.72});}
-document.getElementById('buyTable').addEventListener('click',()=>{const needT=KONFIG.levelMeja[saveData.items.table|0];if(needT&&level<needT){showToast('🔒 Meja berikutnya terbuka di Level '+needT+'.');return;}if(saveData.items.table>=tableSlots.length){showToast('Area makan sudah penuh — tidak ada tempat untuk meja lagi.');return;}if(!spend(1200))return;placeTable(saveData.items.table++);persist();showToast('Meja tambahan berhasil dibeli dan dipasang!');});
+document.getElementById('buyTable').addEventListener('click',()=>{const needT=KONFIG.levelMeja[saveData.items.table|0];if(needT&&level<needT){showToast('🔒 Meja berikutnya terbuka di Level '+needT+'.');return;}if(saveData.items.table>=tableSlots.length-(saveData.legacyStarterTables|0)){showToast('Area makan sudah penuh — tidak ada tempat untuk meja lagi.');return;}if(!spend(1200))return;placeTable((saveData.legacyStarterTables|0)+saveData.items.table);saveData.items.table++;persist();updateTutorial();refreshBusinessLocks();showToast('Meja berhasil dibeli dan dipasang!');});
 document.getElementById('buyChair').addEventListener('click',()=>{if(level<KONFIG.levelKursi){showToast('🔒 Kursi terbuka di Level '+KONFIG.levelKursi+'.');return;}if(saveData.items.chair>=chairSlots.length){showToast('Tidak ada tempat kosong untuk kursi lagi.');return;}if(!spend(500))return;placeChair(saveData.items.chair++);persist();showToast('Kursi tambahan berhasil dibeli dan dipasang!');});
 document.getElementById('buyStove').addEventListener('click',()=>{if(level<KONFIG.levelKompor){showToast('🔒 Kompor tambahan terbuka di Level '+KONFIG.levelKompor+'.');return;}if(saveData.items.stove>=stoveSlots.length){showToast('Dapur sudah penuh — tidak ada tempat untuk kompor lagi.');return;}if(!spend(1800))return;placeStove(saveData.items.stove++);persist();showToast('Kompor tambahan berhasil dibeli dan dipasang!');});
-for(let i=0;i<Math.min(saveData.items.table|0,tableSlots.length);i++)placeTable(i);
+for(let i=0;i<(saveData.legacyStarterTables|0);i++)placeTable(i);
+ for(let i=0;i<Math.min(saveData.items.table|0,tableSlots.length-(saveData.legacyStarterTables|0));i++)placeTable((saveData.legacyStarterTables|0)+i);
 for(let i=0;i<Math.min(saveData.items.chair|0,chairSlots.length);i++)placeChair(i);
 for(let i=0;i<Math.min(saveData.items.stove|0,stoveSlots.length);i++)placeStove(i);
 const wingBuilt={left:false,right:false};
@@ -1979,7 +1984,7 @@ document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!con
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
 // ===== IRLISE RISTORANTE 2.0: visual upgrade =====
-const GAME_VERSION='2.1.0';
+const GAME_VERSION='2.2.0';
 (function(){
  const L=window.IR_LANG,T=window.TRX,$=id=>document.getElementById(id);
  $('verText').textContent=(L==='en'?'Game version ':'Versi game ')+GAME_VERSION;
