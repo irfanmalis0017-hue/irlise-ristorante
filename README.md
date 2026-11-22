@@ -30,3 +30,8 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 - A ready dish can be delivered to any seated customer who ordered that menu, including a different customer in the queue.
 - Customers become visibly angry after 20 seconds of waiting and leave after 30 seconds; leaving customers reduce restaurant reputation.
 - Completed orders adjust reputation according to total waiting time: faster service earns a better customer rating.
+
+
+### Restaurant progression updates
+- Customer order size scales with restaurant level: Level 1 = up to 2 menu items; Levels 2–3 = up to 3; Levels 4–5 = up to 4; Levels 6–7 = up to 5; Levels 8–10 = up to 6.
+- The morning-shift kitchen chef becomes available for recruitment at Level 2. The evening-shift recruitment unlock remains Level 6.
