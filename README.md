@@ -74,3 +74,11 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 - These new management and maintenance systems are committed to the 2.2 development branch only.
 - They have not yet been verified in Cloudflare Preview gameplay. Test hiring/unlocking each department, salary adjustments and payroll, save/load compatibility, equipment condition changes, technician effects, and cooking-time penalties before release.
 - Keep this PR unmerged and production 2.1 unchanged until the owner approves release.
+
+
+## Branch `fix/2.3-staff-payroll` — perbaikan gaji dan kinerja (belum dirilis)
+
+- Naik skill tidak lagi menimpa gaji yang sudah diatur pemain: rasio penyesuaian gaji dipertahankan dan tetap dibatasi 50%–200% dari gaji dasar. Karyawan yang gajinya belum pernah diubah mendapat gaji yang sama seperti sebelumnya.
+- Kinerja karyawan baru memakai rumus yang sama dengan penghitungan harian (`50 + reputasi × 10`), tidak lagi mulai dari 75% lalu turun saat hari pertama ditutup.
+- Gaji bulanan yang tidak terbayar kini menjadi tunggakan (`saveData.wageDebt`) yang ditambahkan ke penggajian bulan berikutnya, dan ditampilkan di panel level. Save lama tetap terbaca karena field ini opsional (default 0), sehingga `SAVE_VERSION` tidak diubah.
+- `status.json` dan versi game (`2.2.0`) sengaja tidak diubah, jadi pemain tidak mendapat pemberitahuan versi baru dari branch ini.
