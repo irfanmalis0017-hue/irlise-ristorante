@@ -1245,7 +1245,28 @@ function makePerson(o={}){
    _ell(head,'hair right lock',.15,.15,.05,.06,.08,.08,hair);
   }
  }
- if(chibi){root.scale.set(1,.8,1);head.position.y=1.86;head.scale.set(1.35,1.41,1.25);}
+ if(chibi){
+  // Strong chibi proportions: oversized head, compact torso and shorter limbs.
+  root.scale.set(1,.72,1);
+  torso.scale.set(1.28,.88,.9);
+  for(const limb of legs){limb.th.scale.y=.76;limb.kn.scale.y=.78;}
+  for(const arm of arms)arm.scale.set(.86,.86,.86);
+  head.position.y=1.78;
+  head.scale.set(1.72,1.78,1.58);
+  if(st==='long'){
+   // Long high ponytail with a visible cream scrunchie.
+   _ell(head,'ponytail base',0,.13,-.19,.105,.12,.12,hair);
+   _ell(head,'ponytail length',0,-.22,-.23,.105,.34,.11,hair);
+   _ell(head,'ponytail tip',.015,-.43,-.23,.09,.13,.095,hair);
+   _ell(head,'cream scrunchie',0,.12,-.205,.12,.055,.12,mat(0xf1e3c8,.8));
+   _ell(head,'front side lock',-.19,-.06,.005,.055,.2,.08,hair);
+   _ell(head,'back side lock',.19,-.08,-.08,.055,.22,.08,hair);
+  }else if(st==='messy'){
+   // Swept fringe and layered side locks for the male avatar.
+   _ell(head,'male swept fringe',.055,.19,.13,.19,.09,.08,hair).rotation.z=-.38;
+   _ell(head,'male side lock',-.17,.02,.045,.07,.17,.09,hair).rotation.z=-.12;
+  }
+ }
  if(o.hat==='chef'){cylinder(head,'chef hat band',0,.3,0,.2,.2,.12,materials.white,20);_ell(head,'chef hat crown',0,.46,0,.22,.17,.2,materials.white);}
  if(o.cap!=null){const cm=mat(o.cap,.7);_ell(head,'cap dome',0,.15,-.04,.215,.17,.2,cm);_ell(head,'cap brim',0,.115,.2,.16,.016,.14,cm).rotation.x=.12;_ell(head,'cap logo',0,.19,.2,.035,.035,.01,mat(0xf3c75b,.5));}
  // Tailored clothing details: small reusable primitives add depth without changing rig or hitboxes.
