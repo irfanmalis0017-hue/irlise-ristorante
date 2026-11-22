@@ -1,10 +1,10 @@
-<!-- IRLISE RISTORANTE v2.3.3 | Fix player identity HUD and one-time skippable tutorial -->
+<!-- IRLISE RISTORANTE v2.3.4 | Enable tutorial skip click and reposition daily mission button -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.3.3</title>
+<title>IRLISE RISTORANTE — Update 2.3.4</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -18,10 +18,10 @@
   #brand .playerHudIdLabel { margin-top:8px; }
   #brand #playerHudId { display:block; color:#5ed2ae; font:800 12px ui-monospace,monospace; letter-spacing:1px; }
   #tutorial { display:none; position:absolute; top:18px; left:50%; transform:translateX(-50%); width:min(520px,calc(100vw - 32px)); z-index:30; text-align:center; line-height:1.5; }
-  #tutorial.show { display:block; }
+  #tutorial.show { display:block; pointer-events:auto; }
   #tutorial b { display:block; color:#f3c75b; margin-bottom:7px; }
   #tutorialText { display:block; }
-  #tutorialSkip { margin-top:10px; border:0; border-radius:9px; padding:8px 15px; background:#344956; color:#fff; font-weight:800; cursor:pointer; }
+  #tutorialSkip { pointer-events:auto; position:relative; z-index:40; margin-top:10px; border:0; border-radius:9px; padding:8px 15px; background:#344956; color:#fff; font-weight:800; cursor:pointer; }
   #brand span { color:#a9c6d8; font-size:12px; }
   #stats { position:absolute; top:16px; right:16px; display:flex; gap:8px; }
   .stat { min-width:100px; }
@@ -145,8 +145,8 @@
   #updateBar.show { display:flex; } #updateBar button { border:0; border-radius:8px; padding:6px 10px; background:#1b2630; color:#fff; font:700 12px inherit; cursor:pointer; }
 
   /* ===== Update 2.2: Daily Missions ===== */
-  #missionBtn{position:fixed;top:86px;left:16px;z-index:9;pointer-events:auto;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;background:linear-gradient(135deg,#9a713d,#d8ae61);color:#17232b;font:800 13px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.25)}
-  #missionPanel{position:fixed;top:132px;left:16px;z-index:25;width:min(340px,calc(100vw - 32px));max-height:min(65vh,520px);overflow:auto;display:none;pointer-events:auto;color:#fff;background:rgba(18,29,39,.97);border:1px solid rgba(243,199,91,.45);border-radius:15px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+  #missionBtn{position:fixed;top:148px;left:16px;z-index:9;pointer-events:auto;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;background:linear-gradient(135deg,#9a713d,#d8ae61);color:#17232b;font:800 13px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.25)}
+  #missionPanel{position:fixed;top:194px;left:16px;z-index:25;width:min(340px,calc(100vw - 32px));max-height:min(65vh,520px);overflow:auto;display:none;pointer-events:auto;color:#fff;background:rgba(18,29,39,.97);border:1px solid rgba(243,199,91,.45);border-radius:15px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
   #missionPanel.open{display:block}
   .missionHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:5px}
   .missionHead h2{margin:0;font-size:17px;color:#f3c75b}
