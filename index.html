@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#202b34">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+/* Tangkap prompt install lebih awal supaya tidak terlewat sebelum game selesai dimuat. */
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__ip=e;window.dispatchEvent(new Event('ir-installable'));});
+window.addEventListener('appinstalled',function(){window.__ip=null;window.dispatchEvent(new Event('ir-installed'));});
+</script>
 <title>IRLISE RISTORANTE — Update 2.2</title>
 <style>
   :root { color-scheme: dark; }
@@ -186,6 +195,7 @@
   </div>
   <button class="settingAction danger" id="restartLevelOne" type="button">↻ Restart dari Level 1</button>
   <button class="settingAction" id="langToggle" type="button"></button>
+  <button class="settingAction" id="installApp" type="button" data-notr style="display:none"></button>
   <div class="setSec">Cadangan & pindah perangkat</div>
   <p>Progres tersimpan otomatis di browser ini. Ekspor kode save untuk memindahkan progres ke perangkat lain atau sebagai cadangan.</p>
   <button class="settingAction" id="exportSave" type="button">📤 Ekspor kode save</button>
@@ -1327,23 +1337,25 @@ function updatePedestrians(time){
 // the player's radius, allowing smooth axis-by-axis sliding along furniture.
 const solidRects = [
  // Small starter restaurant walls and service counter.
- {x:-8,z:-4.65,hx:.28,hz:2.4},{x:-8,z:4.95,hx:.28,hz:2.1},{x:8,z:-4.65,hx:.28,hz:2.4},{x:8,z:4.95,hx:.28,hz:2.1},{x:0,z:-7,hx:8.2,hz:.28},{x:-4.7,z:7,hx:3.3,hz:.22},{x:4.7,z:7,hx:3.3,hz:.22},
- {x:-16,z:0,hx:.24,hz:7.2},{x:16,z:0,hx:.24,hz:7.2},{x:-12,z:-7,hx:3.9,hz:.22},{x:12,z:-7,hx:3.9,hz:.22},{x:-12,z:7,hx:3.9,hz:.22},{x:12,z:7,hx:3.9,hz:.22},
+ {x:-8,z:-4.65,hx:.175,hz:2.4,wall:1},{x:-8,z:4.95,hx:.175,hz:2.1,wall:1},{x:8,z:-4.65,hx:.175,hz:2.4,wall:1},{x:8,z:4.95,hx:.175,hz:2.1,wall:1},{x:0,z:-7,hx:8.2,hz:.175,wall:1},{x:-4.7,z:7,hx:3.3,hz:.15,wall:1},{x:4.7,z:7,hx:3.3,hz:.15,wall:1},
+ {x:-16,z:0,hx:.15,hz:7.2,wall:1},{x:16,z:0,hx:.15,hz:7.2,wall:1},{x:-12,z:-7,hx:3.9,hz:.15,wall:1},{x:12,z:-7,hx:3.9,hz:.15,wall:1},{x:-12,z:7,hx:3.9,hz:.15,wall:1},{x:12,z:7,hx:3.9,hz:.15,wall:1},
  {x:0,z:-5.1,hx:3.65,hz:.82},{x:4.8,z:-4.55,hx:1.95,hz:1.0},
  {x:6.6,z:-5.9,hx:.62,hz:.62},
  ...[[-4.8,1.5],[4.8,1.5],[-4.8,-2.2]].map(([x,z])=>({x,z,hx:.82,hz:.82})),
  ...[[-4.8,1.5],[4.8,1.5],[-4.8,-2.2]].flatMap(([x,z])=>[[-1.18,0],[1.18,0],[0,-1.18],[0,1.18]].map(([dx,dz])=>({x:x+dx,z:z+dz,hx:.39,hz:.39}))),
  {x:-6.8,z:5.5,hx:.42,hz:.42},{x:6.8,z:5.5,hx:.42,hz:.42},
  // Locked extension gate / barrier until expansion is purchased.
- {x:8,z:.3,hx:.22,hz:2.6},{x:-8,z:.3,hx:.22,hz:2.6}
+ {x:8,z:.3,hx:.22,hz:2.6,wall:1},{x:-8,z:.3,hx:.22,hz:2.6,wall:1}
 ];
+const WALL_R=.12, BODY_R=.34; // radius vs dinding (badan boleh nempel) / vs perabot
 function collidesAt(x,z){
- const r=.34;
+ const r=BODY_R;
  for(const o of solidRects){
+  const rr=o.wall?WALL_R:BODY_R;
   const qx=Math.max(o.x-o.hx,Math.min(x,o.x+o.hx));
   const qz=Math.max(o.z-o.hz,Math.min(z,o.z+o.hz));
   const dx=x-qx,dz=z-qz;
-  if(dx*dx+dz*dz<r*r)return true;
+  if(dx*dx+dz*dz<rr*rr)return true;
  }
  // Moving vehicles are solid too; avoid stepping into their current footprint.
  for(const car of trafficCars){
@@ -1351,13 +1363,13 @@ function collidesAt(x,z){
   if(Math.abs(x-cx)<1.72+r && Math.abs(z-cz)<.82+r)return true;
  }
  // Keep the player inside the solid side/back walls while allowing the front exit.
- if(z>6.55){if(z>10.2||Math.abs(x)>9.5||(Math.abs(x)>1.7&&z<7.9))return true;}
- else if(x < (leftAreaUnlocked?-15.5:-7.55) || x > (areaUnlocked?15.5:7.55) || z < -6.55)return true;
+ if(z>6.73){if(z>10.2||Math.abs(x)>9.5||(Math.abs(x)>1.7&&z<7.9))return true;}
+ else if(x < (leftAreaUnlocked?-15.73:-7.66) || x > (areaUnlocked?15.73:7.66) || z < -6.70)return true;
  return false;
 }
 function movePlayerWithCollision(dx,dz){
- const nx=THREE.MathUtils.clamp(player.position.x+dx,leftAreaUnlocked?-15.5:-7.45,areaUnlocked?15.5:7.45);
- const nz=THREE.MathUtils.clamp(player.position.z+dz,-6.45,10.1);
+ const nx=THREE.MathUtils.clamp(player.position.x+dx,leftAreaUnlocked?-15.73:-7.66,areaUnlocked?15.73:7.66);
+ const nz=THREE.MathUtils.clamp(player.position.z+dz,-6.70,10.1);
  // Resolve axes independently so the player can slide along an obstacle.
  if(!collidesAt(nx,player.position.z))player.position.x=nx;
  if(!collidesAt(player.position.x,nz))player.position.z=nz;
@@ -1926,7 +1938,7 @@ function buildOwnerOffice(){
  box(office,'owner office chair seat',-12.65,.58,-4.55,.72,.18,.72,materials.darkTeal);
  box(office,'owner office chair back',-12.65,1.05,-4.85,.72,.82,.16,materials.teal);
  box(office,'owner office nameplate',-12,2.55,-6.72,2.6,.48,.08,materials.black);
- const c=document.createElement('canvas');c.width=512;c.height=128;const cx=c.getContext('2d');cx.fillStyle='#202b34';cx.fillRect(0,0,512,128);cx.fillStyle='#f3c75b';cx.font='bold 54px Arial';cx.textAlign='center';cx.fillText(TRXU('RUANG OWNER'),256,80);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.61),new THREE.MeshBasicMaterial({map:t}));sign.position.set(-12,2.55,-6.70);office.add(sign);solidRects.push({x:-14.58,z:-4.45,hx:.14,hz:2.45},{x:-9.42,z:-4.45,hx:.14,hz:2.45},{x:-12,z:-2.05,hx:1.4,hz:.14},{x:-12.65,z:-5.65,hx:.95,hz:.5});
+ const c=document.createElement('canvas');c.width=512;c.height=128;const cx=c.getContext('2d');cx.fillStyle='#202b34';cx.fillRect(0,0,512,128);cx.fillStyle='#f3c75b';cx.font='bold 54px Arial';cx.textAlign='center';cx.fillText(TRXU('RUANG OWNER'),256,80);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.61),new THREE.MeshBasicMaterial({map:t}));sign.position.set(-12,2.55,-6.70);office.add(sign);solidRects.push({x:-14.58,z:-4.45,hx:.08,hz:2.45,wall:1},{x:-9.42,z:-4.45,hx:.08,hz:2.45,wall:1},{x:-12,z:-2.05,hx:1.4,hz:.08,wall:1},{x:-12.65,z:-5.65,hx:.95,hz:.5});
 }
 function buildExpansion(){unlockWing('right');}
 document.getElementById('expandArea').addEventListener('click',()=>{
@@ -2178,6 +2190,27 @@ addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
 });
+</script>
+<script>
+/* ===== Install di laptop (PWA) + mode offline ===== */
+(function(){
+ var btn=document.getElementById('installApp');if(!btn)return;
+ var en=window.IR_LANG==='en';
+ var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+ btn.textContent=en?'💻 Install on laptop':'💻 Install di laptop';
+ function sync(){btn.style.display=(window.__ip&&!standalone)?'block':'none';}
+ window.addEventListener('ir-installable',sync);
+ window.addEventListener('ir-installed',function(){btn.style.display='none';});
+ btn.addEventListener('click',function(){
+  var ev=window.__ip;if(!ev)return;
+  ev.prompt();
+  Promise.resolve(ev.userChoice).catch(function(){}).then(function(){window.__ip=null;sync();});
+ });
+ sync();
+ if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+ }
+})();
 </script>
 </body>
 </html>
