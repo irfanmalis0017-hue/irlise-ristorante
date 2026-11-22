@@ -1336,8 +1336,11 @@ const solidRects = [
  {x:8,z:.3,hx:.22,hz:2.6},{x:-8,z:.3,hx:.22,hz:2.6}
 ];
 function collidesAt(x,z){
- const r=.24;
- for(const o of solidRects){
+ for(let i=0;i<solidRects.length;i++){
+  const o=solidRects[i];
+  // Wall clearance is smaller than furniture clearance so the avatar can
+  // approach the visible room boundary without weakening furniture blocking.
+  const r=i<13?.12:.24;
   const qx=Math.max(o.x-o.hx,Math.min(x,o.x+o.hx));
   const qz=Math.max(o.z-o.hz,Math.min(z,o.z+o.hz));
   const dx=x-qx,dz=z-qz;
@@ -1350,12 +1353,12 @@ function collidesAt(x,z){
  }
  // Keep the player inside the solid side/back walls while allowing the front exit.
  if(z>6.55){if(z>10.2||Math.abs(x)>9.5||(Math.abs(x)>1.7&&z<7.9))return true;}
- else if(x < (leftAreaUnlocked?-15.6:-7.58) || x > (areaUnlocked?15.6:7.58) || z < -6.58)return true;
+ else if(x < (leftAreaUnlocked?-15.73:-7.70) || x > (areaUnlocked?15.73:7.70) || z < -6.70)return true;
  return false;
 }
 function movePlayerWithCollision(dx,dz){
- const nx=THREE.MathUtils.clamp(player.position.x+dx,leftAreaUnlocked?-15.6:-7.58,areaUnlocked?15.6:7.58);
- const nz=THREE.MathUtils.clamp(player.position.z+dz,-6.58,10.1);
+ const nx=THREE.MathUtils.clamp(player.position.x+dx,leftAreaUnlocked?-15.73:-7.70,areaUnlocked?15.73:7.70);
+ const nz=THREE.MathUtils.clamp(player.position.z+dz,-6.70,10.1);
  // Resolve axes independently so the player can slide along an obstacle.
  if(!collidesAt(nx,player.position.z))player.position.x=nx;
  if(!collidesAt(player.position.x,nz))player.position.z=nz;
