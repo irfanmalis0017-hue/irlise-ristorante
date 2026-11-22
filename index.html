@@ -194,25 +194,37 @@
   }
 
 
-  #playerGate { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(7,14,22,.94); color:#fff; pointer-events:auto; }
+  #playerGate { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(7,14,22,.96); color:#fff; pointer-events:auto; }
   #playerGate.open { display:flex; }
   .playerGateCard { width:min(440px,100%); padding:24px; border:1px solid rgba(125,170,190,.25); border-radius:18px; background:linear-gradient(145deg,#192c3b,#101d29); box-shadow:0 20px 60px rgba(0,0,0,.45); }
   .playerGateCard h2 { margin:0 0 8px; font-size:23px; }
   .playerGateCard p { color:#b7cbd7; font-size:13px; line-height:1.55; }
   .playerGateCard label { display:block; margin:14px 0 7px; font-size:13px; color:#dce8ef; }
   #playerName { width:100%; padding:13px; border:1px solid #3c5668; border-radius:10px; background:#0c1721; color:#fff; font:inherit; }
-  .playerConsent { display:flex!important; align-items:flex-start; gap:9px; line-height:1.45; }
-  .playerConsent input { margin-top:3px; accent-color:#5ed2ae; }
   .playerGateActions { display:grid; gap:9px; margin-top:16px; }
   .playerGateActions button { border:0; border-radius:10px; padding:12px; font:700 14px Inter,system-ui,sans-serif; cursor:pointer; }
   #playerAccept { background:#5ed2ae; color:#10252b; }
-  #playerSkip { background:#293d4b; color:#e4edf2; }
   #playerGateStatus { min-height:17px; color:#f1bd82; font-size:12px; }
+  #guidedTutorial { position:fixed; inset:0; z-index:75; display:none; pointer-events:none; color:#fff; }
+  #guidedTutorial.open { display:block; }
+  #guidedTutorial:before { content:""; position:absolute; inset:0; background:rgba(3,10,16,.28); }
+  #guideCard { position:absolute; left:50%; top:18px; transform:translateX(-50%); width:min(430px,calc(100vw - 28px)); padding:15px 17px; border:1px solid #f3c75b; border-radius:15px; background:rgba(17,30,41,.97); box-shadow:0 12px 40px #0008; text-align:center; pointer-events:auto; }
+  #guideStep { color:#f3c75b; font-size:10px; font-weight:900; letter-spacing:.13em; }
+  #guideTitle { margin:4px 0; font-size:17px; }
+  #guideText { color:#d5e3eb; font-size:12px; line-height:1.45; }
+  #guideActions { display:flex; justify-content:center; gap:8px; margin-top:12px; }
+  #guideActions button { border:0; border-radius:9px; padding:9px 14px; font:800 12px Inter,system-ui,sans-serif; cursor:pointer; }
+  #guideNext { background:#f3c75b; color:#1b2630; }
+  #guideSkip { background:#344956; color:#fff; }
+  #guideArrow { position:absolute; width:48px; height:64px; left:50%; top:55%; transform:translate(-50%,-50%); color:#f3c75b; filter:drop-shadow(0 4px 8px #000); animation:guideBounce .8s ease-in-out infinite alternate; }
+  @keyframes guideBounce { from{translate:0 -4px} to{translate:0 8px} }
+  @media(max-width:650px){ #guideCard { top:10px; padding:12px; } #guideTitle{font-size:15px} #guideArrow{width:40px;height:54px} }
 
 </style>
 </head>
 <body>
-<div id="playerGate" data-notr><div class="playerGateCard"><h2>Kenalan dengan IRLISE</h2><p>Jika setuju, nama pilihanmu dan waktu sesi bermain akan dicatat agar admin dapat melihat aktivitas pemain. Kami tidak mengumpulkan lokasi atau data perangkat.</p><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Masukkan nama (2–24 karakter)"><label class="playerConsent"><input id="playerConsent" type="checkbox"><span>Saya setuju nama dan aktivitas sesi bermain saya dicatat di IRLISE PLAYER MONITOR.</span></label><div class="playerGateActions"><button id="playerAccept" type="button">Setuju & Mulai</button><button id="playerSkip" type="button">Main tanpa pemantauan</button></div><div id="playerGateStatus" role="status"></div></div></div>
+<div id="playerGate" data-notr><div class="playerGateCard"><h2>Selamat datang di IRLISE!</h2><p>Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Lanjutkan</button></div><div id="playerGateStatus" role="status"></div></div></div>
+<div id="guidedTutorial" data-notr aria-live="polite"><div id="guideCard"><div id="guideStep">PANDUAN 1/3</div><h2 id="guideTitle">Kenali kontrol</h2><div id="guideText">Gunakan tombol W A S D untuk berjalan di dalam restoran.</div><div id="guideActions"><button id="guideSkip" type="button">Lewati</button><button id="guideNext" type="button">Lanjut</button></div></div><svg id="guideArrow" viewBox="0 0 48 64" aria-hidden="true"><path d="M24 2 L24 46 M8 30 L24 48 L40 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div id="langScreen" data-notr><div class="langCard"><h1>IRLISE RISTORANTE</h1><p>Pilih bahasa • Choose your language</p><button type="button" data-lang="id">Bahasa Indonesia</button><button type="button" data-lang="en">English</button></div></div>
 <div id="maintScreen" data-notr role="alertdialog" aria-live="assertive"><div class="maintCard"><div class="maintIcon">🛠️</div><h2 id="maintTitle"></h2><p id="maintMsg"></p><small id="maintSub"></small></div></div>
 <div id="updateBar" data-notr><span id="updText"></span><button id="updBtn" type="button"></button></div>
@@ -511,7 +523,7 @@
  }
  async function start(profile){
   try{
-   const result=await post('start',{name:profile.name,player_key:profile.player_key,consent:true});
+   const result=await post('start',{name:profile.name,player_key:profile.player_key});
    sessionId=result.session_id;ended=false;
    heartbeat=setInterval(()=>{if(sessionId&&!ended)post('heartbeat',{session_id:sessionId}).catch(()=>{});},30000);
   }catch(e){$('playerGateStatus').textContent='Monitor belum tersambung. Kamu tetap bisa bermain.';}
@@ -525,17 +537,17 @@
  window.addEventListener('pagehide',end);
  window.__playerTrackingReady=new Promise(resolve=>{
   const old=read(),gate=$('playerGate');
-  if(old&&old.consent===true&&old.name&&old.player_key){start(old).finally(resolve);return;}
-  gate.classList.add('open');$('playerName').value=old&&old.name?old.name:'';
+  if(old&&old.name&&old.player_key){start(old).finally(resolve);return;}
+  gate.classList.add('open');
+  $('playerName').value=old&&old.name?old.name:'';
   $('playerAccept').addEventListener('click',async()=>{
    const name=$('playerName').value.trim().replace(/\s+/g,' ');
    if(name.length<2||name.length>24){$('playerGateStatus').textContent='Nama harus 2–24 karakter.';return;}
-   if(!$('playerConsent').checked){$('playerGateStatus').textContent='Centang persetujuan terlebih dahulu, atau pilih main tanpa pemantauan.';return;}
-   const profile={name,consent:true,player_key:old&&old.player_key?old.player_key:crypto.randomUUID().replace(/-/g,'')};
-   write(profile);$('playerAccept').disabled=true;$('playerGateStatus').textContent='Menghubungkan ke monitor…';
+   const profile={name,player_key:old&&old.player_key?old.player_key:crypto.randomUUID().replace(/-/g,'')};
+   write(profile);$('playerAccept').disabled=true;$('playerGateStatus').textContent='Mendaftarkan pemain…';
    await start(profile);gate.classList.remove('open');resolve();
   });
-  $('playerSkip').addEventListener('click',()=>{gate.classList.remove('open');resolve();});
+  $('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')$('playerAccept').click();});
  });
 })();
 </script>
@@ -2387,7 +2399,32 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-showToast('IRLISE RISTORANTE Update 2.2 siap! Misi Harian tersedia.');
+(function(){
+ const overlay=document.getElementById('guidedTutorial'),arrow=document.getElementById('guideArrow');
+ const steps=[
+  {title:'Kenali kontrol',text:document.body.classList.contains('touch')?'Gunakan joystick di kiri bawah untuk berjalan dan tombol aksi di kanan bawah untuk berinteraksi.':'Gunakan tombol W A S D untuk berjalan. Arahkan mouse untuk memutar kamera.',target:()=>document.body.classList.contains('touch')?document.getElementById('joy'):document.getElementById('help')},
+  {title:'Buka toko bisnis',text:'Tekan tombol SHOP di kiri bawah untuk membeli meja, bahan, dan perlengkapan restoran.',target:()=>document.getElementById('shopLauncher')},
+  {title:'Mulai operasikan restoran',text:'Setelah siap, tekan tombol BUKA RESTORAN agar pelanggan mulai berdatangan.',target:()=>document.getElementById('restaurantToggleBtn')}
+ ];
+ let index=0;
+ function position(){
+  const el=steps[index].target();if(!el)return;
+  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  arrow.style.left=x+'px';arrow.style.top=Math.max(80,Math.min(innerHeight-55,y-75))+'px';
+  arrow.style.transform='translate(-50%,-50%) rotate(0deg)';
+ }
+ function render(){
+  const st=steps[index];document.getElementById('guideStep').textContent='PANDUAN '+(index+1)+'/'+steps.length;
+  document.getElementById('guideTitle').textContent=st.title;document.getElementById('guideText').textContent=st.text;
+  document.getElementById('guideNext').textContent=index===steps.length-1?'Mulai bermain':'Lanjut';
+  position();
+ }
+ function close(){overlay.classList.remove('open');try{localStorage.setItem('irlise_guided_tutorial_v1','done')}catch(e){}}
+ document.getElementById('guideNext').addEventListener('click',()=>{if(index<steps.length-1){index++;render()}else close()});
+ document.getElementById('guideSkip').addEventListener('click',close);
+ if(!localStorage.getItem('irlise_guided_tutorial_v1')){overlay.classList.add('open');render();addEventListener('resize',position);setTimeout(position,300)}
+})(); 
+showToast('IRLISE RISTORANTE Update 2.3 siap! Misi Harian tersedia.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
