@@ -1,10 +1,10 @@
-<!-- IRLISE RISTORANTE v2.3.2 | Player identity HUD, tutorial overlay removed -->
+<!-- IRLISE RISTORANTE v2.3.3 | Fix player identity HUD and one-time skippable tutorial -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.3.2</title>
+<title>IRLISE RISTORANTE — Update 2.3.3</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -13,7 +13,15 @@
   #hud { position:fixed; inset:0; pointer-events:none; color:#fff; }
   .panel { background:rgba(18,29,39,.82); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:12px 15px; box-shadow:0 8px 30px rgba(0,0,0,.2); backdrop-filter:blur(8px); }
   #brand { position:absolute; top:16px; left:16px; }
-  #brand strong { display:block; font-size:15px; letter-spacing:.04em; overflow-wrap:anywhere; }\n  #brand .playerHudLabel { display:block; color:#8faab8; font-size:9px; font-weight:800; letter-spacing:1.3px; margin-bottom:2px; }\n  #brand .playerHudIdLabel { margin-top:8px; }\n  #brand #playerHudId { display:block; color:#5ed2ae; font:800 12px ui-monospace,monospace; letter-spacing:1px; }\n  #tutorial { display:none !important; }
+  #brand strong { display:block; font-size:15px; letter-spacing:.04em; overflow-wrap:anywhere; }
+  #brand .playerHudLabel { display:block; color:#8faab8; font-size:9px; font-weight:800; letter-spacing:1.3px; margin-bottom:2px; }
+  #brand .playerHudIdLabel { margin-top:8px; }
+  #brand #playerHudId { display:block; color:#5ed2ae; font:800 12px ui-monospace,monospace; letter-spacing:1px; }
+  #tutorial { display:none; position:absolute; top:18px; left:50%; transform:translateX(-50%); width:min(520px,calc(100vw - 32px)); z-index:30; text-align:center; line-height:1.5; }
+  #tutorial.show { display:block; }
+  #tutorial b { display:block; color:#f3c75b; margin-bottom:7px; }
+  #tutorialText { display:block; }
+  #tutorialSkip { margin-top:10px; border:0; border-radius:9px; padding:8px 15px; background:#344956; color:#fff; font-weight:800; cursor:pointer; }
   #brand span { color:#a9c6d8; font-size:12px; }
   #stats { position:absolute; top:16px; right:16px; display:flex; gap:8px; }
   .stat { min-width:100px; }
@@ -249,7 +257,7 @@
   <div id="help" class="panel"><b>KONTROL</b><br>W A S D — Bergerak<br>F — Layani pelanggan jika tidak ada kasir<br>I / J — Angkat & sajikan jika tanpa karyawan<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div>
   <div id="crosshair"></div>
   <div id="toast" class="panel">Selamat datang, Bos!</div>
-  <div id="tutorial" class="panel"><b>PANDUAN PEMULA</b><span id="tutorialText"></span></div>
+  <div id="tutorial" class="panel"><b>PANDUAN PEMULA</b><span id="tutorialText"></span><button id="tutorialSkip" type="button">LEWATI PANDUAN</button></div>
   <div id="levelUp" class="panel"></div>
 </div>
 <button id="restaurantToggleBtn" type="button">BUKA RESTORAN</button>
@@ -547,7 +555,9 @@
   function showIdentity(profile){
    const id='IRL-'+profile.player_key.slice(0,8).toUpperCase();
    $('playerIdentityName').textContent=profile.name;
-   $('playerIdentityId').textContent=id;\n   $('playerHudName').textContent=profile.name;\n   $('playerHudId').textContent=id;
+   $('playerIdentityId').textContent=id;
+   $('playerHudName').textContent=profile.name;
+   $('playerHudId').textContent=id;
    $('playerGateTitle').textContent='Identitas pemain berhasil dibuat!';
    $('playerGateIntro').textContent='Simpan Player ID ini. Identitas yang sama akan digunakan setiap kali kamu bermain.';
    $('playerNameForm').style.display='none';
@@ -1762,9 +1772,11 @@ function payWages(){
  const paid=coins;coins=0;rep=Math.max(0,rep-.1);
  return ' Uang tidak cukup untuk gaji ('+rupiah(w)+' koin), hanya terbayar '+rupiah(paid)+'. Karyawan kecewa, reputasi turun.';
 }
+(function(){const b=document.getElementById('tutorialSkip');if(b)b.addEventListener('click',()=>{try{localStorage.setItem('irlise_tutorial_skipped_v1','1');}catch(e){}const el=document.getElementById('tutorial');if(el)el.classList.remove('show');});})();
 function updateTutorial(){
  const el=document.getElementById('tutorial');if(!el)return;
- if(saveData.tutorialDone||level>1){el.classList.remove('show');return;}
+ let skipped=false;try{skipped=localStorage.getItem('irlise_tutorial_skipped_v1')==='1';}catch(e){}
+ if(saveData.tutorialDone||level>1||skipped){el.classList.remove('show');return;}
  let msg;
  if(holdingDish)msg='Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.';
  else if(dishReady)msg='Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.';
