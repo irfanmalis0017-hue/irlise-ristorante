@@ -30,7 +30,11 @@ function createWindow() {
   });
 
   win.webContents.on('will-navigate', (event, url) => {
-    if (url !== GAME_URL && !url.startsWith(GAME_URL + '/')) {
+    let isGameOrigin = false;
+    try {
+      isGameOrigin = new URL(url).origin === new URL(GAME_URL).origin;
+    } catch (_) {}
+    if (!isGameOrigin) {
       event.preventDefault();
       if (url.startsWith('https://') || url.startsWith('http://')) {
         shell.openExternal(url);
