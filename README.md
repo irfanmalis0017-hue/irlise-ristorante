@@ -9,7 +9,8 @@ Version: `2.2.0`
 ## Update 2.2 — Build From Zero
 
 - New players begin with an empty dining area: no pre-placed tables or chairs.
-- New-game starting funds are 2,000 coins, enough to purchase the first table.
+- New-game starting funds are 2,000 coins, enough to purchase the first table (800 coins).
+- Each purchased dining table automatically includes four chairs; chairs are not sold separately in the shop.
 - The beginner tutorial guides the player to move to the cashier, open the business menu, buy the first table, wait for the first customer, and follow the existing order/cooking/serving workflow.
 - Existing saves retain the three starter tables from earlier versions, plus any tables and chairs they purchased. Existing coins, staff, levels, inventory, and unlocks are preserved.
 
