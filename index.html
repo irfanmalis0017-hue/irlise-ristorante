@@ -1586,7 +1586,7 @@ function updateMenuBoard(){
 function refreshBusinessLocks(){
  const set=(id,text)=>{const b=document.getElementById(id);if(!b)return;const sm=b.querySelector('small');if(sm)sm.textContent=text;};
  const tn=KONFIG.levelMeja[saveData.items.table|0];
- set('buyTable',(saveData.items.table|0)>=tableSlots.length?'Area makan penuh ✓':tn&&level<tn?'🔒 Terbuka di Level '+tn:'1.200 koin • kapasitas +4');
+ set('buyTable',(saveData.items.table|0)>=tableSlots.length-(saveData.legacyStarterTables|0)?'Area makan penuh ✓':tn&&level<tn?'🔒 Terbuka di Level '+tn:'1.200 koin • kapasitas +4');
  set('buyChair',(saveData.items.chair|0)>=chairSlots.length?'Semua kursi terpasang ✓':level<KONFIG.levelKursi?'🔒 Terbuka di Level '+KONFIG.levelKursi:'500 koin • kursi dekorasi');
  set('buyStove',(saveData.items.stove|0)>=stoveSlots.length?'Dapur penuh ✓':level<KONFIG.levelKompor?'🔒 Terbuka di Level '+KONFIG.levelKompor:'1.800 koin • dekorasi dapur');
  if(!areaUnlocked)set('expandArea',level<KONFIG.levelRuanganKanan?'🔒 Terbuka di Level '+KONFIG.levelRuanganKanan+' • 4.000 koin':'4.000 koin • bangunan kanan • area makan tambahan');
