@@ -135,7 +135,7 @@
   #updateBar { position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:40; display:none; gap:10px; align-items:center; padding:9px 12px; border-radius:12px; background:#f3c75b; color:#1b2630; font:700 13px Inter,system-ui,sans-serif; pointer-events:auto; box-shadow:0 8px 24px rgba(0,0,0,.35); }
   #updateBar.show { display:flex; } #updateBar button { border:0; border-radius:8px; padding:6px 10px; background:#1b2630; color:#fff; font:700 12px inherit; cursor:pointer; }
 
-  /* ===== Update 2.1: Daily Missions ===== */
+  /* ===== Update 2.2: Daily Missions ===== */
   #missionBtn{position:fixed;top:86px;left:16px;z-index:9;pointer-events:auto;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;background:linear-gradient(135deg,#9a713d,#d8ae61);color:#17232b;font:800 13px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.25)}
   #missionPanel{position:fixed;top:132px;left:16px;z-index:25;width:min(340px,calc(100vw - 32px));max-height:min(65vh,520px);overflow:auto;display:none;pointer-events:auto;color:#fff;background:rgba(18,29,39,.97);border:1px solid rgba(243,199,91,.45);border-radius:15px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
   #missionPanel.open{display:block}
@@ -349,7 +349,7 @@
  'Dekati pelanggan di kasir untuk berinteraksi.':'Get close to the customer at the counter to interact.',
  'Dekati pelanggan yang memesan (balon hijau) untuk menyajikan.':'Get close to the customer who ordered (green bubble) to serve.',
  'Gunakan K untuk buka kulkas, L untuk memasak, I untuk angkat, lalu J untuk menyajikan.':'Use K to open the fridge, L to cook, I to pick up, then J to serve.',
- 'IRLISE RISTORANTE Update 2.1 siap! Selesaikan Misi Harian untuk mendapat hadiah.':'IRLISE RISTORANTE Update 2.1 is ready! Complete Daily Missions to earn rewards.',
+ 'IRLISE RISTORANTE Update 2.2 siap! Selesaikan Misi Harian untuk mendapat hadiah.':'IRLISE RISTORANTE Update 2.2 is ready! Complete Daily Missions to earn rewards.',
  'Koin belum cukup untuk membeli ':'Not enough coins to buy ','Koin belum cukup untuk upgrade skill.':'Not enough coins to upgrade the skill.',
  'Koin belum cukup. Layani pesanan untuk mendapat uang!':'Not enough coins. Serve orders to earn money!',
  'Koki sedang bertugas dan akan memasak pesanan secara otomatis.':'A chef is on duty and cooks orders automatically.',
@@ -1528,7 +1528,8 @@ function serveDish(){
 }
 const businessPanel=document.getElementById('businessPanel');
 const coinValue=document.getElementById('coinValue');
-const saveKey='fromZeroToCEO_save_v10';
+const legacySaveKey='fromZeroToCEO_save_v10';
+const saveKey='irlise_ristorante_save_v10';
 const MAX_LEVEL=10,MAX_SKILL=3;
 // ===== KONFIG: semua angka keseimbangan game ada di sini, ubah sesuai selera =====
 const KONFIG={
@@ -1548,10 +1549,24 @@ const KONFIG={
 };
 const SAVE_VERSION=3;
 // Cadangan otomatis sebelum migrasi: save versi lama disalin dulu sebelum ditimpa format baru.
-try{const raw0=localStorage.getItem(saveKey);if(raw0){const o0=JSON.parse(raw0);if(o0&&Number.isFinite(o0.coins)&&(o0.saveVersion||0)<SAVE_VERSION)localStorage.setItem(saveKey+'_backup_v'+(o0.saveVersion||0),raw0);}}catch(e){}
+const STAFF_ROLES=['cashier','staff','chef','adminFinance','technician','adminHR'];
+try{const raw0=localStorage.getItem(saveKey)||localStorage.getItem(legacySaveKey);if(raw0){const o0=JSON.parse(raw0);if(o0&&typeof o0==='object'&&!Array.isArray(o0)&&Number.isFinite(o0.coins)){if((o0.saveVersion||0)<SAVE_VERSION)localStorage.setItem(saveKey+'_backup_v'+(o0.saveVersion||0),raw0);if(!localStorage.getItem(saveKey))localStorage.setItem(saveKey,raw0);}}}catch(e){}
 let legacySave=false,hasStoredSave=false;
 let saveData={coins:KONFIG.koinAwal,areaUnlocked:false,leftAreaUnlocked:false,items:{table:0,chair:0,stove:0},inventory:{},staff:[],level:1,xp:0,tutorialDone:false,initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true};
-try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)){hasStoredSave=true;saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}};} if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
+try {
+ const rawSave=localStorage.getItem(saveKey)||localStorage.getItem(legacySaveKey);
+ const old=JSON.parse(rawSave||'null');
+ if(old&&typeof old==='object'&&!Array.isArray(old)&&Number.isFinite(old.coins)&&old.coins>=0){
+  hasStoredSave=true;
+  const safeItems={...saveData.items};
+  if(old.items&&typeof old.items==='object'&&!Array.isArray(old.items))for(const k of ['table','chair','stove'])if(Number.isFinite(old.items[k])&&old.items[k]>=0)safeItems[k]=Math.floor(old.items[k]);
+  const safeInventory={...saveData.inventory};
+  if(old.inventory&&typeof old.inventory==='object'&&!Array.isArray(old.inventory))for(const [k,v] of Object.entries(old.inventory))if(/^[a-z][a-z0-9_]{0,31}$/.test(k)&&Number.isFinite(v)&&v>=0)safeInventory[k]=Math.floor(v);
+  saveData={...saveData,...old,items:safeItems,inventory:safeInventory};
+  legacySave=!old.initializedV16;
+  for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];
+ }
+} catch(e) { console.warn('Save lama tidak dapat dibaca; progres awal tetap digunakan.',e); }
 let coins=saveData.coins, areaUnlocked=!!saveData.areaUnlocked, leftAreaUnlocked=!!saveData.leftAreaUnlocked, lastSale=0;
 let restaurantOpen=!!saveData.restaurantOpen;
 let equipmentCondition=Number.isFinite(saveData.equipmentCondition)?Math.max(0,Math.min(100,saveData.equipmentCondition)):100;
@@ -1565,9 +1580,9 @@ if(!saveData.initializedV15){leftAreaUnlocked=false;saveData.leftAreaUnlocked=fa
 // Update 2.2: brand-new restaurants start empty; existing saves keep their original starter furniture.
 if(!saveData.initializedV21){saveData.legacyStarterTables=hasStoredSave?3:0;saveData.initializedV21=true;}
 if(!Number.isFinite(saveData.legacyStarterTables))saveData.legacyStarterTables=hasStoredSave?3:0;
-saveData.staff=Array.isArray(saveData.staff)?saveData.staff:[];
+saveData.staff=Array.isArray(saveData.staff)?saveData.staff.filter(st=>st&&STAFF_ROLES.includes(st.role)&&(st.shift===1||st.shift===2)).slice(0,24):[];
 // Migrasi staf versi lama: pertahankan karyawan lama sebagai slot pertama agar tetap bisa di-upgrade atau diberhentikan.
-saveData.staff=saveData.staff.map(st=>{if(!st||!st.role||!st.shift)return st;const slot=st.slot||1;const id=st.id&&st.id.includes('_slot')?st.id:(st.role+'_shift'+st.shift+'_slot'+slot);return {...st,slot,id,skill:st.skill||1};});
+saveData.staff=saveData.staff.map(st=>{const slot=Number.isInteger(st.slot)&&st.slot>0?st.slot:1;const id=typeof st.id==='string'&&st.id.length<100&&st.id.includes('_slot')?st.id:(st.role+'_shift'+st.shift+'_slot'+slot);const skill=Number.isInteger(st.skill)?Math.max(1,Math.min(MAX_SKILL,st.skill)):1;return {...st,slot,id,skill};});
 // ===== Update 1.6: Sistem level, XP, gaji harian, skill karyawan, tutorial =====
 // Level lama (legacy): save dari versi sebelumnya langsung dianggap Level maksimum agar progres tidak hilang.
 if(legacySave){saveData.level=MAX_LEVEL;saveData.xp=KONFIG.xpPerLevel[MAX_LEVEL];saveData.tutorialDone=true;saveData.staff=saveData.staff.map(s=>({...s,skill:s.skill||1}));}
@@ -1671,7 +1686,7 @@ function updateTutorial(){
  const b=document.getElementById('resetGame');let armed=false,tm;
  b.addEventListener('click',()=>{
   if(!armed){armed=true;b.textContent='Yakin? Semua progres dihapus. Klik lagi untuk lanjut.';clearTimeout(tm);tm=setTimeout(()=>{armed=false;b.textContent='Mulai ulang dari awal';},4000);return;}
-  resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();
+  resetting=true;try{localStorage.removeItem(saveKey);localStorage.removeItem(legacySaveKey);}catch(e){}location.reload();
  });
 })();
 
@@ -1734,7 +1749,7 @@ document.getElementById('missionBtn').addEventListener('click',()=>{document.get
 document.getElementById('missionClose').addEventListener('click',()=>document.getElementById('missionPanel').classList.remove('open'));
 renderDailyMissions();
 
-function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,restaurantOpen,equipmentCondition,items:saveData.items,inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,saveVersion:SAVE_VERSION,rep,day};try{localStorage.setItem(saveKey,JSON.stringify(saveData));}catch(e){} updateCoins();}
+function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,restaurantOpen,equipmentCondition,items:saveData.items||{table:0,chair:0,stove:0},inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,saveVersion:SAVE_VERSION,rep,day};try{const raw=JSON.stringify(saveData);localStorage.setItem(saveKey,raw);/* Keep the previous key in sync so rollback to an older deployed build does not lose progress. */localStorage.setItem(legacySaveKey,raw);}catch(e){console.warn('Autosave gagal. Periksa ruang penyimpanan browser.',e);} updateCoins();}
 function updateCoins(){const dv=document.getElementById('dayValue'),rv=document.getElementById('repValue');if(dv)dv.textContent=String(day).padStart(2,'0');if(rv)rv.textContent='★ '+rep.toFixed(1);updateLevelHud();const formatted=coins.toLocaleString('id-ID')+' koin';coinValue.textContent=formatted;const mb=document.getElementById('marketBalance');if(mb)mb.textContent=formatted;}
 function spend(amount){if(coins<amount){showToast('Koin belum cukup. Layani pesanan untuk mendapat uang!');return false;}coins-=amount;persist();return true;}
 function openBusiness(){refreshBusinessLocks();businessPanel.classList.add('open');}
@@ -2053,15 +2068,17 @@ if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refre
 
 // ===== Backsound (v1.4): musik santai buatan WebAudio, tanpa file eksternal =====
 const music={ctx:null,master:null,send:null,noise:null,on:true,volume:50,t:0,step:0};
+const legacyMusicKey='fromZeroToCEO_music',musicKey='irlise_ristorante_music',musicVolumeKey='fromZeroToCEO_music_volume';
 try{
- if(localStorage.getItem('fromZeroToCEO_music')==='off')music.on=false;
- const savedVolume=Number(localStorage.getItem('fromZeroToCEO_music_volume'));
- if(Number.isFinite(savedVolume))music.volume=Math.max(0,Math.min(100,savedVolume));
+ const savedMusic=localStorage.getItem(musicKey)??localStorage.getItem(legacyMusicKey);
+ if(savedMusic==='off')music.on=false;else if(savedMusic==='on')music.on=true;
+ const rawVolume=localStorage.getItem(musicVolumeKey);
+ if(rawVolume!==null&&rawVolume!==''&&Number.isFinite(Number(rawVolume)))music.volume=Math.max(0,Math.min(100,Number(rawVolume)));
 }catch(e){}
 const applyMusicVolume=()=>{if(music.master)music.master.gain.setTargetAtTime(music.on?music.volume/100:0,music.ctx.currentTime,.04);};
 const setMusicEnabled=value=>{
  music.on=!!value;
- try{localStorage.setItem('fromZeroToCEO_music',music.on?'on':'off');}catch(e){}
+ try{const v=music.on?'on':'off';localStorage.setItem(musicKey,v);localStorage.setItem(legacyMusicKey,v);}catch(e){}
  if(music.on){ensureMusic();}else if(music.ctx){music.master.gain.setTargetAtTime(0,music.ctx.currentTime,.04);}
  const soundToggle=document.getElementById('soundToggle');
  if(soundToggle)soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';
@@ -2113,10 +2130,10 @@ pauseToggle.addEventListener('click',()=>setPaused(!gamePaused));
 musicVolume.addEventListener('input',()=>{
  music.volume=Number(musicVolume.value);
  musicVolumeValue.textContent=music.volume+'%';
- try{localStorage.setItem('fromZeroToCEO_music_volume',String(music.volume));}catch(e){}
+ try{localStorage.setItem(musicVolumeKey,String(music.volume));}catch(e){}
  applyMusicVolume();
 });
-document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
+document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);localStorage.removeItem(legacySaveKey);}catch(e){}location.reload();});
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
 // ===== IRLISE RISTORANTE 2.0: visual upgrade =====
@@ -2136,13 +2153,17 @@ const GAME_VERSION='2.2.0';
  });
  $('importSave').addEventListener('click',()=>{
   const bad='Kode save tidak valid atau rusak.',raw=($('saveCode').value||'').trim();
-  if(!raw.startsWith('IRLISE1.')){say(bad);return;}
+  if(raw.length>1500000||!raw.startsWith('IRLISE1.')){say(bad);return;}
   let o;try{o=JSON.parse(decodeURIComponent(escape(atob(raw.slice(8)))));}catch(e){say(bad);return;}
-  const ok=o&&typeof o==='object'&&Number.isFinite(o.coins)&&o.coins>=0&&o.coins<1e12&&(o.staff===undefined||Array.isArray(o.staff))&&(o.items===undefined||typeof o.items==='object')&&(o.inventory===undefined||typeof o.inventory==='object')&&(o.level===undefined||(o.level>=1&&o.level<=MAX_LEVEL));
+  const record=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
+  const bounded=(v,min,max)=>v===undefined||(Number.isSafeInteger(v)&&v>=min&&v<=max);
+  const validStaff=s=>s===undefined||(Array.isArray(s)&&s.length<=24&&s.every(w=>record(w)&&STAFF_ROLES.includes(w.role)&&(w.shift===1||w.shift===2)&&bounded(w.skill,1,MAX_SKILL)&&bounded(w.slot,1,100)&&(w.id===undefined||(typeof w.id==='string'&&w.id.length<=100))));
+  const validCounts=v=>v===undefined||(record(v)&&Object.entries(v).every(([k,n])=>/^[a-z][a-z0-9_]{0,31}$/.test(k)&&bounded(n,0,1000000)));
+  const ok=record(o)&&Number.isSafeInteger(o.coins)&&o.coins>=0&&o.coins<1e12&&bounded(o.level,1,MAX_LEVEL)&&bounded(o.xp,0,1e9)&&bounded(o.day,1,1e7)&&(o.rep===undefined||(typeof o.rep==='number'&&Number.isFinite(o.rep)&&o.rep>=0&&o.rep<=5))&&validStaff(o.staff)&&validCounts(o.items)&&validCounts(o.inventory)&&(o.dailyMissions===undefined||record(o.dailyMissions));
   if(!ok){say(bad);return;}
-  if(!confirm('Impor akan menimpa progres saat ini. Lanjutkan?'))return;
+  if(!confirm('Impor akan menimpa progres saat ini. Cadangan progres lama dibuat otomatis. Lanjutkan?'))return;
   o.initializedV16=true;resetting=true;
-  try{localStorage.setItem(saveKey+'_backup_before_import',localStorage.getItem(saveKey)||'');localStorage.setItem(saveKey,JSON.stringify(o));}catch(e){resetting=false;say(bad);return;}
+  try{const previous=localStorage.getItem(saveKey)||localStorage.getItem(legacySaveKey)||'';localStorage.setItem(saveKey+'_backup_before_import',previous);localStorage.setItem(saveKey,JSON.stringify(o));localStorage.setItem(legacySaveKey,JSON.stringify(o));}catch(e){resetting=false;say('Penyimpanan penuh atau tidak tersedia. Progres tidak diubah.');return;}
   say('Save berhasil dipulihkan. Memuat ulang...');setTimeout(()=>location.reload(),600);
  });
  // Autosave berkala + saat tab disembunyikan / ditutup
@@ -2218,7 +2239,6 @@ function ensureMusic(){
  }
  if(music.ctx.state==='suspended')music.ctx.resume();
 }
-
 for(const ev of ['pointerdown','keydown','touchend','click'])window.addEventListener(ev,ensureMusic);
 document.addEventListener('visibilitychange',()=>{if(!music.ctx)return;if(document.hidden)music.ctx.suspend();else if(music.on){music.ctx.resume();applyMusicVolume();}});
 function sfxCoin(){if(!music.ctx||!music.on||music.ctx.state!=='running')return;const t=music.ctx.currentTime;tone(mtof(88),t,.25,.1,'triangle',6000);tone(mtof(95),t+.08,.35,.1,'triangle',6000);}
@@ -2293,7 +2313,7 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-showToast('IRLISE RISTORANTE Update 2.1 siap! Misi Harian tersedia.');
+showToast('IRLISE RISTORANTE Update 2.2 siap! Misi Harian tersedia.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
