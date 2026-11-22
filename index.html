@@ -1,10 +1,10 @@
-<!-- IRLISE RISTORANTE v2.3.0 | Cloudflare Pages development preview -->
+<!-- IRLISE RISTORANTE v2.3.2 | Player identity HUD, tutorial overlay removed -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.3.1</title>
+<title>IRLISE RISTORANTE — Update 2.3.2</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -13,7 +13,7 @@
   #hud { position:fixed; inset:0; pointer-events:none; color:#fff; }
   .panel { background:rgba(18,29,39,.82); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:12px 15px; box-shadow:0 8px 30px rgba(0,0,0,.2); backdrop-filter:blur(8px); }
   #brand { position:absolute; top:16px; left:16px; }
-  #brand strong { display:block; font-size:15px; letter-spacing:.08em; }
+  #brand strong { display:block; font-size:15px; letter-spacing:.04em; overflow-wrap:anywhere; }\n  #brand .playerHudLabel { display:block; color:#8faab8; font-size:9px; font-weight:800; letter-spacing:1.3px; margin-bottom:2px; }\n  #brand .playerHudIdLabel { margin-top:8px; }\n  #brand #playerHudId { display:block; color:#5ed2ae; font:800 12px ui-monospace,monospace; letter-spacing:1px; }\n  #tutorial { display:none !important; }
   #brand span { color:#a9c6d8; font-size:12px; }
   #stats { position:absolute; top:16px; right:16px; display:flex; gap:8px; }
   .stat { min-width:100px; }
@@ -231,14 +231,14 @@
 </head>
 <body>
 <div id="playerGate" data-notr><div class="playerGateCard"><h2 id="playerGateTitle">Selamat datang di IRLISE!</h2><p id="playerGateIntro">Masukkan nama pemain untuk membuat profil. Nama dan waktu sesi bermain akan dicatat otomatis di IRLISE PLAYER MONITOR untuk statistik permainan. Tidak ada lokasi atau data perangkat yang dikumpulkan.</p><div id="playerNameForm"><label for="playerName">Nama pemain</label><input id="playerName" maxlength="24" autocomplete="nickname" placeholder="Nama kamu (2–24 karakter)"><div class="playerGateActions"><button id="playerAccept" type="button">Buat identitas pemain</button></div></div><div id="playerIdentity" style="display:none"><div class="playerIdentityCard"><small>IDENTITAS PEMAIN</small><div class="playerIdentityName" id="playerIdentityName"></div><small>PLAYER ID</small><div class="playerIdentityId" id="playerIdentityId"></div><p>ID ini unik dan akan tetap digunakan pada sesi bermain berikutnya.</p></div><div class="playerGateActions"><button id="playerEnter" type="button">Masuk ke game</button></div></div><div id="playerGateStatus" role="status"></div></div></div>
-<div id="guidedTutorial" data-notr aria-live="polite"><div id="guideCard"><div id="guideStep">PANDUAN 1/3</div><h2 id="guideTitle">Kenali kontrol</h2><div id="guideText">Gunakan tombol W A S D untuk berjalan di dalam restoran.</div><div id="guideActions"><button id="guideSkip" type="button">Lewati</button><button id="guideNext" type="button">Lanjut</button></div></div><svg id="guideArrow" viewBox="0 0 48 64" aria-hidden="true"><path d="M24 2 L24 46 M8 30 L24 48 L40 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
 <div id="langScreen" data-notr><div class="langCard"><h1>IRLISE RISTORANTE</h1><p>Pilih bahasa • Choose your language</p><button type="button" data-lang="id">Bahasa Indonesia</button><button type="button" data-lang="en">English</button></div></div>
 <div id="maintScreen" data-notr role="alertdialog" aria-live="assertive"><div class="maintCard"><div class="maintIcon">🛠️</div><h2 id="maintTitle"></h2><p id="maintMsg"></p><small id="maintSub"></small></div></div>
 <div id="updateBar" data-notr><span id="updText"></span><button id="updBtn" type="button"></button></div>
 <div id="loading"><div><div style="font-size:22px;font-weight:800">IRLISE RISTORANTE</div><div>Menyiapkan restoran 3D...</div><small>Pastikan koneksi internet aktif untuk memuat mesin 3D.</small></div></div>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div id="brand" class="panel"><strong>IRLISE RISTORANTE</strong><span>Restaurant Simulator • Update 2.3 — Player Monitor</span></div>
+  <div id="brand" class="panel"><small class="playerHudLabel">NAMA PEMAIN</small><strong id="playerHudName">Memuat identitas…</strong><small class="playerHudLabel playerHudIdLabel">PLAYER ID</small><span id="playerHudId">—</span></div>
   <div id="stats">
     <div class="panel stat" id="levelStat"><small>Level restoran</small><b id="levelValue">Lv 1</b><div class="xpbar"><i id="xpFill"></i></div><small id="xpText">0 / 50 XP</small></div>
     <div class="panel stat"><small>Uang pemain</small><b id="coinValue">10.000 koin</b></div>
@@ -547,7 +547,7 @@
   function showIdentity(profile){
    const id='IRL-'+profile.player_key.slice(0,8).toUpperCase();
    $('playerIdentityName').textContent=profile.name;
-   $('playerIdentityId').textContent=id;
+   $('playerIdentityId').textContent=id;\n   $('playerHudName').textContent=profile.name;\n   $('playerHudId').textContent=id;
    $('playerGateTitle').textContent='Identitas pemain berhasil dibuat!';
    $('playerGateIntro').textContent='Simpan Player ID ini. Identitas yang sama akan digunakan setiap kali kamu bermain.';
    $('playerNameForm').style.display='none';
@@ -2420,32 +2420,7 @@ function frame(){
 }
 animate();
 loading.classList.add('hidden');
-(function(){
- const overlay=document.getElementById('guidedTutorial'),arrow=document.getElementById('guideArrow');
- const steps=[
-  {title:'Kenali kontrol',text:document.body.classList.contains('touch')?'Gunakan joystick di kiri bawah untuk berjalan dan tombol aksi di kanan bawah untuk berinteraksi.':'Gunakan tombol W A S D untuk berjalan. Arahkan mouse untuk memutar kamera.',target:()=>document.body.classList.contains('touch')?document.getElementById('joy'):document.getElementById('help')},
-  {title:'Buka toko bisnis',text:'Tekan tombol SHOP di kiri bawah untuk membeli meja, bahan, dan perlengkapan restoran.',target:()=>document.getElementById('shopLauncher')},
-  {title:'Mulai operasikan restoran',text:'Setelah siap, tekan tombol BUKA RESTORAN agar pelanggan mulai berdatangan.',target:()=>document.getElementById('restaurantToggleBtn')}
- ];
- let index=0;
- function position(){
-  const el=steps[index].target();if(!el)return;
-  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
-  arrow.style.left=x+'px';arrow.style.top=Math.max(80,Math.min(innerHeight-55,y-75))+'px';
-  arrow.style.transform='translate(-50%,-50%) rotate(0deg)';
- }
- function render(){
-  const st=steps[index];document.getElementById('guideStep').textContent='PANDUAN '+(index+1)+'/'+steps.length;
-  document.getElementById('guideTitle').textContent=st.title;document.getElementById('guideText').textContent=st.text;
-  document.getElementById('guideNext').textContent=index===steps.length-1?'Mulai bermain':'Lanjut';
-  position();
- }
- function close(){overlay.classList.remove('open');try{localStorage.setItem('irlise_guided_tutorial_v1','done')}catch(e){}}
- document.getElementById('guideNext').addEventListener('click',()=>{if(index<steps.length-1){index++;render()}else close()});
- document.getElementById('guideSkip').addEventListener('click',close);
- if(!localStorage.getItem('irlise_guided_tutorial_v1')){overlay.classList.add('open');render();addEventListener('resize',position);setTimeout(position,300)}
-})(); 
-showToast('IRLISE RISTORANTE Update 2.3 siap! Misi Harian tersedia.');
+// Guided tutorial overlay removed by request.\nshowToast('IRLISE RISTORANTE Update 2.3 siap! Misi Harian tersedia.');
 
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
