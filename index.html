@@ -1594,6 +1594,8 @@ const menuLevel={};for(const [lv,ids] of Object.entries(KONFIG.levelMenu))for(co
 const ingLevel={};for(const [id,m] of Object.entries(menuCatalog))for(const ing of Object.keys(m.recipe))ingLevel[ing]=Math.min(ingLevel[ing]??99,menuLevel[id]||1);
 const unlockedMenuIds=()=>menuIds.filter(id=>level>=(menuLevel[id]||1));
 const stockCap=()=>KONFIG.kapasitasKulkas(level);
+const performanceScore=()=>Math.max(0,Math.min(100,Math.round(50+rep*10)));
+const wageDebt=()=>Math.max(0,Number(saveData.wageDebt)||0);
 const totalWages=()=>(saveData.staff||[]).reduce((a,s)=>a+(Number.isFinite(s.salary)?s.salary:(KONFIG.gajiBulanan[s.role]||0)),0);
 const roleName=r=>({chef:'Koki',cashier:'Kasir',staff:'Pelayan',adminFinance:'Admin Keuangan',adminHR:'Admin HRD',technician:'Teknisi Maintenance',engineeringSupervisor:'Engineering Supervisor'}[r]||'Karyawan');
 const staffSkill=role=>{const sh=gameMinutes>=900?2:1;const s=(saveData.staff||[]).find(m=>m.role===role&&m.shift===sh);return Math.min(MAX_SKILL,((s&&s.skill)|0)||1);};
@@ -1659,13 +1661,13 @@ function refreshBusinessLocks(){
  if(!areaUnlocked)set('expandArea',level<KONFIG.levelRuanganKanan?'🔒 Terbuka di Level '+KONFIG.levelRuanganKanan+' • 4.000 koin':'4.000 koin • bangunan kanan • area makan tambahan');
  if(!leftAreaUnlocked)set('expandLeftArea',level<KONFIG.levelRuanganKiri?'🔒 Terbuka di Level '+KONFIG.levelRuanganKiri+' • 3.500 koin':'3.500 koin • bangunan kiri • area makan & kantor owner');
  const info=document.getElementById('levelInfo');
- if(info)info.innerHTML='<b>Level '+level+'</b> • '+(saveData.xp||0)+' XP'+(level<MAX_LEVEL?'<br>Level '+(level+1)+': '+LEVEL_TEXT[level+1]:'<br>Level maksimum tercapai.')+'<br>Gaji bulanan karyawan: '+rupiah(totalWages())+' koin';
+ if(info)info.innerHTML='<b>Level '+level+'</b> • '+(saveData.xp||0)+' XP'+(level<MAX_LEVEL?'<br>Level '+(level+1)+': '+LEVEL_TEXT[level+1]:'<br>Level maksimum tercapai.')+'<br>Gaji bulanan karyawan: '+rupiah(totalWages())+' koin'+(wageDebt()?'<br>Tunggakan gaji: '+rupiah(wageDebt())+' koin':'');
 }
 function payWages(){
- const w=totalWages();if(!w)return '';
- if(coins>=w){coins-=w;return ' Gaji karyawan dibayar −'+rupiah(w)+' koin.';}
- const paid=coins;coins=0;rep=Math.max(0,rep-.1);
- return ' Uang tidak cukup untuk gaji ('+rupiah(w)+' koin), hanya terbayar '+rupiah(paid)+'. Karyawan kecewa, reputasi turun.';
+ const debt=wageDebt(),w=totalWages()+debt;if(!w)return '';
+ if(coins>=w){coins-=w;saveData.wageDebt=0;return ' Gaji karyawan dibayar −'+rupiah(w)+' koin'+(debt?' (termasuk tunggakan '+rupiah(debt)+' koin).':'.');}
+ const paid=coins;coins=0;saveData.wageDebt=w-paid;rep=Math.max(0,rep-.1);
+ return ' Uang tidak cukup untuk gaji ('+rupiah(w)+' koin), hanya terbayar '+rupiah(paid)+'. Sisa '+rupiah(w-paid)+' koin menjadi tunggakan bulan depan. Karyawan kecewa, reputasi turun.';
 }
 function updateTutorial(){
  const el=document.getElementById('tutorial');if(!el)return;
@@ -1876,7 +1878,7 @@ function upgradeStaff(item){
  const sk=st.skill||1;if(sk>=MAX_SKILL)return;
  const nx=sk+1,lv=KONFIG.skill.levelUpgrade[nx];
  if(level<lv){showToast('🔒 Peningkatan keahlian ini terbuka di Level '+lv+'.');return;}
- st.skill=nx;st.salary=Math.round((KONFIG.gajiBulanan[st.role]||0)*(1+.15*(nx-1)));persist();showToast(roleName(item.role)+' naik ke skill '+nx+'. Gaji bulanan ikut naik menjadi '+rupiah(st.salary)+' koin.');renderMarket();
+ const baseSalary=KONFIG.gajiBulanan[st.role]||0,skillBase=n=>baseSalary*(1+.15*(n-1));const ratio=Number.isFinite(st.salary)&&skillBase(sk)>0?st.salary/skillBase(sk):1;st.skill=nx;st.salary=Math.round(Math.max(baseSalary*.5,Math.min(baseSalary*2,skillBase(nx)*ratio)));persist();showToast(roleName(item.role)+' naik ke skill '+nx+'. Gaji bulanan ikut naik menjadi '+rupiah(st.salary)+' koin.');renderMarket();
 }
 function adjustStaffSalary(item,direction){
  const st=(saveData.staff||[]).find(x=>x.id===item.id);if(!st)return;
@@ -1911,7 +1913,7 @@ function purchaseMarketItem(item){
   const same=(saveData.staff||[]).filter(x=>x.role===item.role&&x.shift===item.shift).length;
   const cap=item.role==='chef'?KONFIG.batasKokiPerShift:item.role==='staff'?KONFIG.batasPelayanPerShift:1;
   if(same>=cap){showToast('Kapasitas '+roleName(item.role)+' Shift '+item.shift+' sudah penuh ('+cap+').');return;}
-  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift||1,id:item.id,slot:item.slot||1,skill:1,salary:KONFIG.gajiBulanan[item.role]||0,performance:75});persist();refreshStaffVisuals();
+  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift||1,id:item.id,slot:item.slot||1,skill:1,salary:KONFIG.gajiBulanan[item.role]||0,performance:performanceScore()});persist();refreshStaffVisuals();
   showToast(roleName(item.role)+' Shift '+item.shift+' direkrut. Gaji bulanan '+rupiah(KONFIG.gajiBulanan[item.role])+' koin.');renderMarket();refreshBusinessLocks();return;
  }
  if(coins<item.price){showToast('Koin belum cukup untuk membeli '+item.name+'.');return;}
@@ -2009,7 +2011,7 @@ let gameMinutes=480,lastShift=1,autoServeAt=0;
 function refreshRestaurantButton(){const b=document.getElementById('restaurantToggleBtn');if(!b)return;b.textContent=restaurantOpen?'TUTUP RESTORAN':'BUKA RESTORAN';b.classList.toggle('isOpen',restaurantOpen);}
 function updateShiftClock(dt){
  gameMinutes+=dt*2.8; if(gameMinutes>=1320){gameMinutes=480;restaurantOpen=false;const earned=coins-dayStartCoins;
- (saveData.staff||[]).forEach(st=>{const base=KONFIG.gajiBulanan[st.role]||0;const score=Math.max(0,Math.min(100,Math.round(50+rep*10)));st.performance=score;if(!Number.isFinite(st.salary))st.salary=base;});
+ (saveData.staff||[]).forEach(st=>{const base=KONFIG.gajiBulanan[st.role]||0;st.performance=performanceScore();if(!Number.isFinite(st.salary))st.salary=base;});
  const technicians=(saveData.staff||[]).filter(st=>st.role==='technician').length,supervisors=(saveData.staff||[]).filter(st=>st.role==='engineeringSupervisor').length;
  equipmentCondition=Math.max(0,Math.min(100,equipmentCondition-2+technicians*5+supervisors*3));
  const wageMsg=day%30===0?payWages():'';showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+(day%30===0?' Penggajian bulanan: '+wageMsg:'')+' Hari baru dimulai!');day++;resetDailyMissions();dayStartCoins=coins;refreshRestaurantButton();persist();}
