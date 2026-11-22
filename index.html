@@ -208,7 +208,7 @@
   <p id="levelInfo"></p>
   <div class="shopGrid">
     <button class="shopBtn" id="sellOrder"><b>ℹ️ Panduan alur kerja</b><small>Urutan dapur: K → L → I → J. Klik untuk panduan singkat.</small></button>
-    <button class="shopBtn" id="buyTable"><b>Beli meja</b><small>800 koin • kapasitas +4</small></button>
+    <button class="shopBtn" id="buyTable"><b>Beli meja + 4 kursi</b><small>800 koin • kursi otomatis termasuk</small></button>
     <button class="shopBtn" id="buyStove"><b>Beli kompor</b><small>1.800 koin • dekorasi dapur</small></button>
     <button class="shopBtn" id="expandArea"><b>Buka bangunan kanan</b><small>4.000 koin • bangunan kanan • area makan tambahan</small></button>
     <button class="shopBtn" id="expandLeftArea"><b>Buka bangunan kiri</b><small>3.500 koin • bangunan kiri • area makan & kantor owner</small></button>
@@ -1585,7 +1585,7 @@ function updateMenuBoard(){
 function refreshBusinessLocks(){
  const set=(id,text)=>{const b=document.getElementById(id);if(!b)return;const sm=b.querySelector('small');if(sm)sm.textContent=text;};
  const tn=KONFIG.levelMeja[saveData.items.table|0];
- set('buyTable',(saveData.items.table|0)>=tableSlots.length-(saveData.legacyStarterTables|0)?'Area makan penuh ✓':tn&&level<tn?'🔒 Terbuka di Level '+tn:'800 koin • kapasitas +4');
+ set('buyTable',(saveData.items.table|0)>=tableSlots.length-(saveData.legacyStarterTables|0)?'Area makan penuh ✓':tn&&level<tn?'🔒 Terbuka di Level '+tn:'800 koin • termasuk 4 kursi');
  set('buyStove',(saveData.items.stove|0)>=stoveSlots.length?'Dapur penuh ✓':level<KONFIG.levelKompor?'🔒 Terbuka di Level '+KONFIG.levelKompor:'1.800 koin • dekorasi dapur');
  if(!areaUnlocked)set('expandArea',level<KONFIG.levelRuanganKanan?'🔒 Terbuka di Level '+KONFIG.levelRuanganKanan+' • 4.000 koin':'4.000 koin • bangunan kanan • area makan tambahan');
  if(!leftAreaUnlocked)set('expandLeftArea',level<KONFIG.levelRuanganKiri?'🔒 Terbuka di Level '+KONFIG.levelRuanganKiri+' • 3.500 koin':'3.500 koin • bangunan kiri • area makan & kantor owner');
