@@ -714,6 +714,7 @@
 </script>
 <script type="module" onerror="window.__loadFail()">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 await window.__langReady;
 await window.__playerTrackingReady;
 
@@ -1342,6 +1343,47 @@ const CH=window.__irliseChar||{style:'short',skin:0xe9b58e,hair:0x2b2320,shirt:0
 const avatar=makePerson({skin:CH.skin,hair:CH.hair,shirt:CH.shirt,pants:0x34445b,shoe:0x252a31,style:CH.style,hijab:CH.shirt,apron:0xf3e5c9,tag:true,cap:CH.style==='hijab'?null:CH.shirt,collar:0xfff1d8,scale:1.12});
 player.add(avatar);standPose(avatar);
 player.userData.speed=4.2;
+// Imported barista model: only replaces the default short-hair player; other
+// character styles keep their existing customizable procedural avatar.
+let importedAvatar=null, importedMixer=null, importedActions={}, importedAction=null;
+function setImportedAction(name){
+ const next=importedActions[name]||importedActions.idle||Object.values(importedActions)[0];
+ if(!next||next===importedAction)return;
+ next.reset().fadeIn(.18).play();
+ if(importedAction)importedAction.fadeOut(.18);
+ importedAction=next;
+}
+if(CH.style==='short'){
+ const characterLoader=new GLTFLoader();
+ characterLoader.load('./cowo_barista.glb',gltf=>{
+  const model=gltf.scene;
+  model.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(model);
+  const size=bounds.getSize(new THREE.Vector3());
+  const center=bounds.getCenter(new THREE.Vector3());
+  if(size.y>0.001){
+   const fitScale=2.24/size.y;
+   const modelRoot=new THREE.Group();
+   modelRoot.add(model);
+   modelRoot.scale.setScalar(fitScale);
+   modelRoot.position.set(-center.x*fitScale,-bounds.min.y*fitScale,-center.z*fitScale);
+   model.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;}});
+   player.add(modelRoot);
+   importedAvatar=modelRoot;
+   avatar.visible=false;
+   if(gltf.animations&&gltf.animations.length){
+    importedMixer=new THREE.AnimationMixer(model);
+    gltf.animations.forEach(clip=>{
+     const key=clip.name.toLowerCase();
+     const type=/walk|run|move/.test(key)?'walk':/idle|stand|breath/.test(key)?'idle':/serve|carry|hold/.test(key)?'serve':key;
+     if(!importedActions[type])importedActions[type]=importedMixer.clipAction(clip);
+    });
+    setImportedAction('idle');
+   }
+   console.info('[IRLISE] Barista GLB loaded',{height:size.y,animations:gltf.animations?.map(a=>a.name)||[]});
+  }
+ },undefined,error=>console.warn('[IRLISE] Barista GLB failed; using built-in avatar.',error));
+}
 // Seated customers: each NPC is aligned to an actual chair and faces its table.
 // ===== Pelanggan banyak, pesanan banyak & antrean dapur (v1.4) =====
 const menuCatalog={
@@ -2544,6 +2586,7 @@ function frame(){
    walkPose(avatar,gait*.65,1);
  } else { standPose(avatar); }
  if(holdingDish){const u=avatar.userData;u.arms[0].rotation.x=u.arms[1].rotation.x=-.95;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.55;}
+ if(importedAvatar){importedAvatar.rotation.y=avatar.rotation.y;if(importedMixer){importedMixer.update(dt);setImportedAction(holdingDish?'serve':moving?'walk':'idle');}}
 
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
  while(kitchenQueue.length&&activeCooks.length<2&&hasStaffOnDuty('chef')){if(!beginCooking(true))break;}
