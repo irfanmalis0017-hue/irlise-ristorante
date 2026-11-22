@@ -1486,7 +1486,7 @@ const KONFIG={
  levelRekrut:{cashier:3,staff:4,chef:2}, levelShift2:6,
  levelRuanganKanan:6, levelRuanganKiri:8,
  batasKokiPerShift:2, batasPelayanPerShift:4,
- gajiBulanan:{cashier:1200,staff:1500,chef:2000},
+ gajiBulanan:{cashier:1200,staff:1500,chef:2000,adminFinance:2200,adminHR:2000,technician:2200,engineeringSupervisor:3200},
  skill:{kecepatanKoki:[0,1,.8,.6],kecepatanPelayan:[0,1,1.3,1.6],kecepatanKasir:[0,1,.7,.45],biayaUpgrade:[0,0,1200,2500],levelUpgrade:[0,0,5,8]},
  jedaPelanggan:[0,2.2,1.8,1.5,1.25,1.1,1,.95,.9,.85,.8], // pengali jeda kedatangan pelanggan (makin kecil makin ramai)
  batasPelanggan:[0,2,3,3,4,5,6,8,10,12,12],
@@ -1524,14 +1524,14 @@ const menuLevel={};for(const [lv,ids] of Object.entries(KONFIG.levelMenu))for(co
 const ingLevel={};for(const [id,m] of Object.entries(menuCatalog))for(const ing of Object.keys(m.recipe))ingLevel[ing]=Math.min(ingLevel[ing]??99,menuLevel[id]||1);
 const unlockedMenuIds=()=>menuIds.filter(id=>level>=(menuLevel[id]||1));
 const stockCap=()=>KONFIG.kapasitasKulkas(level);
-const totalWages=()=>(saveData.staff||[]).reduce((a,s)=>a+(KONFIG.gajiBulanan[s.role]||0),0);
-const roleName=r=>r==='chef'?'Koki':r==='cashier'?'Kasir':'Pelayan';
+const totalWages=()=>(saveData.staff||[]).reduce((a,s)=>a+(Number.isFinite(s.salary)?s.salary:(KONFIG.gajiBulanan[s.role]||0)),0);
+const roleName=r=>({chef:'Koki',cashier:'Kasir',staff:'Pelayan',adminFinance:'Admin Keuangan',adminHR:'Admin HRD',technician:'Teknisi Maintenance',engineeringSupervisor:'Engineering Supervisor'}[r]||'Karyawan');
 const staffSkill=role=>{const sh=gameMinutes>=900?2:1;const s=(saveData.staff||[]).find(m=>m.role===role&&m.shift===sh);return Math.min(MAX_SKILL,((s&&s.skill)|0)||1);};
 const staffCount=role=>{const sh=gameMinutes>=900?2:1;return Math.max(1,(saveData.staff||[]).filter(m=>m.role===role&&m.shift===sh).length);};
 const chefSpeedFactor=()=>KONFIG.skill.kecepatanKoki[staffSkill('chef')]/staffCount('chef');
 const waiterSpeedFactor=()=>KONFIG.skill.kecepatanPelayan[staffSkill('staff')]*(1+(staffCount('staff')-1)*.6);
 const cashierSpeedFactor=()=>KONFIG.skill.kecepatanKasir[staffSkill('cashier')];
-const hireLevel=item=>item.role==='cashier'?2:item.role==='chef'&&item.shift===1?2:item.role==='staff'&&item.shift===2?2:Math.max(KONFIG.levelRekrut[item.role]||1,item.shift===2?KONFIG.levelShift2:1);
+const hireLevel=item=>({adminFinance:4,technician:5,adminHR:6,engineeringSupervisor:8}[item.role]|| (item.role==='cashier'?2:item.role==='chef'&&item.shift===1?2:item.role==='staff'&&item.shift===2?2:Math.max(KONFIG.levelRekrut[item.role]||1,item.shift===2?KONFIG.levelShift2:1)));
 const LEVEL_TEXT={
  2:'Rekrut Koki Pagi, Pelayan Sore, serta Kasir Pagi dan Sore. Meja tambahan pertama dan kapasitas kulkas naik.',
  3:'Menu baru: Pisang Goreng, Nasi Goreng, Mie Goreng, dan Es Jeruk.',
@@ -1712,7 +1712,11 @@ const marketCatalog={
   ...[1,2].flatMap(shift=>Array.from({length:KONFIG.batasKokiPerShift},(_,i)=>({id:'chef_shift'+shift+'_slot'+(i+1),name:'Koki '+(i+1)+' • Shift '+shift,icon:'👨‍🍳',price:1800,desc:'Koki dapur untuk shift '+shift+'. Maksimal 2 koki per shift. Koki tambahan mempercepat masak.',role:'chef',shift,slot:i+1}))),
   ...[1,2].flatMap(shift=>Array.from({length:KONFIG.batasPelayanPerShift},(_,i)=>({id:'staff_shift'+shift+'_slot'+(i+1),name:'Pelayan '+(i+1)+' • Shift '+shift,icon:'🧑‍💼',price:1200,desc:'Pelayan untuk shift '+shift+'. Maksimal 4 pelayan per shift. Pelayan tambahan mempercepat antar.',role:'staff',shift,slot:i+1}))),
   {id:'cashier_shift1',name:'Kasir • Shift 1 (08.00–15.00)',icon:'🧑‍💻',price:1500,desc:'Menyambut pelanggan dan menerima pesanan di meja kasir.',role:'cashier',shift:1,slot:1},
-  {id:'cashier_shift2',name:'Kasir • Shift 2 (15.00–22.00)',icon:'🧑‍💻',price:1500,desc:'Melayani percakapan dan konfirmasi pesanan pelanggan.',role:'cashier',shift:2,slot:1}
+  {id:'cashier_shift2',name:'Kasir • Shift 2 (15.00–22.00)',icon:'🧑‍💻',price:1500,desc:'Melayani percakapan dan konfirmasi pesanan pelanggan.',role:'cashier',shift:2,slot:1},
+  {id:'admin_finance',name:'Admin Keuangan',icon:'📊',price:2600,desc:'Menyusun laporan pemasukan, pengeluaran, dan rekap penggajian bulanan.',role:'adminFinance',shift:1,slot:1},
+  {id:'technician',name:'Teknisi Maintenance',icon:'🧰',price:2800,desc:'Menangani pemeriksaan dan perawatan peralatan restoran.',role:'technician',shift:1,slot:1},
+  {id:'admin_hr',name:'Admin HRD',icon:'🗂️',price:3000,desc:'Memantau kinerja, loyalitas, dan administrasi karyawan.',role:'adminHR',shift:1,slot:1},
+  {id:'engineering_supervisor',name:'Engineering Supervisor',icon:'⚙️',price:4200,desc:'Mengawasi jadwal maintenance dan kondisi fasilitas restoran.',role:'engineeringSupervisor',shift:1,slot:1}
  ]
 };
 let marketCategory='equipment';
@@ -1750,14 +1754,16 @@ function renderMarket(){
    const st=saveData.staff.find(x=>x.id===item.id);
    const sk=(st&&st.skill)||1;
    const row=document.createElement('div');row.className='itemFoot staffRow';
-   const lab=document.createElement('span');lab.className='skillLabel';lab.textContent='Skill '+sk+' / '+MAX_SKILL;
+   const lab=document.createElement('span');lab.className='skillLabel';lab.textContent='Kinerja '+(st.performance??75)+'% • Gaji '+rupiah(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))+'/bln';
    const up=document.createElement('button');up.type='button';
    if(sk>=MAX_SKILL){up.textContent='Skill maks';up.disabled=true;}
    else{const nx=sk+1,cost=KONFIG.skill.biayaUpgrade[nx],lv=KONFIG.skill.levelUpgrade[nx];up.textContent=level<lv?'🔒 Lv '+lv:'Upgrade '+rupiah(cost);up.disabled=level<lv||coins<cost;}
    up.addEventListener('click',()=>upgradeStaff(item));
    const fire=document.createElement('button');fire.type='button';fire.className='fireBtn';fire.textContent='Pecat';
    fire.addEventListener('click',()=>{if(fire.dataset.sure!=='1'){fire.dataset.sure='1';fire.textContent='Yakin?';setTimeout(()=>{fire.dataset.sure='';fire.textContent='Pecat';},3000);return;}fireStaff(item);});
-   row.append(lab,up,fire);card.append(row);
+   const lower=document.createElement('button');lower.type='button';lower.textContent='Gaji −';lower.disabled=(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))<=Math.round((KONFIG.gajiBulanan[st.role]||0)*.5/50)*50;lower.addEventListener('click',()=>adjustStaffSalary(item,-1));
+   const raise=document.createElement('button');raise.type='button';raise.textContent='Gaji +';raise.disabled=(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))>=(KONFIG.gajiBulanan[st.role]||0)*2;raise.addEventListener('click',()=>adjustStaffSalary(item,1));
+   row.append(lab,lower,raise,up,fire);card.append(row);
   }
   marketItems.append(card);
  });
@@ -1766,10 +1772,18 @@ function renderMarket(){
 function upgradeStaff(item){
  const st=(saveData.staff||[]).find(x=>x.id===item.id);if(!st)return;
  const sk=st.skill||1;if(sk>=MAX_SKILL)return;
- const nx=sk+1,cost=KONFIG.skill.biayaUpgrade[nx],lv=KONFIG.skill.levelUpgrade[nx];
- if(level<lv){showToast('🔒 Upgrade ini terbuka di Level '+lv+'.');return;}
- if(coins<cost){showToast('Koin belum cukup untuk upgrade skill.');return;}
- coins-=cost;st.skill=nx;persist();showToast(roleName(item.role)+' Shift '+item.shift+' naik ke skill '+nx+'!');renderMarket();
+ const nx=sk+1,lv=KONFIG.skill.levelUpgrade[nx];
+ if(level<lv){showToast('🔒 Peningkatan keahlian ini terbuka di Level '+lv+'.');return;}
+ st.skill=nx;st.salary=Math.round((KONFIG.gajiBulanan[st.role]||0)*(1+.15*(nx-1)));persist();showToast(roleName(item.role)+' naik ke skill '+nx+'. Gaji bulanan ikut naik menjadi '+rupiah(st.salary)+' koin.');renderMarket();
+}
+function adjustStaffSalary(item,direction){
+ const st=(saveData.staff||[]).find(x=>x.id===item.id);if(!st)return;
+ const base=KONFIG.gajiBulanan[st.role]||0;if(!base)return;
+ const current=Number.isFinite(st.salary)?st.salary:base;
+ const next=Math.round((current+direction*Math.max(100,Math.round(base*.1)))/50)*50;
+ const min=Math.round(base*.5/50)*50,max=base*2;
+ if(next<min||next>max){showToast('Gaji dibatasi antara 50% sampai 200% dari gaji dasar.');return;}
+ st.salary=next;persist();showToast('Gaji '+roleName(st.role)+' diperbarui menjadi '+rupiah(next)+' koin per bulan.');renderMarket();
 }
 function fireStaff(item){
  const before=(saveData.staff||[]).length;
@@ -1781,7 +1795,7 @@ function renderInventory(){
  refreshFridgeStock();
  const entries=Object.entries(saveData.inventory||{}).filter(([,qty])=>qty>0);
  const labels={table:'Meja',chair:'Kursi',stove:'Kompor',fridge:'Kulkas',prepTable:'Meja persiapan',plates:'Set piring',rice:'Beras',chicken:'Ayam',beef:'Daging sapi',vegetables:'Sayuran',flour:'Tepung',oil:'Minyak goreng',spices:'Bumbu',egg:'Telur',noodles:'Mi',tea:'Teh',ice:'Es batu',orange:'Jeruk',coffee:'Kopi',milk:'Susu',banana:'Pisang'};
- const stockText=entries.length?'Stok dimiliki: '+entries.map(([id,qty])=>(labels[id]||id)+' × '+qty).join(' • '):'Inventaris barang masih kosong.';const staffText=(saveData.staff||[]).length?'Karyawan: '+saveData.staff.map(x=>(x.role==='chef'?'Koki':x.role==='cashier'?'Kasir':'Pelayan')+' Shift '+x.shift+' (skill '+(x.skill||1)+')').join(' • '):'Belum ada karyawan direkrut.';document.getElementById('marketInventory').textContent=stockText+'\n'+staffText+'\nKapasitas kulkas per bahan: '+stockCap()+' • Total gaji bulanan: '+rupiah(totalWages())+' koin';
+ const stockText=entries.length?'Stok dimiliki: '+entries.map(([id,qty])=>(labels[id]||id)+' × '+qty).join(' • '):'Inventaris barang masih kosong.';const staffText=(saveData.staff||[]).length?'Karyawan: '+saveData.staff.map(x=>roleName(x.role)+(x.role==='chef'||x.role==='staff'||x.role==='cashier'?' Shift '+x.shift:'')+' (skill '+(x.skill||1)+', kinerja '+(x.performance??75)+'%, gaji '+rupiah(Number.isFinite(x.salary)?x.salary:(KONFIG.gajiBulanan[x.role]||0))+')').join(' • '):'Belum ada karyawan direkrut.';document.getElementById('marketInventory').textContent=stockText+'\n'+staffText+'\nKapasitas kulkas per bahan: '+stockCap()+' • Total gaji bulanan: '+rupiah(totalWages())+' koin';
 }
 function purchaseMarketItem(item){
  // Rekrut karyawan: terkunci per level, dikenai gaji bulanan.
@@ -1793,7 +1807,7 @@ function purchaseMarketItem(item){
   const same=(saveData.staff||[]).filter(x=>x.role===item.role&&x.shift===item.shift).length;
   const cap=item.role==='chef'?KONFIG.batasKokiPerShift:item.role==='staff'?KONFIG.batasPelayanPerShift:1;
   if(same>=cap){showToast('Kapasitas '+roleName(item.role)+' Shift '+item.shift+' sudah penuh ('+cap+').');return;}
-  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift,id:item.id,slot:item.slot||1,skill:1});persist();refreshStaffVisuals();
+  coins-=item.price;saveData.staff.push({role:item.role,shift:item.shift||1,id:item.id,slot:item.slot||1,skill:1,salary:KONFIG.gajiBulanan[item.role]||0,performance:75});persist();refreshStaffVisuals();
   showToast(roleName(item.role)+' Shift '+item.shift+' direkrut. Gaji bulanan '+rupiah(KONFIG.gajiBulanan[item.role])+' koin.');renderMarket();refreshBusinessLocks();return;
  }
  if(coins<item.price){showToast('Koin belum cukup untuk membeli '+item.name+'.');return;}
@@ -1877,6 +1891,7 @@ function refreshStaffVisuals(){
   const home=role==='chef'?new THREE.Vector3(4.8,0,-5.72):role==='cashier'?new THREE.Vector3(-2.2,0,-6.05):new THREE.Vector3(3.25,0,-3.05);
   if(role==='chef'&&roleIndex>0){home.x+=roleIndex*1.15;home.z-=.45;}
   if(role==='staff'&&roleIndex>0){home.x-=roleIndex*.72;home.z+=roleIndex*.65;}
+  if(!['chef','cashier','staff'].includes(role))return;
   g.position.copy(home);g.userData.home.copy(home);
   if(role==='chef')g.rotation.y=0;
   if(role==='cashier')g.rotation.y=0;
@@ -1888,7 +1903,9 @@ function getWorker(role){return staffVisuals.find(w=>w.role===role)?.group||null
 let gameMinutes=480,lastShift=1,autoServeAt=0;
 function refreshRestaurantButton(){const b=document.getElementById('restaurantToggleBtn');if(!b)return;b.textContent=restaurantOpen?'TUTUP RESTORAN':'BUKA RESTORAN';b.classList.toggle('isOpen',restaurantOpen);}
 function updateShiftClock(dt){
- gameMinutes+=dt*2.8; if(gameMinutes>=1320){gameMinutes=480;restaurantOpen=false;const earned=coins-dayStartCoins;const wageMsg=day%30===0?payWages():'';showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+(day%30===0?' Penggajian bulanan: '+wageMsg:'')+' Hari baru dimulai!');day++;resetDailyMissions();dayStartCoins=coins;refreshRestaurantButton();persist();}
+ gameMinutes+=dt*2.8; if(gameMinutes>=1320){gameMinutes=480;restaurantOpen=false;const earned=coins-dayStartCoins;
+ (saveData.staff||[]).forEach(st=>{const base=KONFIG.gajiBulanan[st.role]||0;const score=Math.max(0,Math.min(100,Math.round(50+rep*10)));st.performance=score;if(!Number.isFinite(st.salary))st.salary=base;});
+ const wageMsg=day%30===0?payWages():'';showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+(day%30===0?' Penggajian bulanan: '+wageMsg:'')+' Hari baru dimulai!');day++;resetDailyMissions();dayStartCoins=coins;refreshRestaurantButton();persist();}
  const h=Math.floor(gameMinutes/60),m=Math.floor(gameMinutes%60),shift=h<15?1:2;
  const clock=document.getElementById('shiftClock');if(clock)clock.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' • Shift '+shift;
  if(shift!==lastShift){lastShift=shift;refreshStaffVisuals();showToast(shift===2?'Pukul 15.00 — Shift 1 pulang, Shift 2 mulai bekerja.':'Pukul 08.00 — Shift 1 mulai bekerja.');}
