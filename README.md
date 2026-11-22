@@ -19,3 +19,12 @@ Version: `2.2.0`
 ## Previous systems retained
 
 Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflow, staff and shifts, levels and XP, market and inventory, settings, language selection, save import/export, and Owner's Office unlock progression.
+
+## Kitchen workflow and customer service
+
+- Up to two orders can cook at the same time, using separate cooking timers.
+- Level 1 Es Teh takes 5 seconds; Ayam Geprek takes 10 seconds.
+- Every completed dish enters its own ready-to-serve queue, so players can carry and deliver dishes one at a time without waiting for the other dish.
+- A ready dish can be delivered to any seated customer who ordered that menu, including a different customer in the queue.
+- Customers become visibly angry after 20 seconds of waiting and leave after 30 seconds; leaving customers reduce restaurant reputation.
+- Completed orders adjust reputation according to total waiting time: faster service earns a better customer rating.
