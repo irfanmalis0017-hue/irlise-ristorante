@@ -36,3 +36,12 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 - Customer order size scales with restaurant level: Level 1 = up to 2 menu items; Levels 2–3 = up to 3; Levels 4–5 = up to 4; Levels 6–7 = up to 5; Levels 8–10 = up to 6.
 - Level 2 recruitment unlocks: Morning Shift Chef, Evening Shift Waiter, Morning Shift Cashier, and Evening Shift Cashier. The player serves dishes during the morning while the hired chef cooks; during the evening, the player cooks while the hired waiter delivers dishes. Both cashiers automatically receive and confirm customer orders.
 - The Morning Shift Waiter becomes available at Level 4, and the Evening Shift Chef becomes available at Level 6, gradually completing both teams.
+
+
+## Workday, shifts, and payroll
+
+- One in-game workday runs from 08:00 to 22:00 and lasts approximately 5 minutes in real time.
+- Morning shift: 08:00–15:00. Evening shift: 15:00–22:00.
+- Use the in-game **BUKA RESTORAN / TUTUP RESTORAN** control to stop new customer arrivals or reopen the restaurant during the workday.
+- Staff wages are monthly and are charged at the end of every 30 in-game days, not every day.
+- Monthly wages: Chef 2,000 coins; Waiter 1,500 coins; Cashier 1,200 coins. The Level 2 team of one chef, one waiter, and two cashiers costs 5,900 coins per in-game month.
