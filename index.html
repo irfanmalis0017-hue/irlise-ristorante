@@ -1193,7 +1193,8 @@ const _sphGeo=new THREE.SphereGeometry(1,32,22);_sphGeo.userData.shared=true;
 function _ell(p,n,x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(_sphGeo,m);o.name=n;o.position.set(x,y,z);o.scale.set(sx,sy,sz);p.add(o);return o;}
 function makePerson(o={}){
  const skin=mat(o.skin??0xe7b58f,.7),hair=mat(o.hair??0x292522,.55),shirt=mat(o.shirt??0x4b83b7,.75),pants=mat(o.pants??0x34445b,.8),shoe=mat(o.shoe??0x20272d,.6);
- const eyeM=mat(0x1d1816,.4),white=mat(0xffffff,.4),blush=mat(0xd98979,.9),lip=mat(0x9a5148,.7);
+ const eyeM=mat(o.eye??0x1d1816,.4),white=mat(0xffffff,.4),blush=mat(0xd98979,.9),lip=mat(0x9a5148,.7);
+ const chibi=!!o.chibi; // gaya chibi: kepala besar, badan pendek, mata besar
  const g=new THREE.Group(),root=new THREE.Group();g.add(root);
  _ell(root,'hips',0,.93,0,.25,.15,.17,pants).castShadow=true;
  _ell(root,'belt',0,.985,0,.262,.03,.178,mat(0x20272d,.6));
@@ -1203,7 +1204,8 @@ function makePerson(o={}){
   _cap(th,'thigh',0,-.2,0,.105,.2,pants);
   const kn=new THREE.Group();kn.position.set(0,-.42,0);th.add(kn);
   _cap(kn,'shin',0,-.19,0,.085,.2,pants);
-  _ell(kn,'shoe',0,-.42,.06,.1,.065,.17,shoe);_ell(kn,'sole',0,-.465,.06,.105,.02,.175,white);
+  if(chibi){_ell(kn,'shoe',0,-.41,.07,.12,.085,.2,shoe);_ell(kn,'sole',0,-.465,.07,.125,.02,.205,mat(0x2c2522,.7));}
+  else{_ell(kn,'shoe',0,-.42,.06,.1,.065,.17,shoe);_ell(kn,'sole',0,-.465,.06,.105,.02,.175,white);}
   legs.push({th,kn});
  }
  const torso=_cap(root,'customer torso',0,1.2,0,.2,.26,shirt);torso.scale.set(1.2,1,.76);
@@ -1223,12 +1225,20 @@ function makePerson(o={}){
  _ell(head,'face',0,0,0,.2,.23,.19,skin).castShadow=true;
  for(const s of [-1,1]){
   _ell(head,'ear',s*.195,-.02,0,.04,.06,.035,skin);
-  _ell(head,'eye white',s*.075,.03,.158,.042,.05,.02,white);
-  _ell(head,'pupil',s*.075,.03,.172,.026,.034,.014,eyeM);
-  _ell(head,'eye glint',s*.083,.042,.184,.008,.01,.006,white);
-  _ell(head,'brow',s*.075,.105,.165,.05,.011,.012,hair).rotation.z=s*-.1;
+  if(chibi){
+   _ell(head,'eye white',s*.082,.02,.154,.05,.058,.02,white);
+   _ell(head,'pupil',s*.082,.02,.17,.042,.05,.016,eyeM);
+   _ell(head,'eye glint',s*.093,.036,.186,.012,.014,.006,white);
+   _ell(head,'eye glint small',s*.072,.0,.186,.006,.007,.005,white);
+   _ell(head,'brow',s*.085,.105,.165,.062,.017,.014,hair).rotation.z=s*-.12;
+  }else{
+   _ell(head,'eye white',s*.075,.03,.158,.042,.05,.02,white);
+   _ell(head,'pupil',s*.075,.03,.172,.026,.034,.014,eyeM);
+   _ell(head,'eye glint',s*.083,.042,.184,.008,.01,.006,white);
+   _ell(head,'brow',s*.075,.105,.165,.05,.011,.012,hair).rotation.z=s*-.1;
+  }
   _ell(head,'cheek',s*.125,-.06,.15,.035,.02,.01,blush);
-  if(o.style&&o.style!=='short')_ell(head,'lash',s*.075,.066,.17,.05,.007,.012,eyeM).rotation.z=s*-.15;
+  if(o.style&&o.style!=='short'&&o.style!=='messy')_ell(head,'lash',s*.075,.066,.17,.05,.007,.012,eyeM).rotation.z=s*-.15;
  }
  _ell(head,'nose',0,-.03,.185,.028,.032,.03,skin);
  const sm=new THREE.Mesh(new THREE.TorusGeometry(.04,.008,8,16,Math.PI),lip);sm.position.set(0,-.085,.177);sm.rotation.z=Math.PI;head.add(sm);
@@ -1242,7 +1252,14 @@ function makePerson(o={}){
   for(const s of [-1,1])_ell(head,'side hair',s*.17,.04,-.015,.05,.15,.15,hair);
   if(st==='long')_ell(head,'long hair',0,-.17,-.1,.21,.34,.1,hair);
   if(st==='bun')_ell(head,'bun',0,.3,-.07,.09,.09,.09,hair);
+  if(st==='messy'){ // rambut cokelat tebal dan agak berantakan, poni menyamping
+   _ell(head,'hair tuft',.04,.3,.02,.1,.07,.1,hair).rotation.z=-.4;
+   _ell(head,'hair swoop',.07,.2,.1,.14,.06,.09,hair).rotation.z=-.5;
+   _ell(head,'hair left lock',-.14,.17,.06,.07,.08,.08,hair);
+   _ell(head,'hair right lock',.15,.15,.05,.06,.08,.08,hair);
+  }
  }
+ if(chibi){root.scale.set(1,.8,1);head.position.y=1.86;head.scale.set(1.35,1.41,1.25);}
  if(o.hat==='chef'){cylinder(head,'chef hat band',0,.3,0,.2,.2,.12,materials.white,20);_ell(head,'chef hat crown',0,.46,0,.22,.17,.2,materials.white);}
  if(o.cap!=null){const cm=mat(o.cap,.7);_ell(head,'cap dome',0,.15,-.04,.215,.17,.2,cm);_ell(head,'cap brim',0,.115,.2,.16,.016,.14,cm).rotation.x=.12;_ell(head,'cap logo',0,.19,.2,.035,.035,.01,mat(0xf3c75b,.5));}
  // Tailored clothing details: small reusable primitives add depth without changing rig or hitboxes.
@@ -1277,7 +1294,7 @@ function seatPose(p){const u=p.userData;u.root.position.y=-.28;for(const l of u.
 // The model uses rounded forms, layered hair, a readable face and articulated limbs.
 const player=new THREE.Group(); scene.add(player); player.position.set(0,0,4.0);
 // Pemilik restoran: model manusia baru (topi teal, kemeja polo, celemek krem, tanda nama).
-const avatar=makePerson({skin:0xe9b58e,hair:0x2b2320,shirt:0x2f8f8b,pants:0x34445b,shoe:0x252a31,style:'short',apron:0xf3e5c9,tag:true,cap:0x287f80,collar:0xfff1d8,scale:1.12});
+const avatar=makePerson({skin:0xe3a878,hair:0x3a2a22,eye:0x4a2f22,shirt:0x1f8c8c,pants:0x2a2220,shoe:0x1c1614,style:'messy',apron:0xeadfc6,collar:0x1b6f72,chibi:true,scale:1.12});
 player.add(avatar);standPose(avatar);
 player.userData.speed=4.2;
 // Seated customers: each NPC is aligned to an actual chair and faces its table.
