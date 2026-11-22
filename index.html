@@ -157,6 +157,46 @@
   #missionStatus{font-size:10px;color:#9be3b5;min-height:14px;margin-top:8px}
   @media(max-width:650px){#missionBtn{top:58px;left:10px;padding:8px 10px;font-size:11px}#missionPanel{top:105px;left:10px}}
 
+
+  /* Mobile portrait layout: keep HUD, tutorial and touch controls in separate zones. */
+  @media (max-width:650px) and (orientation:portrait) {
+    #brand { top: max(8px, env(safe-area-inset-top)); left:10px; width:34%; max-width:34%; padding:8px 9px; border-radius:12px; }
+    #brand strong { font-size:clamp(11px,3.2vw,14px); line-height:1.25; }
+    #stats { top:max(8px, env(safe-area-inset-top)); right:10px; left:auto; width:60%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
+    #stats .stat { min-width:0; padding:6px 8px; border-radius:11px; }
+    #stats .stat small { font-size:8px; letter-spacing:.04em; }
+    #stats .stat b { font-size:clamp(12px,3.6vw,15px); }
+    #stats #levelStat { min-width:0; }
+    #stats .xpbar { height:4px; margin:3px 0 2px; }
+    #missionBtn { top:clamp(112px,19vh,158px); left:10px; padding:7px 9px; font-size:10px; }
+    #missionPanel { top:clamp(150px,24vh,195px); left:10px; width:min(340px,calc(100vw - 20px)); max-height:55dvh; }
+    #tutorial { top:clamp(160px,27vh,225px); width:calc(100vw - 28px); max-width:none; padding:10px 12px; font-size:11px; line-height:1.35; }
+    #settingsBtn { top:clamp(112px,19vh,158px); right:10px; bottom:auto; padding:7px 9px; font-size:10px; }
+    #settingsOverlay { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
+    #settingsCard { width:min(420px,100%); max-height:85dvh; overflow:auto; padding:15px; }
+    #settingsCard h2 { font-size:18px; }
+    #settingsCard p { font-size:11px; margin-bottom:10px; }
+    .settingAction { margin:6px 0; padding:10px; font-size:12px; }
+    #joy { left:12px; bottom:calc(82px + env(safe-area-inset-bottom)); width:104px; height:104px; }
+    #joyKnob { width:44px; height:44px; margin:-22px 0 0 -22px; }
+    #actBtns { right:10px; bottom:calc(82px + env(safe-area-inset-bottom)); grid-template-columns:repeat(3,52px); gap:5px; }
+    .actBtn { height:48px; border-radius:11px; font-size:9px; }
+    .actBtn b { font-size:16px; }
+    #shopLauncher { left:10px; bottom:calc(10px + env(safe-area-inset-bottom)); padding:7px 10px; font-size:11px; }
+    #shopLauncher .shopIcon { font-size:17px; }
+    #restaurantToggleBtn { right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); padding:8px 10px; font-size:10px; }
+    #musicBtn { top:auto; left:10px; bottom:calc(58px + env(safe-area-inset-bottom)); padding:5px 8px; font-size:10px; }
+    #marketPanel { width:calc(100vw - 20px); max-height:82dvh; padding:12px; }
+    #marketItems { grid-template-columns:1fr; }
+  }
+  @media (max-width:380px) and (orientation:portrait) {
+    #brand { width:32%; max-width:32%; }
+    #stats { width:62%; }
+    #actBtns { grid-template-columns:repeat(3,46px); gap:4px; }
+    .actBtn { height:44px; }
+    #joy { width:94px; height:94px; }
+  }
+
 </style>
 </head>
 <body>
