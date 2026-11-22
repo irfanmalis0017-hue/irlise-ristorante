@@ -1,10 +1,10 @@
-<!-- IRLISE RISTORANTE v2.3.4 | Enable tutorial skip click and reposition daily mission button -->
+<!-- IRLISE RISTORANTE v2.3.5 | Make control instructions collapsible -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IRLISE RISTORANTE — Update 2.3.4</title>
+<title>IRLISE RISTORANTE — Update 2.3.5</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -28,6 +28,7 @@
   .stat small { display:block; color:#a9c6d8; font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
   .stat b { font-size:17px; }
   #help { position:absolute; bottom:88px; left:16px; max-width:340px; line-height:1.5; font-size:12px; color:#dbe8ef; }
+  #help { pointer-events:auto; padding:12px 16px; cursor:default; }\n  #helpToggle { width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0; border:0; background:transparent; color:#fff; font-weight:900; font-size:13px; text-align:left; cursor:pointer; pointer-events:auto; }\n  #helpToggleIcon { color:#a9c6d8; font-size:18px; line-height:1; }\n  #helpContent { margin-top:4px; }\n  #help.collapsed { padding-top:9px; padding-bottom:9px; }\n  #help.collapsed #helpContent { display:none; }
   #help b { color:#fff; }
   #toast { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); font-size:13px; opacity:0; transition:opacity .2s; }
   #toast.show { opacity:1; }
@@ -254,7 +255,7 @@
     <div class="panel stat"><small>Reputasi</small><b id="repValue">★ 1.0</b></div>
     <div class="panel stat"><small>Jam kerja</small><b id="shiftClock">08:00 • Shift 1</b></div>
   </div>
-  <div id="help" class="panel"><b>KONTROL</b><br>W A S D — Bergerak<br>F — Layani pelanggan jika tidak ada kasir<br>I / J — Angkat & sajikan jika tanpa karyawan<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div>
+  <div id="help" class="panel"><button id="helpToggle" type="button" aria-expanded="true"><span>KONTROL</span><span id="helpToggleIcon">−</span></button><div id="helpContent">W A S D — Bergerak<br>F — Layani pelanggan jika tidak ada kasir<br>I / J — Angkat & sajikan jika tanpa karyawan<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div></div>
   <div id="crosshair"></div>
   <div id="toast" class="panel">Selamat datang, Bos!</div>
   <div id="tutorial" class="panel"><b>PANDUAN PEMULA</b><span id="tutorialText"></span><button id="tutorialSkip" type="button">LEWATI PANDUAN</button></div>
@@ -1773,7 +1774,7 @@ function payWages(){
  return ' Uang tidak cukup untuk gaji ('+rupiah(w)+' koin), hanya terbayar '+rupiah(paid)+'. Karyawan kecewa, reputasi turun.';
 }
 (function(){const b=document.getElementById('tutorialSkip');if(b)b.addEventListener('click',()=>{try{localStorage.setItem('irlise_tutorial_skipped_v1','1');}catch(e){}const el=document.getElementById('tutorial');if(el)el.classList.remove('show');});})();
-function updateTutorial(){
+\n(function(){const panel=document.getElementById('help'),btn=document.getElementById('helpToggle'),icon=document.getElementById('helpToggleIcon');if(!panel||!btn)return;btn.addEventListener('click',()=>{const closed=panel.classList.toggle('collapsed');btn.setAttribute('aria-expanded',String(!closed));if(icon)icon.textContent=closed?'+':'−';});})();\nfunction updateTutorial(){
  const el=document.getElementById('tutorial');if(!el)return;
  let skipped=false;try{skipped=localStorage.getItem('irlise_tutorial_skipped_v1')==='1';}catch(e){}
  if(saveData.tutorialDone||level>1||skipped){el.classList.remove('show');return;}
