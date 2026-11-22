@@ -1,0 +1,43 @@
+{
+  "name": "irlise-ristorante-desktop",
+  "version": "2.2.0",
+  "description": "IRLISE RISTORANTE Windows desktop application",
+  "main": "desktop/main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.irlise.ristorante",
+    "productName": "IRLISE RISTORANTE",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "IRLISE-RISTORANTE-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "IRLISE RISTORANTE"
+    }
+  }
+}
