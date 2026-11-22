@@ -228,6 +228,7 @@
   <div class="marketTabs"><button class="marketTab active" data-category="equipment" type="button">Perlengkapan</button><button class="marketTab" data-category="ingredients" type="button">Bahan-bahan</button><button class="marketTab" data-category="employees" type="button">Karyawan & Kasir</button></div>
   <div id="marketItems"></div>
   <div id="marketInventory">Stok barang akan tampil di sini.</div>
+  <div id="maintenanceStatus" style="margin-top:8px;color:#c9d8df;font-size:12px"></div><button id="repairEquipment" type="button" class="settingAction">🔧 Perawatan fasilitas — 350 koin</button>
 </div>
 <div id="cashierOrderPanel" class="panel" role="dialog" aria-label="Pesanan pelanggan" style="display:none;position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 28px));pointer-events:auto;color:#fff">
  <h2 style="margin:0 0 8px">💬 Pelanggan di Kasir</h2>
@@ -1445,7 +1446,8 @@ function beginCooking(automatic=false){
  if(idx<0){const m=menuCatalog[kitchenQueue[0].menuId];const missing=Object.entries(m.recipe).filter(([id,qty])=>(saveData.inventory[id]||0)<qty);setCookStatus('Stok bahan kurang — buka SHOP untuk belanja.');showToast('BAHAN KURANG untuk '+m.name+': '+missing.map(([id,qty])=>(ingredientNames[id]||id)+' kurang '+(qty-(saveData.inventory[id]||0))+' (butuh '+qty+')').join(', ')+'. Buka SHOP → Bahan-bahan untuk membeli.');return false;}
  const ticket=kitchenQueue.splice(idx,1)[0];ticket.id=++ticketSeq;const selected=menuCatalog[ticket.menuId];
  Object.entries(selected.recipe).forEach(([id,qty])=>saveData.inventory[id]-=qty);persist();renderInventory();renderMarket();refreshFridgeStock();
- const cookTime=(ticket.menuId==='tea'?2:ticket.menuId==='ayam'?5:selected.cook)*(automatic?chefSpeedFactor():1);
+ const conditionFactor=equipmentCondition<30?1.5:equipmentCondition<60?1.2:1;
+ const cookTime=(ticket.menuId==='tea'?2:ticket.menuId==='ayam'?5:selected.cook)*(automatic?chefSpeedFactor():1)*conditionFactor;
  activeCooks.push({ticket,elapsed:0,duration:cookTime});cooking=true;setCookStatus('Memasak '+selected.name+' — '+cookTime+' detik');if(!automatic)showToast('Memasak '+selected.name+' dimulai!');return true;
 }
 function startCooking(){
@@ -1500,6 +1502,7 @@ let saveData={coins:KONFIG.koinAwal,areaUnlocked:false,leftAreaUnlocked:false,it
 try { const old=JSON.parse(localStorage.getItem(saveKey)||'null'); if(old && Number.isFinite(old.coins)){hasStoredSave=true;saveData={...saveData,...old,items:{...saveData.items,...(old.items||{})},inventory:{...(old.inventory||{})}};} if(old&&Number.isFinite(old.coins)){legacySave=!old.initializedV16;for(const f of ['initializedV12','initializedV14','initializedV15'])saveData[f]=!!old[f];} } catch(e) {}
 let coins=saveData.coins, areaUnlocked=!!saveData.areaUnlocked, leftAreaUnlocked=!!saveData.leftAreaUnlocked, lastSale=0;
 let restaurantOpen=!!saveData.restaurantOpen;
+let equipmentCondition=Number.isFinite(saveData.equipmentCondition)?Math.max(0,Math.min(100,saveData.equipmentCondition)):100;
 let rep=Number.isFinite(saveData.rep)?saveData.rep:1, day=(saveData.day|0)||1, dayStartCoins=coins;
 if(!saveData.initializedV10){coins=10000;saveData.initializedV10=true;saveData.inventory={rice:10,chicken:5,vegetables:10,flour:10,oil:5,spices:10};saveData.staff=[];saveData.items={table:0,chair:0,stove:0};saveData.areaUnlocked=false;saveData.leftAreaUnlocked=false;areaUnlocked=false;leftAreaUnlocked=false;}
 // One-time Update 1.2 ingredient grant for the new menu recipes; never resets existing stock.
@@ -1676,7 +1679,7 @@ document.getElementById('missionBtn').addEventListener('click',()=>{document.get
 document.getElementById('missionClose').addEventListener('click',()=>document.getElementById('missionPanel').classList.remove('open'));
 renderDailyMissions();
 
-function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,restaurantOpen,items:saveData.items,inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,saveVersion:SAVE_VERSION,rep,day};try{localStorage.setItem(saveKey,JSON.stringify(saveData));}catch(e){} updateCoins();}
+function persist(){if(resetting)return;saveData={...saveData,level,coins,areaUnlocked,leftAreaUnlocked,restaurantOpen,equipmentCondition,items:saveData.items,inventory:saveData.inventory||{},staff:saveData.staff||[],initializedV10:true,initializedV12:true,initializedV14:true,initializedV15:true,initializedV16:true,saveVersion:SAVE_VERSION,rep,day};try{localStorage.setItem(saveKey,JSON.stringify(saveData));}catch(e){} updateCoins();}
 function updateCoins(){const dv=document.getElementById('dayValue'),rv=document.getElementById('repValue');if(dv)dv.textContent=String(day).padStart(2,'0');if(rv)rv.textContent='★ '+rep.toFixed(1);updateLevelHud();const formatted=coins.toLocaleString('id-ID')+' koin';coinValue.textContent=formatted;const mb=document.getElementById('marketBalance');if(mb)mb.textContent=formatted;}
 function spend(amount){if(coins<amount){showToast('Koin belum cukup. Layani pesanan untuk mendapat uang!');return false;}coins-=amount;persist();return true;}
 function openBusiness(){refreshBusinessLocks();businessPanel.classList.add('open');}
@@ -1757,7 +1760,7 @@ function renderMarket(){
    const lab=document.createElement('span');lab.className='skillLabel';lab.textContent='Kinerja '+(st.performance??75)+'% • Gaji '+rupiah(Number.isFinite(st.salary)?st.salary:(KONFIG.gajiBulanan[st.role]||0))+'/bln';
    const up=document.createElement('button');up.type='button';
    if(sk>=MAX_SKILL){up.textContent='Skill maks';up.disabled=true;}
-   else{const nx=sk+1,cost=KONFIG.skill.biayaUpgrade[nx],lv=KONFIG.skill.levelUpgrade[nx];up.textContent=level<lv?'🔒 Lv '+lv:'Upgrade '+rupiah(cost);up.disabled=level<lv||coins<cost;}
+   else{const nx=sk+1,lv=KONFIG.skill.levelUpgrade[nx];up.textContent=level<lv?'🔒 Lv '+lv:'Naik Skill';up.disabled=level<lv;}
    up.addEventListener('click',()=>upgradeStaff(item));
    const fire=document.createElement('button');fire.type='button';fire.className='fireBtn';fire.textContent='Pecat';
    fire.addEventListener('click',()=>{if(fire.dataset.sure!=='1'){fire.dataset.sure='1';fire.textContent='Yakin?';setTimeout(()=>{fire.dataset.sure='';fire.textContent='Pecat';},3000);return;}fireStaff(item);});
@@ -1767,7 +1770,7 @@ function renderMarket(){
   }
   marketItems.append(card);
  });
- renderInventory();updateCoins();
+ renderInventory();refreshMaintenanceStatus();updateCoins();
 }
 function upgradeStaff(item){
  const st=(saveData.staff||[]).find(x=>x.id===item.id);if(!st)return;
@@ -1791,6 +1794,7 @@ function fireStaff(item){
  if(saveData.staff.length===before)return;
  persist();refreshStaffVisuals();refreshBusinessLocks();showToast(roleName(item.role)+' Shift '+item.shift+' diberhentikan. Biaya rekrut tidak dikembalikan.');renderMarket();
 }
+function refreshMaintenanceStatus(){const el=document.getElementById('maintenanceStatus');const btn=document.getElementById('repairEquipment');if(el)el.textContent='Kondisi fasilitas: '+Math.round(equipmentCondition)+'%'+(equipmentCondition<30?' • Kritis — waktu memasak melambat 50%.':equipmentCondition<60?' • Perlu perawatan — waktu memasak melambat 20%.':' • Kondisi baik.');if(btn)btn.disabled=equipmentCondition>=100||coins<350;}
 function renderInventory(){
  refreshFridgeStock();
  const entries=Object.entries(saveData.inventory||{}).filter(([,qty])=>qty>0);
@@ -1827,6 +1831,7 @@ function purchaseMarketItem(item){
  renderMarket();refreshBusinessLocks();
 }
 document.getElementById('shopLauncher').addEventListener('click',()=>{marketPanel.classList.add('open');renderMarket();});
+document.getElementById('repairEquipment').addEventListener('click',()=>{if(equipmentCondition>=100){showToast('Fasilitas masih dalam kondisi baik.');return;}if(coins<350){showToast('Koin tidak cukup untuk perawatan fasilitas.');return;}coins-=350;equipmentCondition=100;persist();refreshMaintenanceStatus();showToast('Perawatan selesai. Kondisi fasilitas kembali 100%.');});
 document.getElementById('closeMarket').addEventListener('click',()=>marketPanel.classList.remove('open'));
 document.querySelectorAll('.marketTab').forEach(tab=>tab.addEventListener('click',()=>{
  marketCategory=tab.dataset.category;document.querySelectorAll('.marketTab').forEach(t=>t.classList.toggle('active',t===tab));renderMarket();
@@ -1905,6 +1910,8 @@ function refreshRestaurantButton(){const b=document.getElementById('restaurantTo
 function updateShiftClock(dt){
  gameMinutes+=dt*2.8; if(gameMinutes>=1320){gameMinutes=480;restaurantOpen=false;const earned=coins-dayStartCoins;
  (saveData.staff||[]).forEach(st=>{const base=KONFIG.gajiBulanan[st.role]||0;const score=Math.max(0,Math.min(100,Math.round(50+rep*10)));st.performance=score;if(!Number.isFinite(st.salary))st.salary=base;});
+ const technicians=(saveData.staff||[]).filter(st=>st.role==='technician').length,supervisors=(saveData.staff||[]).filter(st=>st.role==='engineeringSupervisor').length;
+ equipmentCondition=Math.max(0,Math.min(100,equipmentCondition-2+technicians*5+supervisors*3));
  const wageMsg=day%30===0?payWages():'';showToast('Restoran tutup pukul 22.00. Hari '+day+' selesai — pendapatan '+rupiah(earned)+' koin.'+(day%30===0?' Penggajian bulanan: '+wageMsg:'')+' Hari baru dimulai!');day++;resetDailyMissions();dayStartCoins=coins;refreshRestaurantButton();persist();}
  const h=Math.floor(gameMinutes/60),m=Math.floor(gameMinutes%60),shift=h<15?1:2;
  const clock=document.getElementById('shiftClock');if(clock)clock.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' • Shift '+shift;
@@ -1956,7 +1963,7 @@ addEventListener('keydown',e=>{
  else if(e.code==='KeyI') pickupDish();
  else if(e.code==='KeyJ') serveDish();
 });
-updateCoins();refreshFridgeStock();
+updateCoins();refreshFridgeStock();refreshMaintenanceStatus();
 if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refreshStaffVisuals();persist();updateMenuBoard();refreshBusinessLocks();updateTutorial();
 
 // ===== Backsound (v1.4): musik santai buatan WebAudio, tanpa file eksternal =====
