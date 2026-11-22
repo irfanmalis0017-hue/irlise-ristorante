@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#202b34">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+/* Tangkap prompt install lebih awal supaya tidak terlewat sebelum game selesai dimuat. */
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__ip=e;window.dispatchEvent(new Event('ir-installable'));});
+window.addEventListener('appinstalled',function(){window.__ip=null;window.dispatchEvent(new Event('ir-installed'));});
+</script>
 <title>IRLISE RISTORANTE — Update 2.2</title>
 <style>
   :root { color-scheme: dark; }
@@ -237,6 +246,7 @@
   </div>
   <button class="settingAction danger" id="restartLevelOne" type="button">↻ Restart dari Level 1</button>
   <button class="settingAction" id="langToggle" type="button"></button>
+  <button class="settingAction" id="installApp" type="button" data-notr style="display:none"></button>
   <div class="setSec">Cadangan & pindah perangkat</div>
   <p>Progres tersimpan otomatis di browser ini. Ekspor kode save untuk memindahkan progres ke perangkat lain atau sebagai cadangan.</p>
   <button class="settingAction" id="exportSave" type="button">📤 Ekspor kode save</button>
@@ -2299,6 +2309,27 @@ addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
 });
+</script>
+<script>
+/* ===== Install di laptop (PWA) + mode offline ===== */
+(function(){
+ var btn=document.getElementById('installApp');if(!btn)return;
+ var en=window.IR_LANG==='en';
+ var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+ btn.textContent=en?'💻 Install on laptop':'💻 Install di laptop';
+ function sync(){btn.style.display=(window.__ip&&!standalone)?'block':'none';}
+ window.addEventListener('ir-installable',sync);
+ window.addEventListener('ir-installed',function(){btn.style.display='none';});
+ btn.addEventListener('click',function(){
+  var ev=window.__ip;if(!ev)return;
+  ev.prompt();
+  Promise.resolve(ev.userChoice).catch(function(){}).then(function(){window.__ip=null;sync();});
+ });
+ sync();
+ if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+ }
+})();
 </script>
 </body>
 </html>
