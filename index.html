@@ -229,6 +229,9 @@
   <h2>Pengaturan</h2><p>Atur permainan IRLISE RISTORANTE. Progres tersimpan otomatis.</p>
   <button class="settingAction" id="pauseToggle" type="button">⏸ Jeda permainan</button>
   <button class="settingAction" id="soundToggle" type="button">🔊 Suara: ON</button>
+  <div class="setSec">Volume musik</div>
+  <input id="musicVolume" type="range" min="0" max="100" step="1" value="50" aria-label="Volume musik" style="width:100%;accent-color:#f3c75b;margin:4px 0 12px">
+  <p id="musicVolumeValue" style="margin:0 0 12px">50%</p>
   <div class="setSec" id="qualityTitle">Kualitas grafis</div>
   <p id="qualityDescription">Pilih kualitas visual sesuai kemampuan perangkat.</p>
   <div class="qualityOptions" role="group" aria-label="Kualitas grafis">
@@ -2053,10 +2056,20 @@ updateCoins();refreshFridgeStock();refreshMaintenanceStatus();
 if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refreshStaffVisuals();persist();updateMenuBoard();refreshBusinessLocks();updateTutorial();
 
 // ===== Backsound (v1.4): musik santai buatan WebAudio, tanpa file eksternal =====
-const music={ctx:null,master:null,send:null,noise:null,on:true,t:0,step:0};
-try{if(localStorage.getItem('fromZeroToCEO_music')==='off')music.on=false;}catch(e){}
-const mbtn=document.createElement('button');mbtn.id='musicBtn';mbtn.type='button';document.body.appendChild(mbtn);
-const updateMusicBtn=()=>{mbtn.textContent=music.on?'🔊 Musik':'🔇 Musik';};updateMusicBtn();
+const music={ctx:null,master:null,send:null,noise:null,on:true,volume:50,t:0,step:0};
+try{
+ if(localStorage.getItem('fromZeroToCEO_music')==='off')music.on=false;
+ const savedVolume=Number(localStorage.getItem('fromZeroToCEO_music_volume'));
+ if(Number.isFinite(savedVolume))music.volume=Math.max(0,Math.min(100,savedVolume));
+}catch(e){}
+const applyMusicVolume=()=>{if(music.master)music.master.gain.setTargetAtTime(music.on?music.volume/100:0,music.ctx.currentTime,.04);};
+const setMusicEnabled=value=>{
+ music.on=!!value;
+ try{localStorage.setItem('fromZeroToCEO_music',music.on?'on':'off');}catch(e){}
+ if(music.on){ensureMusic();}else if(music.ctx){music.master.gain.setTargetAtTime(0,music.ctx.currentTime,.04);}
+ const soundToggle=document.getElementById('soundToggle');
+ if(soundToggle)soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';
+};
 // Pengaturan permainan: jeda menghentikan simulasi waktu, NPC, pelanggan, dan gerakan pemain.
 let gamePaused=false;
 const settingsOverlay=document.getElementById('settingsOverlay');
@@ -2076,8 +2089,12 @@ applyGraphicsQuality(graphicsQuality);
 const pauseShade=document.getElementById('pauseShade');
 const pauseToggle=document.getElementById('pauseToggle');
 const soundToggle=document.getElementById('soundToggle');
+const musicVolume=document.getElementById('musicVolume');
+const musicVolumeValue=document.getElementById('musicVolumeValue');
+musicVolume.value=String(music.volume);
+musicVolumeValue.textContent=music.volume+'%';
 function setPaused(value){gamePaused=!!value;pauseShade.classList.toggle('show',gamePaused);pauseToggle.textContent=gamePaused?'▶ Lanjutkan permainan':'⏸ Jeda permainan';}
-document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOverlay.classList.add('open');soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
+document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOverlay.classList.add('open');soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';musicVolume.value=String(music.volume);musicVolumeValue.textContent=music.volume+'%';});
 document.getElementById('restaurantToggleBtn').addEventListener('click',()=>{restaurantOpen=!restaurantOpen;refreshRestaurantButton();showToast(restaurantOpen?'Restoran dibuka! Pelanggan mulai berdatangan.':'Restoran ditutup. Pelanggan baru tidak akan datang.');persist();});
 refreshRestaurantButton();
 document.getElementById('closeSettings').addEventListener('click',()=>settingsOverlay.classList.remove('open'));
@@ -2096,7 +2113,14 @@ document.getElementById('exitGame').addEventListener('click',()=>{
 document.getElementById('returnGame').addEventListener('click',()=>{exitScreen.style.display='none';setPaused(false);if(music.on)ensureMusic();});
 document.getElementById('closeGameTab').addEventListener('click',()=>{persist();window.close();document.getElementById('exitMessage').textContent=window.IR_LANG==='en'?'The browser may block automatic tab closing. You can close this tab manually.':'Browser mungkin memblokir penutupan tab otomatis. Silakan tutup tab ini secara manual.';});
 pauseToggle.addEventListener('click',()=>setPaused(!gamePaused));
-soundToggle.addEventListener('click',()=>{mbtn.click();soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';});
+ soundToggle.addEventListener('click',()=>setMusicEnabled(!music.on));
+musicVolume.addEventListener('input',()=>{
+ music.volume=Number(musicVolume.value);
+ musicVolumeValue.textContent=music.volume+'%';
+ try{localStorage.setItem('fromZeroToCEO_music_volume',String(music.volume));}catch(e){}
+ applyMusicVolume();
+ if(music.volume>0&&!music.on){setMusicEnabled(true);}
+});
 document.getElementById('restartLevelOne').addEventListener('click',()=>{if(!confirm('Restart game dari Level 1? Semua progres, koin, staf, dan bangunan yang dibuka akan direset.'))return;resetting=true;try{localStorage.removeItem(saveKey);}catch(e){}location.reload();});
 settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.classList.remove('open');});
 
@@ -2190,7 +2214,7 @@ function ensureMusic(){
  if(!music.on)return;
  if(!music.ctx){
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-  const c=new AC();music.ctx=c;music.master=c.createGain();music.master.gain.value=.5;
+  const c=new AC();music.ctx=c;music.master=c.createGain();music.master.gain.value=music.on?music.volume/100:0;
   const comp=c.createDynamicsCompressor();music.master.connect(comp);comp.connect(c.destination);
   music.send=c.createGain();music.send.gain.value=.25;const d=c.createDelay(1);d.delayTime.value=.36;const fb=c.createGain();fb.gain.value=.35;
   const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;music.send.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(music.master);
@@ -2199,13 +2223,9 @@ function ensureMusic(){
  }
  if(music.ctx.state==='suspended')music.ctx.resume();
 }
-mbtn.addEventListener('click',()=>{
- music.on=!music.on;try{localStorage.setItem('fromZeroToCEO_music',music.on?'on':'off');}catch(e){}
- updateMusicBtn();
- if(music.on)ensureMusic();else if(music.ctx)music.ctx.suspend();
-});
+
 for(const ev of ['pointerdown','keydown','touchend','click'])window.addEventListener(ev,ensureMusic);
-document.addEventListener('visibilitychange',()=>{if(!music.ctx)return;if(document.hidden)music.ctx.suspend();else if(music.on)music.ctx.resume();});
+document.addEventListener('visibilitychange',()=>{if(!music.ctx)return;if(document.hidden)music.ctx.suspend();else if(music.on){music.ctx.resume();applyMusicVolume();}});
 function sfxCoin(){if(!music.ctx||!music.on||music.ctx.state!=='running')return;const t=music.ctx.currentTime;tone(mtof(88),t,.25,.1,'triangle',6000);tone(mtof(95),t+.08,.35,.1,'triangle',6000);}
 function sfxDing(){if(!music.ctx||!music.on||music.ctx.state!=='running')return;const t=music.ctx.currentTime;tone(mtof(84),t,.5,.1,'sine',6000);}
 // ===== Kontrol sentuh (v1.3): joystick + tombol aksi =====
