@@ -1487,7 +1487,7 @@ function makePerson(o={}){
  const torso=_cap(root,'customer torso',0,1.2,0,.2,.26,shirt);torso.scale.set(1.2,1,.76);
  _cap(root,'neck',0,1.52,0,.07,.06,skin);
  _ell(root,'collar',0,1.47,.04,.14,.05,.1,mat(o.collar??0xfff1d8,.8));
- const arms=[],elbows=[];
+ const arms=[],elbows=[],hands=[];
  for(const s of [-1,1]){
   const sh=new THREE.Group();sh.position.set(s*.29,1.4,0);sh.rotation.z=s*.06;root.add(sh);
   _ell(sh,'shoulder',0,0,0,.098,.098,.098,shirt);
@@ -1501,7 +1501,7 @@ function makePerson(o={}){
   _ell(hd,'palm',0,-.05,0,.028,.058,.045,skin);
   _ell(hd,'fingers',0,-.112,.006,.022,.05,.038,skin).rotation.x=-.22;
   _ell(hd,'thumb',-s*.026,-.06,.032,.016,.04,.017,skin).rotation.x=-.35;
-  arms.push(sh);elbows.push(el);
+  arms.push(sh);elbows.push(el);hands.push(hd);
  }
  const head=new THREE.Group();head.position.set(0,1.72,0);root.add(head);
  _ell(head,'face',0,0,0,.2,.23,.19,skin).castShadow=true;
@@ -1544,7 +1544,7 @@ function makePerson(o={}){
   box(root,'apron pocket seam',0,.82,.188,.012,.12,.008,am,false);
  }
  if(o.tag)box(root,'name tag',.14,1.2,.19,.1,.07,.025,materials.yellow,false);
- g.userData={root,legs,arms,elbows,head,torso,seed:Math.random()*6.283,mats:{skin,hair,shirt}};
+ g.userData={root,legs,arms,elbows,hands,head,torso,seed:Math.random()*6.283,mats:{skin,hair,shirt}};
  if(o.scale)g.scale.setScalar(o.scale);
  return g;
 }
@@ -1644,7 +1644,7 @@ const menuCatalog={
  kopi:{emoji:'☕',name:'Kopi Susu',price:350,cook:4,recipe:{coffee:1,milk:1,ice:1}}
 };
 const menuIds=Object.keys(menuCatalog);
-let currentOrderMenuId='ayam',currentTicket=null,waiterMode='idle',waiterDish=null,waiterPath=[],cashierAutoTimer=0,spawnTimer=1.5,statusTimer=0,queueShown=false,custId=0;
+let currentOrderMenuId='ayam',currentTicket=null,waiterMode='idle',waiterDish=null,waiterGuest=null,waiterAnim=null,waiterPath=[],cashierAutoTimer=0,spawnTimer=1.5,statusTimer=0,queueShown=false,custId=0;
 const kitchenQueue=[],customers=[],activeCooks=[],readyTickets=[];let ticketSeq=0;
 const PATIENCE_ORDER=30,PATIENCE_SEAT=30;
 const cashierSpot=new THREE.Vector3(CASH_QX,0,CASH_QZ);
@@ -1729,7 +1729,7 @@ function findPath(from,to){
 const maxCust=()=>{rebuildSeats();return Math.min(KONFIG.batasPelanggan[level]||12,12,1+Math.floor(seatList.length/3));};
 // Pelanggan meninggalkan restoran (selesai makan atau kehilangan kesabaran).
 function leaveNow(c,angry){
- const g=c.g;
+ const g=c.g;removeTablePlates(c);
  if(c.stage==='ordering')cashierOrderPanel.style.display='none';
  if(c.stage==='seated'||c.stage==='eating'){const st=c.stand||seatStand(c.seat);standPose(g);g.position.set(c.seat.x,0,c.seat.z);c.path=[st.clone(),...findPath(st,V3(0,6.2))];}
  else{standPose(g);c.path=findPath(V3(g.position.x,g.position.z),V3(0,6.2));}
@@ -1810,8 +1810,56 @@ function deliverTo(c,ticket=currentTicket){
  persist();renderInventory();renderMarket();sfxCoin();return true;
 }
 
+// ===== Animasi pelayan membawa & menyajikan piring =====
+// Pose membawa nampan: lengan ke depan, siku menekuk, telapak menghadap ke atas (sudut dihitung dari kinematika lengan).
+// s = -1 (lengan kiri model) / +1 (kanan). Pose "reach" = lengan terjulur untuk menyerahkan piring ke meja.
+const WCARRY={rx:-.4,rz:.3,ex:-1.14,ry:1.4},WREACH={rx:-1.2,rz:.16,ex:0,ry:1.4};
+const tablePlates=[];
+const _wTmp=new THREE.Vector3();
+const easeIO=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+// Campurkan pose dasar (jalan/diam) dengan pose membawa & menjulur secara halus (tanpa patah).
+function applyWaiterArms(w,dt,hold,reach,phase){
+ const u=w.userData,k=1-Math.exp(-dt*9);
+ u.hold=(u.hold||0)+(hold-(u.hold||0))*k;u.reach=(u.reach||0)+(reach-(u.reach||0))*k;
+ const h=u.hold,r=u.reach,sway=Math.sin(phase*1.15)*.012;
+ for(let i=0;i<2;i++){
+  const s=i===0?-1:1,A=u.arms[i],E=u.elbows[i];
+  const crx=(WCARRY.rx+sway)*(1-r)+WREACH.rx*r,crz=-s*(WCARRY.rz*(1-r)+WREACH.rz*r),cex=WCARRY.ex*(1-r)+WREACH.ex*r,cry=-s*WCARRY.ry;
+  A.rotation.x+=(crx-A.rotation.x)*h;
+  A.rotation.z=s*.06*(1-h)+crz*h;
+  E.rotation.x+=(cex-E.rotation.x)*h;
+  E.rotation.y=cry*h;
+ }
+}
+// Titik tengah kedua telapak (koordinat lokal root badan) -> piring selalu tepat di atas kedua tangan.
+function handsMidLocal(w,out){
+ const u=w.userData;w.updateMatrixWorld(true);
+ const a=u.hands[0].localToWorld(new THREE.Vector3(0,-.07,0)),b=u.hands[1].localToWorld(new THREE.Vector3(0,-.07,0));
+ a.add(b).multiplyScalar(.5);return u.root.worldToLocal(out.copy(a));
+}
+function anchorWaiterDish(w){
+ if(!waiterDish||waiterDish.parent!==w.userData.root)return;
+ const sc=waiterDish.scale.x;handsMidLocal(w,_wTmp);
+ waiterDish.position.set(_wTmp.x,_wTmp.y+.03+.035*sc,_wTmp.z);
+ waiterDish.quaternion.copy(w.userData.root.quaternion).invert(); // piring tetap datar walau badan condong/memutar
+}
+function clearWaiterDish(){if(waiterDish){if(waiterDish.parent)waiterDish.parent.remove(waiterDish);disposeObj(waiterDish);}waiterDish=null;waiterAnim=null;waiterGuest=null;}
+function removeTablePlates(c){for(let i=tablePlates.length-1;i>=0;i--)if(tablePlates[i].cust===c){scene.remove(tablePlates[i].obj);disposeObj(tablePlates[i].obj);tablePlates.splice(i,1);}}
+// Titik berdiri pelayan di samping meja (di antara dua kursi, agar tidak menabrak pelanggan) & posisi piring di meja pelanggan.
+function serveStandPoint(seat,from){
+ const a0=Math.atan2(seat.uz,seat.ux);let best=null;
+ for(const d of [-.7,.7]){const p=V3(seat.tx+Math.cos(a0+d)*1.25,seat.tz+Math.sin(a0+d)*1.25);const dist=Math.hypot(p.x-from.x,p.z-from.z);if(!best||dist<best.dist)best={p,dist};}
+ return best.p;
+}
+function tableSpot(c){
+ const n=tablePlates.filter(t=>t.cust===c).length,seat=c.seat,tx=-seat.uz,tz=seat.ux,side=n===0?0:(n%2?1:-1)*.3,rad=n===0?.62:.55;
+ return new THREE.Vector3(seat.tx+seat.ux*rad+tx*side,1.1,seat.tz+seat.uz*rad+tz*side);
+}
+const validGuest=(c,t)=>!!(c&&t&&customers.includes(c)&&c.stage==='seated'&&c.remaining.includes(t.menuId));
+
 function updateStaff(dt){
  const t=performance.now()/1000;
+ const activeWaiter=getWorker('staff');
  for(const worker of staffVisuals){
   const g=worker.group,u=g.userData;u.phase+=dt*5;
   g.position.y=Math.sin(u.phase*.45)*.012;
@@ -1821,8 +1869,8 @@ function updateStaff(dt){
   }else if(worker.role==='cashier'){
    u.arms[0].rotation.x=-.45+Math.sin(u.phase*1.7)*.12;u.arms[1].rotation.x=-.45+Math.cos(u.phase*1.7)*.12;
    u.arms[0].rotation.z=-.18;u.arms[1].rotation.z=.18;
-  }else if(waiterMode==='idle'){
-   u.arms[0].rotation.x=-.12+Math.sin(u.phase)*.08;u.arms[1].rotation.x=-.12-Math.sin(u.phase)*.08;
+  }else if(waiterMode==='idle'||g!==activeWaiter){
+   u.arms[0].rotation.x=-.12+Math.sin(u.phase)*.08;u.arms[1].rotation.x=-.12-Math.sin(u.phase)*.08;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.16;
   }
  }
  const ordering=customers.find(x=>x.stage==='ordering');
@@ -1832,37 +1880,49 @@ function updateStaff(dt){
  const iIdx=(waiter&&level>=2&&waiterMode==='idle')?islandTickets.findIndex(t=>customers.some(c=>c.stage==='seated'&&c.remaining.includes(t.menuId))):-1;
  if(waiter&&iIdx>=0){currentTicket=takeIsland(iIdx);currentOrderMenuId=currentTicket.menuId;waiterMode='toFood';waiterPath=[V3(ISLAND_ACCESS_X,ISLAND_ACCESS_Z)];}
  if(waiter&&waiterMode!=='idle'){
-  const u=waiter.userData;
-  const waiterArrived=stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7);
-  if(waiterMode==='toGuest'&&waiterDish){
-   // Pastikan piring tetap berada di depan kedua tangan; jangan ikut terayun seperti objek bebas.
-   waiterDish.position.set(0,1.02+.012*Math.sin(u.phase*1.15),.34);
-   waiterDish.rotation.set(0,0,0);
-   u.arms[0].rotation.x=.78+Math.sin(u.phase*1.15)*.035;u.arms[1].rotation.x=.78-Math.sin(u.phase*1.15)*.035;
-   u.arms[0].rotation.z=-.16;u.arms[1].rotation.z=.16;
-   u.elbows[0].rotation.x=-.72;u.elbows[1].rotation.x=-.72;
-  }
-  if(waiterArrived){
-   if(waiterMode==='toFood'){
-    
-    if(!currentTicket){waiterMode='idle';waiterPath=[];return;}
-    const target=customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
-    if(!target){addIslandPlate(currentTicket);currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);return;}
-    waiterDish=createAyamGeprekPlate(currentOrderMenuId);waiterDish.name='waiter carried dish';waiterDish.scale.setScalar(.82);waiterDish.position.set(0,1.02,.34);waiterDish.rotation.set(0,0,0);waiter.userData.root.add(waiterDish);
-    waiterMode='toGuest';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),seatStand(target.seat));showToast('Pelayan mengambil '+menuCatalog[currentOrderMenuId].name+'.');
-   }else if(waiterMode==='toGuest'){
-    const c=customers.filter(x=>x.stage==='seated'&&currentTicket&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
-    if(c){if(waiterDish){u.root.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}deliverTo(c,currentTicket);waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
-    else{if(waiterDish){u.root.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
-   }else if(waiterMode==='return'){waiterMode='idle';waiter.position.copy(u.home);}
+  const u=waiter.userData;let reach=0;
+  if(waiterMode==='serving'&&waiterAnim){
+   // Serah-terima: menghadap meja, tangan menjulur, piring pindah ke meja pelanggan, baru tangan dikosongkan.
+   const A=waiterAnim;A.t+=dt;const spot=A.to;
+   const want=Math.atan2(spot.x-waiter.position.x,spot.z-waiter.position.z);let dy=want-waiter.rotation.y;dy=Math.atan2(Math.sin(dy),Math.cos(dy));waiter.rotation.y+=dy*(1-Math.exp(-dt*12));
+   walkPose(waiter,0,0,false);
+   reach=A.t<.95?1:0;u.root.rotation.x+=.2*(u.reach||0);
+   if(A.t>=.45&&!A.released&&waiterDish){A.released=true;scene.attach(waiterDish);A.from=waiterDish.position.clone();waiterDish.rotation.set(0,0,0);}
+   if(A.released&&!A.landed&&waiterDish){
+    const p=easeIO(Math.min(1,(A.t-.45)/.5));waiterDish.position.lerpVectors(A.from,spot,p);waiterDish.position.y+=Math.sin(Math.PI*p)*.1;waiterDish.scale.setScalar(.5+.05*p);
+    if(p>=1){
+     A.landed=true;waiterDish.position.copy(spot);waiterDish.scale.setScalar(.55);
+     if(validGuest(A.cust,A.ticket)){tablePlates.push({cust:A.cust,obj:waiterDish});waiterDish=null;deliverTo(A.cust,A.ticket);} // piring sudah di meja pelanggan, tangan pelayan baru dikosongkan
+     else{disposeObj(waiterDish);scene.remove(waiterDish);waiterDish=null;if(A.ticket){addIslandPlate(A.ticket);}if(currentTicket===A.ticket)currentTicket=null;}
+    }
+   }
+   if(A.t>=1.4){waiterAnim=null;waiterGuest=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
   }else{
-   // Pose membawa: kedua lengan menopang piring di depan dada, dengan ayunan kecil agar tetap hidup saat berjalan.
-   const carryPhase=Math.sin(u.phase*1.15);
-   u.arms[0].rotation.x=.78+carryPhase*.035;u.arms[1].rotation.x=.78-carryPhase*.035;
-   u.arms[0].rotation.z=-.16;u.arms[1].rotation.z=.16;
-   u.elbows[0].rotation.x=-.72;u.elbows[1].rotation.x=-.72;
+   const waiterArrived=stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7);
+   if(waiterArrived){
+    if(waiterMode==='toFood'){
+     if(!currentTicket){waiterMode='idle';waiterPath=[];}
+     else{
+      const target=customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
+      if(!target){addIslandPlate(currentTicket);currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
+      else{
+       waiterDish=createAyamGeprekPlate(currentOrderMenuId);waiterDish.name='waiter carried dish';waiterDish.scale.setScalar(.5);u.root.add(waiterDish);
+       waiterGuest=target;waiterMode='toGuest';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),serveStandPoint(target.seat,waiter.position));showToast('Pelayan mengambil '+menuCatalog[currentOrderMenuId].name+'.');
+      }
+     }
+    }else if(waiterMode==='toGuest'){
+     let c=waiterGuest;
+     if(!validGuest(c,currentTicket)){c=currentTicket?customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0]:null;
+      if(c&&c!==waiterGuest){waiterGuest=c;waiterPath=findPath(V3(waiter.position.x,waiter.position.z),serveStandPoint(c.seat,waiter.position));c=null;} // pelanggan awal pergi: ganti tujuan
+     }
+     if(c&&validGuest(c,currentTicket)){waiterMode='serving';waiterAnim={t:0,released:false,landed:false,from:null,to:tableSpot(c),cust:c,ticket:currentTicket};}
+     else if(!c&&waiterGuest&&validGuest(waiterGuest,currentTicket)){/* sedang menuju pelanggan pengganti */}
+     else{clearWaiterDish();if(currentTicket){addIslandPlate(currentTicket);currentTicket=null;}waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
+    }else if(waiterMode==='return'){waiterMode='idle';waiter.position.copy(u.home);}
+   }
   }
- }else if(waiter)walkPose(waiter,0,0,false);
+  applyWaiterArms(waiter,dt,waiterDish?1:0,reach,u.phase);anchorWaiterDish(waiter);
+ }else if(waiter){walkPose(waiter,0,0,false);applyWaiterArms(waiter,dt,0,0,waiter.userData.phase);}
 }
 
 let noTableToastAt=-1e9;
@@ -2651,8 +2711,8 @@ function makeStaffCharacter(role){
  return g;
 }
 function refreshStaffVisuals(){
- if(waiterMode==='toGuest'&&currentTicket&&!holdingDish){addIslandPlate(currentTicket);currentTicket=null;}
- if(waiterMode!=='idle'){waiterMode='idle';waiterPath=[];waiterDish=null;}
+ if((waiterMode==='toGuest'||waiterMode==='serving')&&currentTicket&&!holdingDish){addIslandPlate(currentTicket);currentTicket=null;}
+ if(waiterMode!=='idle'){waiterMode='idle';waiterPath=[];clearWaiterDish();}
  staffVisuals.forEach(w=>{scene.remove(w.group);disposeObj(w.group);});staffVisuals.length=0;
  const activeShift=gameMinutes>=900?2:1;
  (saveData.staff||[]).forEach((staff,i)=>{
