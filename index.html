@@ -1123,7 +1123,7 @@ box(scene,'register screen glow',CASH_X+.58,1.79,CASH_QZ,.018,.3,.48,mat(0x9be0c
   box(scene,'cashier chair back',kx-.26,.98,kz,.12,.72,.6,materials.darkTeal);
 }
 
-// Full-width kitchen screen: hides the cooks from diners, with a staff passage on the left.
+// Full-width kitchen screen with a staff passage on the left and a glass window over the stove so diners can see the chef cook.
 const dividerZ=-2.72;
 const dividerMat=materials.cream;
 // Main wall begins after a wide, unobstructed staff entrance on the left.
@@ -1133,7 +1133,16 @@ box(scene,'serving hatch lower wall',.5,.53,dividerZ,2.0,1.06,.22,dividerMat);
 box(scene,'serving hatch upper wall',.5,2.57,dividerZ,2.0,.54,.22,dividerMat);
 box(scene,'serving hatch left pier',-.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
 box(scene,'serving hatch right pier',1.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
-box(scene,'divider right wall',4.55,1.42,dividerZ,5.7,2.84,.22,dividerMat);
+box(scene,'divider right wall',3.65,1.42,dividerZ,3.9,2.84,.22,dividerMat);
+// Glass window over the stove side (x 5.6 to the east wall at 7.83) so diners can watch the chef cook.
+const dividerGlassMat=new THREE.MeshStandardMaterial({color:0xa9dce8,roughness:.08,metalness:0,transparent:true,opacity:.26,depthWrite:false});
+box(scene,'divider stove window sill',6.715,.53,dividerZ,2.23,1.06,.22,dividerMat);
+box(scene,'divider stove glass',6.715,1.95,dividerZ,2.23,1.78,.05,dividerGlassMat,false,false);
+box(scene,'divider stove glass frame top',6.715,2.8,dividerZ,2.23,.08,.22,materials.teal);
+box(scene,'divider stove glass frame bottom',6.715,1.08,dividerZ,2.23,.05,.22,materials.teal);
+box(scene,'divider stove glass frame left',5.64,1.95,dividerZ,.08,1.78,.22,materials.teal);
+box(scene,'divider stove glass frame mid',6.715,1.95,dividerZ,.05,1.78,.22,materials.teal);
+box(scene,'divider stove glass frame right',7.79,1.95,dividerZ,.08,1.78,.22,materials.teal);
 // Trim follows the exact wall span (-3.4 to 7.4); no projecting beams or decorative ledges.
 box(scene,'divider lower trim',2.0,.12,dividerZ,10.8,.14,.22,materials.wood2);
 box(scene,'divider top trim',2.0,2.88,dividerZ,10.8,.12,.22,materials.trim);
@@ -1143,7 +1152,7 @@ box(scene,'serving hatch counter shelf',.5,1.12,-2.38,2.0,.12,.42,materials.wood
 // Kitchen on the right.
 // Kitchen island: east end of the kitchen, beside the stove, flush with the east wall, front facing west (-x).
 // Rotated like the stove (group rotation -PI/2: local +z -> west, local x -> world +z). Fitted between the stove and the divider.
-const islandGroup=new THREE.Group();islandGroup.name='kitchen island group';islandGroup.position.set(7.18,0,-4.065);islandGroup.rotation.y=-Math.PI/2;scene.add(islandGroup);
+const islandGroup=new THREE.Group();islandGroup.name='kitchen island group';islandGroup.position.set(7.18,0,-5.63);islandGroup.rotation.y=-Math.PI/2;scene.add(islandGroup);
 box(islandGroup,'kitchen island',0,.58,0,2.3,1.15,1.2,materials.steel);
 box(islandGroup,'kitchen top',.025,1.2,0,2.4,.16,1.3,materials.cream);
 for(let i=0;i<2;i++){
@@ -1193,7 +1202,7 @@ for(const y of [1.12,2.12]) detailBox(scene,'fridge glass shelf',FRIDGE_X,y,-5.4
 detailBox(scene,'fridge interior light',FRIDGE_X,2.54,-5.5+FRIDGE_DZ,.5,.045,.045,detailGlow);
 const fridgeInteriorLight=new THREE.PointLight(0xc9efff,.32,2.2,2);fridgeInteriorLight.position.set(FRIDGE_X,2.35,-5.4+FRIDGE_DZ);fridgeInteriorLight.castShadow=false;scene.add(fridgeInteriorLight);
 // Stove at the east end of the back wall, front (burner side) facing west (-x). Hood, knobs and drawer belong to it.
-const stoveGroup=new THREE.Group();stoveGroup.name='kitchen stove';stoveGroup.position.set(7.18,0,-6.03);stoveGroup.rotation.y=-Math.PI/2;scene.add(stoveGroup);
+const stoveGroup=new THREE.Group();stoveGroup.name='kitchen stove';stoveGroup.position.set(7.18,0,-3.62);stoveGroup.rotation.y=-Math.PI/2;scene.add(stoveGroup);
 box(stoveGroup,'stove body',0,.58,0,1.5,1.15,1.2,materials.steel);
 box(stoveGroup,'stove top',0,1.22,0,1.58,.1,1.28,materials.black);
 box(stoveGroup,'stove front panel',0,.62,.61,1.4,.9,.04,materials.darkTeal);
@@ -1211,11 +1220,11 @@ detailBox(stoveGroup,'extractor duct',0,2.83,-.3,.6,.78,.5,materials.steel);
 detailBox(stoveGroup,'extractor control strip',0,2.39,.445,.9,.055,.025,detailGold);
 for(let i=0;i<3;i++) cylinder(stoveGroup,'extractor control dial',-.32+i*.32,2.39,.46,.045,.045,.035,detailDark,12);
 // Prep items now sit on the kitchen island (the old counter decoration was removed).
-detailBox(scene,'prep cutting board',7.18,1.31,-3.2,.48,.055,.6,materials.wood2);
-detailBox(scene,'prep board inset',7.18,1.342,-3.2,.34,.012,.5,detailCeramic);
-cylinder(scene,'utensil crock',7.4,1.46,-5.05,.14,.16,.36,materials.cream,18);
+detailBox(scene,'prep cutting board',7.35,1.31,-6.35,.48,.055,.6,materials.wood2);
+detailBox(scene,'prep board inset',7.35,1.342,-6.35,.34,.012,.5,detailCeramic);
+cylinder(scene,'utensil crock',7.4,1.46,-4.8,.14,.16,.36,materials.cream,18);
 for(let i=0;i<3;i++){
-  cylinder(scene,'utensil handle',7.33+i*.07,1.76,-5.05,.018,.018,.42,detailSteel,8);
+  cylinder(scene,'utensil handle',7.33+i*.07,1.76,-4.8,.018,.018,.42,detailSteel,8);
 }
 
 // Dining tables and chairs.
@@ -1660,9 +1669,9 @@ function cellBlocked(x,z){
  if(x>CASH_X-.85&&x<CASH_X+.85&&z>CASH_Z-1.025&&z<CASH_Z+1.025)return true;
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
  if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
- if(x>6.45&&z>-5.3&&z<-2.8)return true;
+ if(x>6.45&&z>=-4.35&&z<-2.8)return true;
  if(x>3.05&&x<4.35&&z>-6.9&&z<-5.7)return true;
- if(x>6.5&&z>-6.3&&z<-5.15)return true;
+ if(x>6.45&&z>-6.9&&z<-4.35)return true;
  if((x-6.8)*(x-6.8)+(z-5.5)*(z-5.5)<.5||(x+6.8)*(x+6.8)+(z-5.5)*(z-5.5)<.5)return true;
  if(x>-14.8&&x<-9.2&&z<-1.9&&leftAreaUnlocked)return true;
  for(let i=0;i<(saveData.items.stove|0);i++){const p=stoveSlots[i];if(p&&Math.abs(x-p[0])<1.0&&Math.abs(z-p[1])<.9)return true;}
@@ -1799,7 +1808,7 @@ function updateStaff(dt){
  if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=0;if(cashierAutoTimer>=2.6*cashierSpeedFactor()){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
  // Pelayan: ambil hidangan matang di pass, antar ke pelanggan yang memesannya.
  const waiter=getWorker('staff');
- if(waiter&&readyTickets.length&&waiterMode==='idle'){currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;dishReady=readyTickets.length>0;waiterMode='toFood';waiterPath=[V3(6.0,-4.0)];}
+ if(waiter&&readyTickets.length&&waiterMode==='idle'){currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;dishReady=readyTickets.length>0;waiterMode='toFood';waiterPath=[V3(6.0,-4.6)];}
  if(waiter&&waiterMode!=='idle'){
   const u=waiter.userData;
   if(stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7)){
@@ -1883,7 +1892,7 @@ const solidRects = [
  // Wall colliders follow actual wall thickness; player clearance is handled by the player radius.
  {x:-8,z:-4.65,hx:.175,hz:2.35},{x:-8,z:4.95,hx:.175,hz:2.05},{x:8,z:-4.65,hx:.175,hz:2.35},{x:8,z:4.95,hx:.175,hz:2.05},{x:0,z:-7,hx:8,hz:.175},{x:-4.7,z:7,hx:3.3,hz:.15},{x:4.7,z:7,hx:3.3,hz:.15},
  {x:-16,z:0,hx:.15,hz:7},{x:16,z:0,hx:.15,hz:7},{x:-12,z:-7,hx:4,hz:.15},{x:12,z:-7,hx:4,hz:.15},{x:-12,z:7,hx:4,hz:.15},{x:12,z:7,hx:4,hz:.15},
- {x:7.18,z:-4.04,hx:.66,hz:1.22},{x:7.18,z:-6.03,hx:.65,hz:.8},
+ {x:7.18,z:-5.63,hx:.66,hz:1.22},{x:7.18,z:-3.62,hx:.65,hz:.8},
  {x:3.7,z:-6.31,hx:.58,hz:.55},
  // Dining furniture colliders are added only when tables are actually placed.
  // Empty/locked table slots must remain walkable.
@@ -1948,7 +1957,7 @@ const cookStatus=document.getElementById('cookStatus');
 const ingredientNames={rice:'beras',chicken:'ayam',flour:'tepung',oil:'minyak',spices:'bumbu',vegetables:'sayuran',egg:'telur',noodles:'mi',tea:'teh',ice:'es batu',orange:'jeruk',coffee:'kopi',milk:'susu',banana:'pisang'};
 let fridgeOpen=false,cooking=false,cookStarted=0,cookElapsed=0,dishReady=false,holdingDish=null,holdingDish2=null,secondTicket=null,currentCookTime=10;
 function nearPoint(x,z,r=3.2){return Math.hypot(player.position.x-x,player.position.z-z)<=r;}
-const STOVE_ACCESS=[6.0,-5.7],FRIDGE_ACCESS=[3.7,-5.3];
+const STOVE_ACCESS=[6.0,-3.6],FRIDGE_ACCESS=[3.7,-5.3];
 function setCookStatus(message,show=true){message=TRX(message);if(cookStatus.textContent!==message)cookStatus.textContent=message;if(cookStatus.classList.contains('show')!==show)cookStatus.classList.toggle('show',show);}
 function createAyamGeprekPlate(menuId='ayam'){
  const dish=new THREE.Group();
@@ -2036,7 +2045,7 @@ function startCooking(){
 function pickupDish(){
  if(currentTicket&&secondTicket){showToast('Kamu sudah membawa maksimal 2 hidangan. Antar salah satunya terlebih dahulu.');return;}
  if(!readyTickets.length){showToast('Belum ada hidangan matang.');return;}
- if(!nearPoint(6.0,-4.0,3.8)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
+ if(!nearPoint(6.0,-4.6,3.8)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
  const ticket=readyTickets.shift();const plate=scene.getObjectByName('ready plate '+ticket.id);if(plate){scene.remove(plate);disposeObj(plate);}
  const dish=createAyamGeprekPlate(ticket.menuId);dish.scale.setScalar(.48);
  if(!currentTicket){currentTicket=ticket;currentOrderMenuId=ticket.menuId;holdingDish=dish;dish.position.set(-.22,1.2,.5);avatar.add(dish);}
@@ -2054,7 +2063,7 @@ function serveDish(){
 function dishAction(){
  const hungry=(holdingDish&&currentTicket)?customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)):[];
  if(hungry.some(c=>nearPoint(c.seat.x,c.seat.z,3.6))){serveDish();return;}
- if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(6.0,-4.0,3.8)){pickupDish();return;}
+ if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(6.0,-4.6,3.8)){pickupDish();return;}
  // Belum ada yang bisa dikerjakan di posisi ini: tampilkan petunjuk yang sesuai kondisi.
  if(holdingDish&&currentTicket)serveDish();
  else if(readyTickets.length)pickupDish();
@@ -2582,8 +2591,8 @@ function refreshStaffVisuals(){
   const sameRole=(saveData.staff||[]).filter(x=>x.shift===staff.shift&&x.role===role);
   const roleIndex=Math.max(0,sameRole.findIndex(x=>x.id===staff.id));
   // All three jobs have a dedicated station: cashier behind the counter, chef behind the stove, waiter near the kitchen pass.
-  const home=role==='chef'?new THREE.Vector3(5.6,0,-5.9):role==='cashier'?new THREE.Vector3(-2.2,0,-6.05):new THREE.Vector3(3.25,0,-3.05);
-  if(role==='chef'&&roleIndex>0){home.x-=roleIndex*.9;home.z+=roleIndex*.55;}
+  const home=role==='chef'?new THREE.Vector3(5.9,0,-3.62):role==='cashier'?new THREE.Vector3(-2.2,0,-6.05):new THREE.Vector3(3.25,0,-3.05);
+  if(role==='chef'&&roleIndex>0){home.x-=roleIndex*.9;home.z-=roleIndex*.55;}
   if(role==='staff'&&roleIndex>0){home.x-=roleIndex*.72;home.z+=roleIndex*.65;}
   if(!['chef','cashier','staff'].includes(role))return;
   g.position.copy(home);g.userData.home.copy(home);
@@ -2908,7 +2917,7 @@ function frame(){
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
  while(kitchenQueue.length&&activeCooks.length<2&&hasStaffOnDuty('chef')){if(!beginCooking(true))break;}
  // Complete each cooking cycle when its configured duration has elapsed.
- for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(7.0,1.4,-4.45+(readyTickets.length%2)*.65);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
+ for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(6.95,1.4,-5.0-(readyTickets.length%2)*.65);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
   cooking=activeCooks.length>0;dishReady=readyTickets.length>0;
   if(cooking){const status=activeCooks.map(j=>menuCatalog[j.ticket.menuId].name+' '+Math.max(0,j.duration-j.elapsed).toFixed(1)+'s').join(' • ');setCookStatus('Sedang dimasak: '+status);}else if(dishReady)setCookStatus('Hidangan siap antar: '+readyTickets.map(t=>menuCatalog[t.menuId].name).join(', '));
  // Karyawan kini bergerak dan menjalankan tugas, bukan berdiri diam.
