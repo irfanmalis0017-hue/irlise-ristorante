@@ -1086,26 +1086,26 @@ box(scene,'divider top trim',2.0,2.88,dividerZ,10.8,.12,.22,materials.trim);
 box(scene,'serving hatch counter shelf',.5,1.12,-2.38,2.0,.12,.42,materials.wood2);
 
 // Kitchen on the right.
-box(scene,'kitchen island',4.8,.58,-4.55,3.5,1.15,1.8,materials.steel);
-box(scene,'kitchen top',4.8,1.2,-4.55,3.65,.16,1.9,materials.cream);
+box(scene,'kitchen island',.5,.58,-4.55,3.5,1.15,1.8,materials.steel);
+box(scene,'kitchen top',.5,1.2,-4.55,3.65,.16,1.9,materials.cream);
 for(let i=0;i<2;i++){
-  box(scene,'cabinet',4.0+i*1.5,.55,-3.58,1.25,.9,.12,materials.darkTeal);
-  box(scene,'cabinet handle',4.0+i*1.5,.58,-3.49,.08,.18,.05,materials.yellow);
+  box(scene,'cabinet',-.25+i*1.5,.55,-3.58,1.25,.9,.12,materials.darkTeal);
+  box(scene,'cabinet handle',-.25+i*1.5,.58,-3.49,.08,.18,.05,materials.yellow);
 }
-for(let x of [4.0,5.5]) {
-  cylinder(scene,'cooking burner',x,1.31,-4.8,.36,.36,.08,materials.black,24);
-  cylinder(scene,'burner ring',x,1.37,-4.8,.23,.23,.035,materials.steel,24);
+for(let x of [-.25,1.25]) {
+  cylinder(scene,'cooking burner',x,1.31,-4.05,.36,.36,.08,materials.black,24);
+  cylinder(scene,'burner ring',x,1.37,-4.05,.23,.23,.035,materials.steel,24);
 }
 // Open-front refrigerator cabinet so the purchased stock can be seen when its door swings open.
-box(scene,'fridge left wall',6.12,1.35,-5.9,.12,2.7,1.0,materials.white);
-box(scene,'fridge right wall',7.08,1.35,-5.9,.12,2.7,1.0,materials.white);
-box(scene,'fridge back',6.6,1.35,-6.36,.92,2.7,.10,materials.white);
-box(scene,'fridge top',7.0,2.67,-5.9,1.0,.12,1.0,materials.white);
-box(scene,'fridge bottom',7.0,.03,-5.9,1.0,.12,1.0,materials.white);
-box(scene,'fridge interior',6.6,1.35,-6.28,.78,2.48,.035,materials.darkTeal);
-box(scene,'fridge door seam',6.6,1.35,-5.38,.025,2.55,.03,materials.steel);
+box(scene,'fridge left wall',5.32,1.35,-5.35,.12,2.7,1.0,materials.white);
+box(scene,'fridge right wall',6.28,1.35,-5.35,.12,2.7,1.0,materials.white);
+box(scene,'fridge back',5.8,1.35,-5.81,.92,2.7,.10,materials.white);
+box(scene,'fridge top',6.2,2.67,-5.35,1.0,.12,1.0,materials.white);
+box(scene,'fridge bottom',6.2,.03,-5.35,1.0,.12,1.0,materials.white);
+box(scene,'fridge interior',5.8,1.35,-5.73,.78,2.48,.035,materials.darkTeal);
+box(scene,'fridge door seam',5.8,1.35,-4.83,.025,2.55,.03,materials.steel);
 // Hinged animated fridge door for the K interaction.
-const fridgeDoorPivot=new THREE.Group();fridgeDoorPivot.position.set(6.1,1.35,-5.36);scene.add(fridgeDoorPivot);
+const fridgeDoorPivot=new THREE.Group();fridgeDoorPivot.position.set(5.3,1.35,-4.81);scene.add(fridgeDoorPivot);
 box(fridgeDoorPivot,'interactive fridge door',.5,0,0,.96,2.58,.12,materials.white);
 box(fridgeDoorPivot,'fridge handle',.83,0,.08,.055,.72,.08,materials.steel);
 // Visible ingredient packages inside the fridge; quantities mirror purchased stock.
@@ -1115,7 +1115,7 @@ const fridgeStockColors={rice:0xe6d4a6,chicken:0xe7a18b,vegetables:0x70ad72,flou
 const fridgeStockSprites={};
 function makeFridgeLabel(id){const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d');x.fillStyle='#26343b';x.fillRect(0,0,256,96);x.fillStyle='#fff';x.font='bold 27px Arial';x.textAlign='center';x.fillText(fridgeStockLabels[id],128,34);x.fillStyle='#f3c75b';x.font='bold 30px Arial';x.fillText('0',128,76);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));sp.scale.set(.72,.27,1);return {sp,ctx:x,texture:t};}
 const fridgeIds=['rice','chicken','vegetables','flour','oil','spices'];
-fridgeIds.forEach((id,i)=>{const y=i<3?.62:1.62;const col=i%3;const x=6.45+col*.52;const pkg=box(fridgeStockMeshes,'fridge package '+id,x,y,-6.18,.34,.30,.38,mat(fridgeStockColors[id]));const label=makeFridgeLabel(id);label.sp.position.set(x,y+.22,-5.91);fridgeStockMeshes.add(label.sp);fridgeStockSprites[id]=label;});
+fridgeIds.forEach((id,i)=>{const y=i<3?.62:1.62;const col=i%3;const x=5.55+col*.24;const pkg=box(fridgeStockMeshes,'fridge package '+id,x,y,-5.63,.28,.30,.32,mat(fridgeStockColors[id]));const label=makeFridgeLabel(id);label.sp.position.set(x,y+.22,-5.32);fridgeStockMeshes.add(label.sp);fridgeStockSprites[id]=label;});
 function refreshFridgeStock(){fridgeIds.forEach(id=>{const label=fridgeStockSprites[id];if(!label)return;const qty=saveData.inventory?.[id]||0;label.ctx.fillStyle='#26343b';label.ctx.fillRect(0,48,256,48);label.ctx.fillStyle='#f3c75b';label.ctx.font='bold 30px Arial';label.ctx.textAlign='center';label.ctx.fillText('× '+qty,128,84);label.texture.needsUpdate=true;const pkg=fridgeStockMeshes.getObjectByName('fridge package '+id);if(pkg)pkg.visible=qty>0;label.sp.visible=qty>0;});}
 
 
@@ -1533,7 +1533,8 @@ function cellBlocked(x,z){
  if(x>-6.85&&x<-5.05&&z>2.55&&z<5.85)return true;
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
  if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
- if(x>2.7&&x<7.3&&z<-3.45)return true;
+ if(x>-1.35&&x<2.35&&z>-5.5&&z<-3.62)return true;
+ if(x>5.25&&x<6.35&&z>-5.9&&z<-4.75)return true;
  if((x-6.8)*(x-6.8)+(z-5.5)*(z-5.5)<.5||(x+6.8)*(x+6.8)+(z-5.5)*(z-5.5)<.5)return true;
  if(x>-14.8&&x<-9.2&&z<-1.9&&leftAreaUnlocked)return true;
  for(let i=0;i<(saveData.items.stove|0);i++){const p=stoveSlots[i];if(p&&Math.abs(x-p[0])<1.0&&Math.abs(z-p[1])<.9)return true;}
@@ -1893,7 +1894,7 @@ function beginCooking(automatic=false){
  activeCooks.push({ticket,elapsed:0,duration:cookTime});cooking=true;setCookStatus('Memasak '+selected.name+' — '+cookTime+' detik');if(!automatic)showToast('Memasak '+selected.name+' dimulai!');return true;
 }
 function startCooking(){
- if(!nearPoint(4.8,-4.55,3.5)){showToast('Dekati kompor untuk mulai memasak.');return;}
+ if(!nearPoint(.5,-3.15,3.5)){showToast('Dekati kompor untuk mulai memasak.');return;}
  if(hasStaffOnDuty('chef')){showToast('Koki sedang bertugas dan akan memasak pesanan secara otomatis.');return;}
  if(!fridgeOpen){showToast('Buka kulkas terlebih dahulu dengan tombol K.');return;}
  if(!kitchenQueue.length){showToast('Belum ada pesanan di antrean dapur.');return;}
@@ -1903,7 +1904,7 @@ function startCooking(){
 function pickupDish(){
  if(currentTicket&&secondTicket){showToast('Kamu sudah membawa maksimal 2 hidangan. Antar salah satunya terlebih dahulu.');return;}
  if(!readyTickets.length){showToast('Belum ada hidangan matang.');return;}
- if(!nearPoint(4.8,-4.55,3.7)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
+ if(!nearPoint(.5,-3.15,3.7)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
  const ticket=readyTickets.shift();const plate=scene.getObjectByName('ready plate '+ticket.id);if(plate){scene.remove(plate);disposeObj(plate);}
  const dish=createAyamGeprekPlate(ticket.menuId);dish.scale.setScalar(.48);
  if(!currentTicket){currentTicket=ticket;currentOrderMenuId=ticket.menuId;holdingDish=dish;dish.position.set(-.22,1.2,.5);avatar.add(dish);}
@@ -2511,7 +2512,7 @@ addEventListener('keydown',e=>{if(e.code==='KeyE'&&!e.repeat){
 addEventListener('keydown',e=>{
  if(e.repeat||gamePaused||GATE.maint||settingsOverlay.classList.contains('open')||marketPanel.classList.contains('open')||businessPanel.classList.contains('open')||cashierOrderPanel.style.display==='block')return;
  if(e.code==='KeyK'){
-  if(!nearPoint(7.0,-5.9,3.6)){showToast('Dekati kulkas untuk membuka atau menutupnya.');return;}
+  if(!nearPoint(5.8,-4.3,3.6)){showToast('Dekati kulkas untuk membuka atau menutupnya.');return;}
   fridgeOpen=!fridgeOpen;fridgeDoorPivot.rotation.y=fridgeOpen?-1.15:0;
   showToast(fridgeOpen?'Kulkas dibuka. Ambil bahan untuk memasak.':'Kulkas ditutup.');
  } else if(e.code==='KeyL') startCooking();
