@@ -1252,6 +1252,19 @@ const _capCache={};
 function _cap(p,n,x,y,z,r,len,m){const k=r+'_'+len;const geo=_capCache[k]||(_capCache[k]=(()=>{const q=new THREE.CapsuleGeometry(r,len,6,14);q.userData.shared=true;return q;})());const o=new THREE.Mesh(geo,m);o.name=n;o.position.set(x,y,z);o.castShadow=true;p.add(o);return o;}
 const _sphGeo=new THREE.SphereGeometry(1,32,22);_sphGeo.userData.shared=true;
 function _ell(p,n,x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(_sphGeo,m);o.name=n;o.position.set(x,y,z);o.scale.set(sx,sy,sz);p.add(o);return o;}
+// Anggota badan menyambung (v2.4): kapsul meruncing dengan pivot di sendi atas.
+// Ujung bawah satu segmen berjari-jari sama dengan ujung atas segmen berikutnya,
+// jadi lutut/siku/pergelangan tampak satu bentuk utuh, bukan potongan terpisah.
+const _limbCache={};
+function _limbGeo(r0,r1,len){
+ const k=r0+'_'+r1+'_'+len;if(_limbCache[k])return _limbCache[k];
+ const pts=[],seg=8;
+ for(let i=0;i<=seg;i++){const a=-Math.PI/2+(i/seg)*Math.PI/2;pts.push(new THREE.Vector2(Math.cos(a)*r1,-len+Math.sin(a)*r1));}
+ for(let i=0;i<=seg;i++){const a=(i/seg)*Math.PI/2;pts.push(new THREE.Vector2(Math.cos(a)*r0,Math.sin(a)*r0));}
+ const geo=new THREE.LatheGeometry(pts,16);geo.userData.shared=true;return _limbCache[k]=geo;
+}
+function _limb(p,n,x,y,z,r0,r1,len,m){const o=new THREE.Mesh(_limbGeo(r0,r1,len),m);o.name=n;o.position.set(x,y,z);o.castShadow=true;p.add(o);return o;}
+const _sleeveGeo=new THREE.CylinderGeometry(.088,.079,.2,16);_sleeveGeo.userData.shared=true;
 function makePerson(o={}){
  const skin=mat(o.skin??0xe7b58f,.7),hair=mat(o.hair??0x292522,.55),shirt=mat(o.shirt??0x4b83b7,.75),pants=mat(o.pants??0x34445b,.8),shoe=mat(o.shoe??0x20272d,.6);
  const eyeM=mat(0x1d1816,.4),white=mat(0xffffff,.4),blush=mat(0xd98979,.9),lip=mat(0x9a5148,.7);
@@ -1261,11 +1274,13 @@ function makePerson(o={}){
  const legs=[];
  for(const s of [-1,1]){
   const th=new THREE.Group();th.position.set(s*.12,.9,0);root.add(th);
-  _cap(th,'thigh',0,-.2,0,.105,.2,pants);
+  _limb(th,'thigh',0,0,0,.108,.078,.42,pants);
   const kn=new THREE.Group();kn.position.set(0,-.42,0);th.add(kn);
-  _cap(kn,'shin',0,-.19,0,.085,.2,pants);
-  _ell(kn,'shoe',0,-.42,.06,.1,.065,.17,shoe);_ell(kn,'sole',0,-.465,.06,.105,.02,.175,white);
-  legs.push({th,kn});
+  _limb(kn,'shin',0,0,0,.076,.056,.4,pants);
+  // Telapak punya pivot pergelangan sendiri supaya bisa mengikuti langkah (tumit naik, ujung kaki turun).
+  const ft=new THREE.Group();ft.position.set(0,-.4,0);kn.add(ft);
+  _ell(ft,'shoe',0,-.02,.06,.1,.065,.17,shoe);_ell(ft,'sole',0,-.065,.06,.105,.02,.175,white);
+  legs.push({th,kn,ft});
  }
  const torso=_cap(root,'customer torso',0,1.2,0,.2,.26,shirt);torso.scale.set(1.2,1,.76);
  _cap(root,'neck',0,1.52,0,.07,.06,skin);
@@ -1273,11 +1288,17 @@ function makePerson(o={}){
  const arms=[],elbows=[];
  for(const s of [-1,1]){
   const sh=new THREE.Group();sh.position.set(s*.29,1.4,0);sh.rotation.z=s*.06;root.add(sh);
-  _ell(sh,'shoulder',0,0,0,.1,.1,.1,shirt);
-  _cap(sh,'upper arm',0,-.15,0,.075,.14,shirt);
+  _ell(sh,'shoulder',0,0,0,.098,.098,.098,shirt);
+  // Lengan atas kulit utuh sampai siku; lengan baju pendek hanya sebagai selubung di atasnya.
+  _limb(sh,'upper arm',0,0,0,.068,.054,.31,skin);
+  const sl=new THREE.Mesh(_sleeveGeo,shirt);sl.name='sleeve';sl.position.set(0,-.1,0);sl.castShadow=true;sh.add(sl);
   const el=new THREE.Group();el.position.set(0,-.31,0);sh.add(el);
-  _cap(el,'forearm',0,-.13,0,.065,.12,skin);
-  _ell(el,'hand',0,-.28,.01,.07,.08,.065,skin);
+  _limb(el,'forearm',0,0,0,.052,.042,.24,skin);
+  // Tangan: telapak pipih + jari sedikit menekuk + ibu jari (bukan bola lagi).
+  const hd=new THREE.Group();hd.position.set(0,-.24,0);el.add(hd);
+  _ell(hd,'palm',0,-.05,0,.028,.058,.045,skin);
+  _ell(hd,'fingers',0,-.112,.006,.022,.05,.038,skin).rotation.x=-.22;
+  _ell(hd,'thumb',-s*.026,-.06,.032,.016,.04,.017,skin).rotation.x=-.35;
   arms.push(sh);elbows.push(el);
  }
  const head=new THREE.Group();head.position.set(0,1.72,0);root.add(head);
@@ -1321,19 +1342,37 @@ function makePerson(o={}){
   box(root,'apron pocket seam',0,.82,.188,.012,.12,.008,am,false);
  }
  if(o.tag)box(root,'name tag',.14,1.2,.19,.1,.07,.025,materials.yellow,false);
- g.userData={root,legs,arms,elbows,head,mats:{skin,hair,shirt}};
+ g.userData={root,legs,arms,elbows,head,torso,seed:Math.random()*6.283,mats:{skin,hair,shirt}};
  if(o.scale)g.scale.setScalar(o.scale);
  return g;
 }
 function walkPose(p,ph,amp=1,withArms=true){
- const u=p.userData,s=Math.sin(ph)*amp,c=Math.cos(ph)*amp;
- u.legs[0].th.rotation.x=s*.55;u.legs[1].th.rotation.x=-s*.55;
- u.legs[0].kn.rotation.x=Math.max(0,-c)*.9;u.legs[1].kn.rotation.x=Math.max(0,c)*.9;
- u.root.position.y=Math.abs(c)*.025;
- if(withArms){u.arms[0].rotation.x=-s*.45;u.arms[1].rotation.x=s*.45;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.2-amp*.25;}
+ // v2.4: siklus jalan halus. amp 0 = berdiri (napas pelan), 1 = jalan, ~1.3 = lari.
+ // Semua kurva berbentuk sinus (tanpa max/abs yang patah) supaya gerakan tidak menyentak.
+ const u=p.userData,A=Math.min(Math.max(amp,0),1.5),s=Math.sin(ph),c=Math.cos(ph);
+ const t=performance.now()*.001+(u.seed||0),idle=Math.max(0,1-A*2);
+ for(let i=0;i<2;i++){
+  const d=i===0?1:-1,L=u.legs[i],sp=s*d,cp=c*d;
+  L.th.rotation.x=sp*.5*A;                          // + = kaki ke belakang
+  const kb=Math.max(0,-cp);                          // lutut menekuk saat kaki diayun ke depan
+  L.kn.rotation.x=A*(.08+.85*kb*kb);
+  if(L.ft)L.ft.rotation.x=-(L.th.rotation.x+L.kn.rotation.x)*.7; // telapak mengikuti lantai
+ }
+ // Badan: naik-turun halus, condong ke depan, pinggul memutar berlawanan arah ayunan lengan, kepala tetap stabil.
+ u.root.position.set(s*.012*A,c*c*.03*A,0);
+ u.root.rotation.set(.05*A,s*.07*A,0);
+ if(u.head)u.head.rotation.set(-.04*A+Math.sin(t*.45)*.02*idle,-s*.05*A+Math.sin(t*.37)*.06*idle,0);
+ if(u.torso){const b=Math.sin(t*1.7)*idle;u.torso.scale.set(1.2+b*.004,1+b*.012,.76+b*.008);}
+ if(withArms){
+  for(let i=0;i<2;i++){
+   const d=i===0?1:-1,sd=s*d,a=-sd*.5*A+Math.sin(t*1.3+i*1.7)*.018*idle;
+   u.arms[i].rotation.x=a;
+   u.elbows[i].rotation.x=-(.16+A*(.1+.3*(.5+.5*sd)));  // siku menekuk lebih saat lengan ke depan
+  }
+ }
 }
 function standPose(p){walkPose(p,0,0);}
-function seatPose(p){const u=p.userData;u.root.position.y=-.28;for(const l of u.legs){l.th.rotation.x=-Math.PI/2+.05;l.kn.rotation.x=Math.PI/2-.05;}u.arms[0].rotation.x=u.arms[1].rotation.x=-.55;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.95;}
+function seatPose(p){const u=p.userData;u.root.position.set(0,-.28,0);u.root.rotation.set(0,0,0);if(u.head)u.head.rotation.set(0,0,0);if(u.torso)u.torso.scale.set(1.2,1,.76);for(const l of u.legs){l.th.rotation.x=-Math.PI/2+.05;l.kn.rotation.x=Math.PI/2-.05;if(l.ft)l.ft.rotation.x=0;}u.arms[0].rotation.x=u.arms[1].rotation.x=-.55;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.95;}
 // Player character: upgraded stylized 3D restaurant owner.
 // The model uses rounded forms, layered hair, a readable face and articulated limbs.
 const player=new THREE.Group(); scene.add(player); player.position.set(0,0,4.0);
@@ -1341,6 +1380,7 @@ const player=new THREE.Group(); scene.add(player); player.position.set(0,0,4.0);
 const CH=window.__irliseChar||{style:'short',skin:0xe9b58e,hair:0x2b2320,shirt:0x2f8f8b};
 const avatar=makePerson({skin:CH.skin,hair:CH.hair,shirt:CH.shirt,pants:0x34445b,shoe:0x252a31,style:CH.style,hijab:CH.shirt,apron:0xf3e5c9,tag:true,cap:CH.style==='hijab'?null:CH.shirt,collar:0xfff1d8,scale:1.12});
 player.add(avatar);standPose(avatar);
+const pAnim={phase:0,amp:0,target:0};
 player.userData.speed=4.2;
 // Seated customers: each NPC is aligned to an actual chair and faces its table.
 // ===== Pelanggan banyak, pesanan banyak & antrean dapur (v1.4) =====
@@ -2539,10 +2579,15 @@ function frame(){
    const speed=keys.ShiftLeft||keys.ShiftRight?7:4.2;
    const step=move.multiplyScalar(speed*dt);
    movePlayerWithCollision(step.x,step.z);
-   avatar.rotation.y=Math.atan2(move.x,move.z);
-   const gait=performance.now()*.012;
-   walkPose(avatar,gait*.65,1);
- } else { standPose(avatar); }
+   // Badan berbelok perlahan (bukan langsung berputar) ke arah gerak.
+   let turn=Math.atan2(move.x,move.z)-avatar.rotation.y;turn=Math.atan2(Math.sin(turn),Math.cos(turn));
+   avatar.rotation.y+=turn*(1-Math.exp(-14*dt));
+   pAnim.phase+=dt*(6.5+speed*.9);               // kecepatan langkah ikut kecepatan lari
+   pAnim.target=speed>5?1.3:1;
+ } else { pAnim.target=0; }
+ // Amplitudo dihaluskan: berhenti/mulai berjalan mengalir, tidak loncat ke pose lain.
+ pAnim.amp+=(pAnim.target-pAnim.amp)*(1-Math.exp(-10*dt));
+ walkPose(avatar,pAnim.phase,pAnim.amp);
  if(holdingDish){const u=avatar.userData;u.arms[0].rotation.x=u.arms[1].rotation.x=-.95;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.55;}
 
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
