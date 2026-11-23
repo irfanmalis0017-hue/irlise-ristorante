@@ -1086,11 +1086,11 @@ box(scene,'divider top trim',2.0,2.88,dividerZ,10.8,.12,.22,materials.trim);
 box(scene,'serving hatch counter shelf',.5,1.12,-2.38,2.0,.12,.42,materials.wood2);
 
 // Kitchen on the right.
-box(scene,'kitchen island',.5,.58,-4.55,3.5,1.15,1.8,materials.steel);
-box(scene,'kitchen top',.5,1.2,-4.55,3.65,.16,1.9,materials.cream);
+box(scene,'kitchen island',.5,.58,-5.92,3.5,1.15,1.8,materials.steel);
+box(scene,'kitchen top',.5,1.2,-5.92,3.65,.16,1.9,materials.cream);
 for(let i=0;i<2;i++){
-  box(scene,'cabinet',-.25+i*1.5,.55,-3.58,1.25,.9,.12,materials.darkTeal);
-  box(scene,'cabinet handle',-.25+i*1.5,.58,-3.49,.08,.18,.05,materials.yellow);
+  box(scene,'cabinet',-.25+i*1.5,.55,-4.95,1.25,.9,.12,materials.darkTeal);
+  box(scene,'cabinet handle',-.25+i*1.5,.58,-4.86,.08,.18,.05,materials.yellow);
 }
 // Open-front refrigerator cabinet so the purchased stock can be seen when its door swings open.
 // Moved west along the back wall (center x=FRIDGE_X), door facing south (+z).
@@ -1153,11 +1153,11 @@ detailBox(stoveGroup,'extractor duct',0,2.83,-.3,.6,.78,.5,materials.steel);
 detailBox(stoveGroup,'extractor control strip',0,2.39,.445,.9,.055,.025,detailGold);
 for(let i=0;i<3;i++) cylinder(stoveGroup,'extractor control dial',-.32+i*.32,2.39,.46,.045,.045,.035,detailDark,12);
 // Prep items now sit on the kitchen island (the old counter decoration was removed).
-detailBox(scene,'prep cutting board',-.7,1.31,-4.95,.72,.055,.48,materials.wood2);
-detailBox(scene,'prep board inset',-.7,1.342,-4.95,.58,.012,.34,detailCeramic);
-cylinder(scene,'utensil crock',2.0,1.46,-5.1,.14,.16,.36,materials.cream,18);
+detailBox(scene,'prep cutting board',-.7,1.31,-6.32,.72,.055,.48,materials.wood2);
+detailBox(scene,'prep board inset',-.7,1.342,-6.32,.58,.012,.34,detailCeramic);
+cylinder(scene,'utensil crock',2.0,1.46,-6.47,.14,.16,.36,materials.cream,18);
 for(let i=0;i<3;i++){
-  cylinder(scene,'utensil handle',1.93+i*.07,1.76,-5.1,.018,.018,.42,detailSteel,8);
+  cylinder(scene,'utensil handle',1.93+i*.07,1.76,-6.47,.018,.018,.42,detailSteel,8);
 }
 
 // Dining tables and chairs.
@@ -1524,7 +1524,7 @@ function cellBlocked(x,z){
  if(x>-6.85&&x<-5.05&&z>2.55&&z<5.85)return true;
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
  if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
- if(x>-1.35&&x<2.35&&z>-5.5&&z<-3.62)return true;
+ if(x>-1.35&&x<2.35&&z>-6.9&&z<-4.95)return true;
  if(x>3.05&&x<4.35&&z>-6.9&&z<-5.7)return true;
  if(x>6.5&&z>-6.3&&z<-5.15)return true;
  if((x-6.8)*(x-6.8)+(z-5.5)*(z-5.5)<.5||(x+6.8)*(x+6.8)+(z-5.5)*(z-5.5)<.5)return true;
@@ -1663,7 +1663,7 @@ function updateStaff(dt){
  if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=0;if(cashierAutoTimer>=2.6*cashierSpeedFactor()){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
  // Pelayan: ambil hidangan matang di pass, antar ke pelanggan yang memesannya.
  const waiter=getWorker('staff');
- if(waiter&&readyTickets.length&&waiterMode==='idle'){currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;dishReady=readyTickets.length>0;waiterMode='toFood';waiterPath=[V3(1.0,-3.2)];}
+ if(waiter&&readyTickets.length&&waiterMode==='idle'){currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;dishReady=readyTickets.length>0;waiterMode='toFood';waiterPath=[V3(1.0,-4.4)];}
  if(waiter&&waiterMode!=='idle'){
   const u=waiter.userData;
   if(stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7)){
@@ -1746,7 +1746,7 @@ const solidRects = [
  // Wall colliders follow actual wall thickness; player clearance is handled by the player radius.
  {x:-8,z:-4.65,hx:.175,hz:2.35},{x:-8,z:4.95,hx:.175,hz:2.05},{x:8,z:-4.65,hx:.175,hz:2.35},{x:8,z:4.95,hx:.175,hz:2.05},{x:0,z:-7,hx:8,hz:.175},{x:-4.7,z:7,hx:3.3,hz:.15},{x:4.7,z:7,hx:3.3,hz:.15},
  {x:-16,z:0,hx:.15,hz:7},{x:16,z:0,hx:.15,hz:7},{x:-12,z:-7,hx:4,hz:.15},{x:12,z:-7,hx:4,hz:.15},{x:-12,z:7,hx:4,hz:.15},{x:12,z:7,hx:4,hz:.15},
- {x:.5,z:-4.55,hx:1.85,hz:.98},{x:7.18,z:-6.03,hx:.65,hz:.8},
+ {x:.5,z:-5.92,hx:1.85,hz:.98},{x:7.18,z:-6.03,hx:.65,hz:.8},
  {x:3.7,z:-6.31,hx:.58,hz:.55},
  // Dining furniture colliders are added only when tables are actually placed.
  // Empty/locked table slots must remain walkable.
@@ -1897,7 +1897,7 @@ function startCooking(){
 function pickupDish(){
  if(currentTicket&&secondTicket){showToast('Kamu sudah membawa maksimal 2 hidangan. Antar salah satunya terlebih dahulu.');return;}
  if(!readyTickets.length){showToast('Belum ada hidangan matang.');return;}
- if(!nearPoint(.5,-3.15,3.7)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
+ if(!nearPoint(.5,-4.3,3.8)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
  const ticket=readyTickets.shift();const plate=scene.getObjectByName('ready plate '+ticket.id);if(plate){scene.remove(plate);disposeObj(plate);}
  const dish=createAyamGeprekPlate(ticket.menuId);dish.scale.setScalar(.48);
  if(!currentTicket){currentTicket=ticket;currentOrderMenuId=ticket.menuId;holdingDish=dish;dish.position.set(-.22,1.2,.5);avatar.add(dish);}
@@ -1915,7 +1915,7 @@ function serveDish(){
 function dishAction(){
  const hungry=(holdingDish&&currentTicket)?customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)):[];
  if(hungry.some(c=>nearPoint(c.seat.x,c.seat.z,3.6))){serveDish();return;}
- if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(.5,-3.15,3.7)){pickupDish();return;}
+ if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(.5,-4.3,3.8)){pickupDish();return;}
  // Belum ada yang bisa dikerjakan di posisi ini: tampilkan petunjuk yang sesuai kondisi.
  if(holdingDish&&currentTicket)serveDish();
  else if(readyTickets.length)pickupDish();
@@ -2769,7 +2769,7 @@ function frame(){
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
  while(kitchenQueue.length&&activeCooks.length<2&&hasStaffOnDuty('chef')){if(!beginCooking(true))break;}
  // Complete each cooking cycle when its configured duration has elapsed.
- for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(.6+(readyTickets.length%2)*.9,1.4,-4.55);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
+ for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(.6+(readyTickets.length%2)*.9,1.4,-5.92);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
   cooking=activeCooks.length>0;dishReady=readyTickets.length>0;
   if(cooking){const status=activeCooks.map(j=>menuCatalog[j.ticket.menuId].name+' '+Math.max(0,j.duration-j.elapsed).toFixed(1)+'s').join(' • ');setCookStatus('Sedang dimasak: '+status);}else if(dishReady)setCookStatus('Hidangan siap antar: '+readyTickets.map(t=>menuCatalog[t.menuId].name).join(', '));
  // Karyawan kini bergerak dan menjalankan tugas, bukan berdiri diam.
