@@ -2073,9 +2073,10 @@ function startCooking(){
 }
 function pickupDish(){
  if(currentTicket&&secondTicket){showToast('Kamu sudah membawa maksimal 2 hidangan. Antar salah satunya terlebih dahulu.');return;}
- if(!readyTickets.length){showToast('Belum ada hidangan matang.');return;}
- if(!nearPoint(6.0,-4.6,3.8)){showToast('Dekati kompor untuk mengangkat pesanan.');return;}
- const ticket=readyTickets.shift();const plate=scene.getObjectByName('ready plate '+ticket.id);if(plate){scene.remove(plate);disposeObj(plate);}
+ if(!readyTickets.length&&!islandTickets.length){showToast('Belum ada hidangan matang di kitchen island.');return;}
+ if(!nearPoint(ISLAND_ACCESS_X,ISLAND_ACCESS_Z,3.0)){showToast('Dekati kitchen island untuk mengangkat pesanan.');return;}
+ const ticket=readyTickets.length?readyTickets.shift():takeIsland(0);
+ const plate=scene.getObjectByName('ready plate '+ticket.id);if(plate){scene.remove(plate);disposeObj(plate);}
  holdTicket(ticket);
 }
 function holdTicket(ticket){
