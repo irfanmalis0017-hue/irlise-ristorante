@@ -1826,7 +1826,7 @@ function updateStaff(dt){
   }
  }
  const ordering=customers.find(x=>x.stage==='ordering');
- if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=0;if(cashierAutoTimer>=2.6*cashierSpeedFactor()){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
+ if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=Math.PI/2;if(cashierAutoTimer>=2.6*cashierSpeedFactor()){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
  // Pelayan: ambil hidangan matang di pass, antar ke pelanggan yang memesannya.
  const waiter=getWorker('staff');
  const iIdx=(waiter&&level>=2&&waiterMode==='idle')?islandTickets.findIndex(t=>customers.some(c=>c.stage==='seated'&&c.remaining.includes(t.menuId))):-1;
@@ -2661,13 +2661,13 @@ function refreshStaffVisuals(){
   const sameRole=(saveData.staff||[]).filter(x=>x.shift===staff.shift&&x.role===role);
   const roleIndex=Math.max(0,sameRole.findIndex(x=>x.id===staff.id));
   // All three jobs have a dedicated station: cashier behind the counter, chef behind the stove, waiter near the kitchen pass.
-  const home=role==='chef'?new THREE.Vector3(5.9,0,-3.62):role==='cashier'?new THREE.Vector3(CASH_QX,0,CASH_QZ):new THREE.Vector3(-1.6,0,-1.85);
+  const home=role==='chef'?new THREE.Vector3(5.9,0,-3.62):role==='cashier'?new THREE.Vector3(CASH_X-1.3,0,CASH_QZ):new THREE.Vector3(-1.6,0,-1.85);
   if(role==='chef'&&roleIndex>0){home.x-=roleIndex*.9;home.z-=roleIndex*.55;}
   if(role==='staff'&&roleIndex>0){home.x-=roleIndex*.72;home.z+=roleIndex*.65;}
   if(!['chef','cashier','staff'].includes(role))return;
   g.position.copy(home);g.userData.home.copy(home);
   if(role==='chef')g.rotation.y=Math.PI/2;
-  if(role==='cashier')g.rotation.y=0;
+  if(role==='cashier'){g.rotation.y=Math.PI/2;seatPose(g);}
   if(role==='staff')g.rotation.y=Math.PI;
   scene.add(g);staffVisuals.push({group:g,role,shift:staff.shift});
  });
