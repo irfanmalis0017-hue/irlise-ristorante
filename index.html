@@ -495,6 +495,8 @@
  'Bangunan kiri berhasil dibuka!':'Left building unlocked!','Bangunan kiri sudah terbuka.':'The left building is already unlocked.',
  'Belum ada makanan di tangan. Tekan I untuk mengangkat pesanan.':"You aren't carrying any food. Press I to pick up an order.",
  'Belum ada pelanggan yang menunggu di kasir.':'No customer is waiting at the counter.',
+ 'Beli meja dulu sebelum membuka restoran (menu Bisnis di kasir).':'Buy a table first before opening the restaurant (Business menu at the counter).',
+ 'Belum ada meja, pelanggan belum bisa datang. Beli meja lewat menu Bisnis di kasir.':'No tables yet, so customers cannot arrive. Buy a table from the Business menu at the counter.',
  'Belum ada pesanan di antrean dapur.':'No orders in the kitchen queue yet.',
  'Buka kulkas terlebih dahulu dengan tombol K.':'Open the fridge first with the K key.',
  'Dapur sudah penuh — tidak ada tempat untuk kompor lagi.':'The kitchen is full — no space for more stoves.',
@@ -1337,6 +1339,84 @@ makeBuilding(-14,42,12,18,9,0x7f9fb5,'apartment block');
 makeBuilding(8,41,15,15,9,0xd7bd83,'mini market');
 makeBuilding(31,40,14,21,10,0x8d9baf,'office building');
 
+// ===== Rumah bos (v2.4 Tahap 1: bangunan saja) =====
+// Rumah kecil di sebelah restoran, di luar dinding luar sayap kiri (x=-16), menghadap jalan.
+// Tahap ini hanya visual: pintu belum bisa dimasuki dan belum ada tabrakan karena pemain
+// dibatasi |x|<=15.4. Interior, tempat tidur, dan pintu interaktif menyusul di Tahap 2.
+// Ubah HOUSE.cx / HOUSE.cz untuk memindahkan seluruh rumah; semua bagiannya mengikuti.
+const HOUSE={cx:-23,cz:1,w:8,d:8,wallH:3.2};
+const bossHouse=new THREE.Group();bossHouse.name='boss house';scene.add(bossHouse);
+{
+ const {cx,cz,w,d,wallH}=HOUSE,fz=cz+d/2;               // fz = sisi depan (menghadap jalan)
+ const hWall=mat(0xf3e3c3,.85),hRoof=mat(0xa94a3a,.8),hDoor=mat(0x6d4630,.8),hStone=mat(0xeee4cf),hBrick=mat(0x8a5a4a,.9);
+ const H=(n,x,y,z,sx,sy,sz,m,cast=true)=>box(bossHouse,'house '+n,x,y,z,sx,sy,sz,m,cast,true);
+
+ // Fondasi dan teras (permukaan setinggi lantai restoran, sama seperti 'entrance apron').
+ H('foundation',cx,-.2,cz,w+1.4,.4,d+1.2,hStone,false);
+ H('porch slab',cx,-.2,fz+1.1,3.6,.4,1.0,hStone,false);
+
+ // Badan rumah, kaki dinding, tiang sudut, dan list atas.
+ H('walls',cx,wallH/2,cz,w,wallH,d,hWall);
+ H('base trim',cx,.28,cz,w+.08,.56,d+.08,materials.trim);
+ for(const sx of [-1,1])for(const sz of [-1,1])H('corner post',cx+sx*w/2,wallH/2,cz+sz*d/2,.24,wallH,.24,facadeTrim);
+ H('eave trim',cx,wallH+.09,cz,w+.3,.18,d+.3,facadeTrim);
+
+ // Atap pelana: bubungan sejajar jalan (sumbu x), dua bidang miring, dua segitiga tutup di sisi.
+ const rise=1.9,run=d/2+.5,ang=Math.atan2(rise,run),len=Math.hypot(run,rise);
+ for(const s of [1,-1]){
+  const slab=H('roof slope',cx,wallH+rise/2+.02,cz+s*run/2,w+1,.2,len+.1,hRoof);
+  slab.rotation.x=s*ang;                                 // bidang depan (+z) miring turun ke arah +z
+ }
+ H('roof ridge',cx,wallH+rise+.1,cz,w+1.05,.24,.55,materials.trim);
+ {
+  const shp=new THREE.Shape();shp.moveTo(-d/2,0);shp.lineTo(d/2,0);shp.lineTo(0,rise*(d/2)/run);shp.closePath();
+  const gg=new THREE.ExtrudeGeometry(shp,{depth:.3,bevelEnabled:false});gg.translate(0,0,-.15);gg.rotateY(Math.PI/2);
+  for(const s of [-1,1]){const m=new THREE.Mesh(gg,hWall);m.name='house gable';m.position.set(cx+s*(w/2-.15),wallH,cz);m.castShadow=true;m.receiveShadow=true;bossHouse.add(m);}
+ }
+ // Cerobong di sisi belakang atap.
+ H('chimney',cx+2.4,wallH+1.8,cz-1.6,.75,2.0,.75,hBrick);
+ H('chimney cap',cx+2.4,wallH+2.85,cz-1.6,.95,.12,.95,materials.black);
+
+ // Jendela: dua di depan, satu di tiap sisi.
+ for(const wx of [-2.4,2.4]){
+  const x=cx+wx,y=1.75;
+  H('window frame',x,y,fz+.03,1.55,1.35,.1,facadeTrim);
+  H('window glass',x,y,fz+.09,1.3,1.1,.04,exteriorGlass,false);
+  H('window mullion',x,y,fz+.115,.05,1.1,.03,facadeTrim,false);
+  H('window sill',x,y-.72,fz+.12,1.75,.1,.22,facadeTrim,false);
+ }
+ for(const s of [-1,1]){
+  const x=cx+s*w/2,z=cz-.4,y=1.75;
+  H('side window frame',x+s*.03,y,z,.1,1.35,1.55,facadeTrim);
+  H('side window glass',x+s*.09,y,z,.04,1.1,1.3,exteriorGlass,false);
+  H('side window mullion',x+s*.115,y,z,.03,1.1,.05,facadeTrim,false);
+  H('side window sill',x+s*.12,y-.72,z,.22,.1,1.75,facadeTrim,false);
+ }
+
+ // Pintu depan, papan nama, lampu teras, atap teras.
+ H('door frame',cx,1.2,fz+.05,1.6,2.4,.12,facadeTrim);
+ H('door',cx,1.075,fz+.12,1.2,2.15,.08,hDoor);
+ H('door glass',cx,1.7,fz+.17,.7,.5,.03,exteriorGlass,false);
+ sphere(bossHouse,'house door knob',cx+.42,1.05,fz+.2,.06,materials.yellow);
+ H('plaque',cx,2.62,fz+.1,.9,.3,.06,materials.teal,false);
+ sphere(bossHouse,'house porch lamp',cx+1.15,2.35,fz+.2,.1,materials.yellow);
+ H('porch roof',cx,2.88,fz+.8,3.6,.14,1.7,hRoof);
+ for(const s of [-1,1])cylinder(bossHouse,'house porch post',cx+s*1.6,1.4,fz+1.45,.07,.07,2.8,materials.trim,10);
+
+ // Semak di depan, kotak surat, dan satu pohon di samping.
+ for(const s of [-1,1])for(let i=-1;i<=1;i++){
+  const b=sphere(bossHouse,'house shrub',cx+s*3.0+i*.55,.3,fz+.35,.38,shrubMat);b.scale.set(1.2,.6,.85);
+ }
+ cylinder(bossHouse,'house mailbox post',cx+2.2,.26,fz+2.6,.05,.05,1.3,materials.black,8);
+ H('mailbox',cx+2.2,1.0,fz+2.6,.5,.3,.3,materials.red,false);
+ makeStreetTree(cx-6.6,cz+3);
+
+ // Jalan setapak dari teras ke area pintu masuk restoran (menyambung dengan 'entrance apron' di x=-9.5).
+ const px0=cx-.9,px1=-9.5;
+ box(bossHouse,'house path',(px0+px1)/2,-.2,8.95,px1-px0,.4,1.6,hStone,false);
+ box(bossHouse,'house path spur',cx,-.2,(fz+1.6+8.15)/2,1.4,.4,8.15-(fz+1.6),hStone,false);
+}
+
 // Simple animated traffic with visible body, windows and rotating wheels.
 const trafficCars=[];
 function makeCar(x,z,color,direction,speed){
@@ -1739,8 +1819,9 @@ function updateStaff(dt){
  }else if(waiter)walkPose(waiter,0,0,false);
 }
 
+let noTableToastAt=-1e9;
 function updateCustomers(dt){
- if(restaurantOpen){spawnTimer-=dt;if(spawnTimer<=0&&customers.length<maxCust())spawnTimer=spawnCustomer()?(6+Math.random()*6)*(KONFIG.jedaPelanggan[level]||1)/(0.8+rep*0.2):3;}
+ if(restaurantOpen){spawnTimer-=dt;if(spawnTimer<=0&&customers.length<maxCust()){const spawned=spawnCustomer();spawnTimer=spawned?(6+Math.random()*6)*(KONFIG.jedaPelanggan[level]||1)/(0.8+rep*0.2):3;if(!spawned&&tablePositions.length===0){const now=performance.now();if(now-noTableToastAt>20000){noTableToastAt=now;showToast('Belum ada meja, pelanggan belum bisa datang. Beli meja lewat menu Bisnis di kasir.');}}}}
  const line=customers.filter(c=>c.stage==='line'||c.stage==='ordering').sort((a,b)=>a.id-b.id);
  line.forEach((c,i)=>{c.slot=i;});
  const ph=performance.now()/1000*7.5;
@@ -2615,7 +2696,7 @@ musicVolume.value=String(music.volume);
 musicVolumeValue.textContent=music.volume+'%';
 function setPaused(value){gamePaused=!!value;pauseShade.classList.toggle('show',gamePaused);pauseToggle.textContent=gamePaused?'▶ Lanjutkan permainan':'⏸ Jeda permainan';}
 document.getElementById('settingsBtn').addEventListener('click',()=>{settingsOverlay.classList.add('open');soundToggle.textContent=music.on?'🔊 Suara: ON':'🔇 Suara: OFF';musicVolume.value=String(music.volume);musicVolumeValue.textContent=music.volume+'%';});
-document.getElementById('restaurantToggleBtn').addEventListener('click',()=>{restaurantOpen=!restaurantOpen;refreshRestaurantButton();showToast(restaurantOpen?'Restoran dibuka! Pelanggan mulai berdatangan.':'Restoran ditutup. Pelanggan baru tidak akan datang.');persist();});
+document.getElementById('restaurantToggleBtn').addEventListener('click',()=>{if(!restaurantOpen&&tablePositions.length===0){showToast('Beli meja dulu sebelum membuka restoran (menu Bisnis di kasir).');return;}restaurantOpen=!restaurantOpen;refreshRestaurantButton();showToast(restaurantOpen?'Restoran dibuka! Pelanggan mulai berdatangan.':'Restoran ditutup. Pelanggan baru tidak akan datang.');persist();});
 refreshRestaurantButton();
 document.getElementById('closeSettings').addEventListener('click',()=>settingsOverlay.classList.remove('open'));
 const exitScreen=document.getElementById('exitScreen');
