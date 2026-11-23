@@ -115,8 +115,7 @@
   .actBtn { height:56px; border-radius:14px; border:1px solid rgba(255,255,255,.3); background:rgba(18,29,39,.72); color:#fff; font:800 10px Inter,system-ui,sans-serif; touch-action:manipulation; line-height:1.2; padding:2px; }
   .actBtn b { display:block; font-size:18px; }
   .actBtn.on { background:#287f80; }
-  .actBtn.main { grid-column:span 2; background:#f3c75b; border-color:#ffe08a; color:#1b2630; font-size:12px; box-shadow:0 0 14px rgba(243,199,91,.35); }
-  .actBtn.main b { display:inline-block; margin-right:6px; vertical-align:middle; font-size:20px; }
+  .actBtn.wide { grid-column:span 2; }
   #stats .stat#levelStat { min-width:120px; }
   .xpbar { height:6px; border-radius:4px; background:rgba(255,255,255,.16); margin:5px 0 3px; overflow:hidden; }
   .xpbar i { display:block; height:100%; width:0; background:#f3c75b; transition:width .3s; }
@@ -358,7 +357,7 @@
     <div class="panel stat"><small>Reputasi</small><b id="repValue">★ 1.0</b></div>
     <div class="panel stat"><small>Jam kerja</small><b id="shiftClock">08:00 • Shift 1</b></div>
   </div>
-  <div id="help" class="panel"><button id="helpToggle" type="button" aria-expanded="true"><span>KONTROL</span><span id="helpToggleIcon">−</span></button><div id="helpContent">W A S D — Bergerak<br>I / J — Layani (terima pesanan, angkat, sajikan) jika tanpa karyawan<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div></div>
+  <div id="help" class="panel"><button id="helpToggle" type="button" aria-expanded="true"><span>KONTROL</span><span id="helpToggleIcon">−</span></button><div id="helpContent">W A S D — Bergerak<br>I — Angkat & sajikan jika tanpa karyawan<br>J — Layani pelanggan jika tidak ada kasir<br>K — Buka / tutup kulkas<br>L — Masak manual jika tanpa koki (10 detik)<br>Mouse — Putar kamera • Shift — Berlari<br>E — Menu bisnis dekat kasir<br><span style="color:#9db9c9">Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.</span></div></div>
   <div id="crosshair"></div>
   <div id="toast" class="panel">Selamat datang, Bos!</div>
   <div id="tutorial" class="panel gd" data-notr role="dialog" aria-live="polite">
@@ -466,7 +465,7 @@
   [/(.+?) selesai disiapkan!/,'$1 is done!'],
   [/Antrean dapur: (\d+) pesanan/,'Kitchen queue: $1 orders'],
   [/Pelanggan duduk & memesan (\d+) menu — antrean dapur: (\d+)/,'Customer seated & ordered $1 dishes — kitchen queue: $2'],
-  [/Pelanggan di kasir \((\d+) menu\)\. Dekati dan tekan I \(Layani\) untuk menerima pesanan\./,'Customer at the counter ($1 dishes). Get close and press I (Serve) to take the order.'],
+  [/Pelanggan di kasir \((\d+) menu\)\. Dekati dan tekan J \(Layani\) untuk menerima pesanan\./,'Customer at the counter ($1 dishes). Get close and press J (Serve) to take the order.'],
   [/(\d+) menu, ([\d.]+) koin\. Pelanggan menuju meja\./,'$1 dishes, $2 coins. The customer heads to the table.'],
   [/Restoran tutup pukul 22\.00\. Hari (\d+) selesai — pendapatan ([\d.]+) koin\./,'The restaurant closed at 22:00. Day $1 finished — earnings $2 coins.'],
   [/Uang tidak cukup untuk gaji \(([\d.]+) koin\), hanya terbayar ([\d.]+) koin\./,'Not enough money for wages ($1 coins), only $2 coins paid.'],
@@ -524,15 +523,15 @@
  'Kasir menyambut pelanggan dan mencatat pesanan...':'The cashier greets the customer and takes the order...',
  'Pukul 08.00 — Shift 1 mulai bekerja.':'08:00 — Shift 1 starts working.','Pukul 15.00 — Shift 1 pulang, Shift 2 mulai bekerja.':'15:00 — Shift 1 goes home, Shift 2 starts working.',
  ' — tekan L di dekat kompor':' — press L near the stove','Pelanggan puas — total ':'Customer satisfied — total ',
- 'Pesanan di tangan — antar ke pelanggan yang balonnya hijau lalu tekan J.':'Order in hand — bring it to the customer with the green bubble, then press J.',
+ 'Pesanan di tangan — antar ke pelanggan yang balonnya hijau lalu tekan I.':'Order in hand — bring it to the customer with the green bubble, then press I.',
  'Pesanan dibatalkan karena pelanggan sudah pergi. Dapur siap menerima pesanan berikutnya.':'Order cancelled because the customer left. The kitchen is ready for the next order.',
  'Stok bahan kurang — buka SHOP untuk belanja.':'Not enough ingredients — open SHOP to buy more.',
- 'Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan J.':'Bring the dish to the customer with the green bubble, get close to the table, then press J.',
+ 'Antar hidangan ke pelanggan yang balonnya hijau, dekati mejanya, lalu tekan I.':'Bring the dish to the customer with the green bubble, get close to the table, then press I.',
  'Masakan matang! Dekati kompor lalu tekan I untuk mengangkatnya.':'The food is ready! Get close to the stove and press I to pick it up.',
  'Sedang memasak. Tunggu sampai matang.':'Cooking in progress. Wait until it is done.',
  'Dekati kompor lalu tekan L untuk mulai memasak.':'Get close to the stove and press L to start cooking.',
  'Pesanan masuk dapur. Dekati kulkas lalu tekan K untuk membukanya.':'An order reached the kitchen. Get close to the fridge and press K to open it.',
- 'Pelanggan menunggu di kasir. Dekati kasir lalu tekan I (Layani) untuk menerima pesanan.':'A customer is waiting at the counter. Get close and press I (Serve) to take the order.',
+ 'Pelanggan menunggu di kasir. Dekati kasir lalu tekan J (Layani) untuk menerima pesanan.':'A customer is waiting at the counter. Get close and press J (Serve) to take the order.',
  'Pelanggan sedang menuju meja...':'The customer is heading to the table...','Menunggu pelanggan pertama datang...':'Waiting for the first customer...',
  'Meja tambahan pertama dan kursi. Kapasitas kulkas naik.':'First extra table and chairs. Fridge capacity increases.',
  'Rekrut Kasir. Menu baru: Mie Goreng dan Es Jeruk.':'Hire a Cashier. New dishes: Fried Noodles and Iced Orange.',
@@ -559,8 +558,8 @@
  'Restaurant Simulator • Update 2.0 — Bahasa & Save':'Restaurant Simulator • Update 2.2 — Build From Zero',
  'Menyiapkan restoran 3D...':'Preparing the 3D restaurant...','Pastikan koneksi internet aktif untuk memuat mesin 3D.':'Make sure your internet connection is on to load the 3D engine.',
  'Level restoran':'Restaurant level','Uang pemain':'Your money','Reputasi':'Reputation','Jam kerja':'Work hours','KONTROL':'CONTROLS',
- '🧑‍🍳 Ganti karakter':'🧑‍🍳 Change character','W A S D — Bergerak':'W A S D — Move','I / J — Layani (terima pesanan, angkat, sajikan) jika tanpa karyawan':'I / J — Serve (take order, pick up, deliver) if there is no staff',
- 'Belum ada yang perlu dilayani. Tunggu pelanggan datang ke kasir.':'Nothing to serve right now. Wait for a customer to reach the counter.',
+ '🧑‍🍳 Ganti karakter':'🧑‍🍳 Change character','W A S D — Bergerak':'W A S D — Move','I — Angkat & sajikan jika tanpa karyawan':'I — Pick up & deliver if there is no staff','J — Layani pelanggan jika tidak ada kasir':'J — Serve customer if there is no cashier',
+ 'Belum ada hidangan untuk diangkat atau disajikan.':'No dish to pick up or deliver right now.',
  'K — Buka / tutup kulkas':'K — Open / close the fridge','L — Masak manual jika tanpa koki (10 detik)':'L — Cook manually if there is no chef (10 sec)','Mouse — Putar kamera • Shift — Berlari':'Mouse — Rotate camera • Shift — Run',
  'E — Menu bisnis dekat kasir':'E — Business menu near the counter','Dekati kulkas, kompor, dan pelanggan untuk berinteraksi.':'Get close to the fridge, stove and customers to interact.',
  'Selamat datang, Bos!':'Welcome, Boss!','PANDUAN PEMULA':'BEGINNER GUIDE','⚙ PENGATURAN':'⚙ SETTINGS','GAME DIJEDA':'GAME PAUSED','Pengaturan':'Settings',
@@ -1683,7 +1682,7 @@ function updateCustomers(dt){
     const sp=slotPos(c.slot),dx=sp.x-g.position.x,dz=sp.z-g.position.z,dist=Math.hypot(dx,dz);
     if(dist>.1){const st=Math.min(1.8*dt,dist);g.position.x+=dx/dist*st;g.position.z+=dz/dist*st;g.rotation.y=Math.atan2(dx,dz);walkPose(g,ph,1);}
     else{standPose(g);g.rotation.y=Math.PI;
-     if(c.slot===0&&c.stage==='line'){c.stage='ordering';showToast(hasStaffOnDuty('cashier')?'Kasir menyambut pelanggan dan mencatat pesanan...':'Pelanggan di kasir ('+c.total+' menu). Dekati dan tekan I (Layani) untuk menerima pesanan.');}}
+     if(c.slot===0&&c.stage==='line'){c.stage='ordering';showToast(hasStaffOnDuty('cashier')?'Kasir menyambut pelanggan dan mencatat pesanan...':'Pelanggan di kasir ('+c.total+' menu). Dekati dan tekan J (Layani) untuk menerima pesanan.');}}
    }
   }else if(c.stage==='toSeat'){
    if(stepAlong(g,c.path,1.8,dt,ph)){c.stage='seated';c.wait=0;g.rotation.y=c.seat.yaw;seatPose(g);for(const id of c.items)kitchenQueue.push({cust:c,menuId:id});showToast('Pelanggan duduk & memesan '+c.total+' menu — antrean dapur: '+kitchenQueue.length);}
@@ -1896,18 +1895,16 @@ function serveDish(){
  if(!c||!nearPoint(c.seat.x,c.seat.z,3.6)){showToast('Dekati pelanggan yang memesan '+menuCatalog[currentTicket.menuId].name+'.');return;}
  avatar.remove(holdingDish);disposeObj(holdingDish);holdingDish=null;deliverTo(c,currentTicket);if(secondTicket&&holdingDish2){currentTicket=secondTicket;currentOrderMenuId=secondTicket.menuId;secondTicket=null;holdingDish=holdingDish2;holdingDish2=null;holdingDish.position.set(0,1.2,.5);setCookStatus('Masih membawa '+menuCatalog[currentTicket.menuId].name+' — lanjutkan pengantaran.');}dishReady=readyTickets.length>0;
 }
-// Satu aksi "Layani" untuk tombol I dan J (dan tombol Layani di layar sentuh). Tombol F lama dihapus.
-// Aksi dipilih otomatis dari posisi pemain: sajikan ke pelanggan -> angkat dari kompor -> terima pesanan di kasir.
-function serviceAction(){
+// Tombol I = angkat & sajikan hidangan (satu aksi, dipilih otomatis dari posisi pemain).
+// Tombol J = layani pelanggan di kasir (terima pesanan). Tombol F lama dihapus.
+function dishAction(){
  const hungry=(holdingDish&&currentTicket)?customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)):[];
  if(hungry.some(c=>nearPoint(c.seat.x,c.seat.z,3.6))){serveDish();return;}
  if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(4.8,-4.55,3.7)){pickupDish();return;}
- if(customers.some(x=>x.stage==='ordering')&&nearPoint(-2.2,-3.55,3.0)){openCashierOrder();return;}
  // Belum ada yang bisa dikerjakan di posisi ini: tampilkan petunjuk yang sesuai kondisi.
  if(holdingDish&&currentTicket)serveDish();
  else if(readyTickets.length)pickupDish();
- else if(customers.some(x=>x.stage==='ordering'))openCashierOrder();
- else showToast('Belum ada yang perlu dilayani. Tunggu pelanggan datang ke kasir.');
+ else showToast('Belum ada hidangan untuk diangkat atau disajikan.');
 }
 const businessPanel=document.getElementById('businessPanel');
 const coinValue=document.getElementById('coinValue');
@@ -2074,10 +2071,10 @@ const GUIDE_STEPS=[
   m:{d:['Restoran masih kosong. Menuju meja kasir, ketuk tombol Bisnis untuk membuka menu bisnis, lalu beli meja pertamamu.','The restaurant is still empty. Head to the cashier counter, tap the Business button to open the business menu, then buy your first table.'],
    keys:[['🏪',['Bisnis (dekat kasir)','Business (near the counter)']],['SHOP',['Beli bahan & perabot','Buy ingredients & furniture']]]}},
  {icon:'🍳',t:['Layani Pelanggan','Serve Customers'],
-  d:['Saat pelanggan datang: terima pesanan di kasir, ambil bahan, masak, lalu antar ke meja. Satu tombol I / J mengurus semuanya sesuai posisimu: terima pesanan, angkat hidangan, dan sajikan.','When customers arrive: take the order at the counter, grab ingredients, cook, then deliver to the table. One key, I / J, handles it all depending on where you stand: take the order, pick up the dish and serve it.'],
-  keys:[['I / J',['Layani: terima pesanan, angkat & sajikan','Serve: take order, pick up & deliver']],['K',['Kulkas','Fridge']],['L',['Masak','Cook']]],
-  m:{d:['Ada pelanggan? Dekati kasir lalu ketuk Layani untuk menerima pesanan. Di dapur, ketuk Kulkas lalu Masak. Saat matang, ketuk Layani di dekat kompor untuk mengangkat, lalu Layani lagi di dekat pelanggan untuk menyajikan.','Customer waiting? Walk to the counter and tap Serve to take the order. In the kitchen, tap Fridge then Cook. When it is ready, tap Serve near the stove to pick it up, then Serve again near the customer to deliver it.'],
-   keys:[['🍽️',['Layani: terima, angkat & sajikan','Serve: take order, pick up & deliver']],['🧊',['Kulkas','Fridge']],['🔥',['Masak','Cook']]]}},
+  d:['Saat pelanggan datang: tekan J di kasir untuk menerima pesanan, ambil bahan, masak, lalu tekan I untuk mengangkat hidangan dan menyajikannya ke meja. Tanpa karyawan, kamu yang mengerjakan semuanya!','When customers arrive: press J at the counter to take the order, grab ingredients, cook, then press I to pick up the dish and deliver it to the table. With no staff, you do it all yourself!'],
+  keys:[['J',['Layani: terima pesanan','Serve: take order']],['K',['Kulkas','Fridge']],['L',['Masak','Cook']],['I',['Angkat & sajikan','Pick up & deliver']]],
+  m:{d:['Ada pelanggan? Dekati kasir lalu ketuk Layani untuk menerima pesanan. Di dapur, ketuk Kulkas lalu Masak. Saat matang, ketuk Angkat & Sajikan di dekat kompor, lalu ketuk lagi di dekat pelanggan untuk menyajikan.','Customer waiting? Walk to the counter and tap Serve to take the order. In the kitchen, tap Fridge then Cook. When it is ready, tap Pick up & Deliver near the stove, then tap it again near the customer to deliver.'],
+   keys:[['💬',['Layani: terima pesanan','Serve: take order']],['🧊',['Kulkas','Fridge']],['🔥',['Masak','Cook']],['🍽️',['Angkat & sajikan','Pick up & deliver']]]}},
  {icon:'🚀',t:['Buka Restoran!','Open for Business!'],
   d:['Tekan BUKA RESTORAN agar pelanggan mulai berdatangan. Layani dengan cepat untuk menambah reputasi, naik level, dan membuka area baru.','Press OPEN RESTAURANT so customers start arriving. Serve quickly to raise your reputation, level up and unlock new areas.'],
   keys:[['★',['Reputasi','Reputation']],['XP',['Naik level','Level up']],['🎯',['Misi harian = bonus','Daily missions = bonus']]],
@@ -2497,7 +2494,8 @@ addEventListener('keydown',e=>{
   fridgeOpen=!fridgeOpen;fridgeDoorPivot.rotation.y=fridgeOpen?-1.15:0;
   showToast(fridgeOpen?'Kulkas dibuka. Ambil bahan untuk memasak.':'Kulkas ditutup.');
  } else if(e.code==='KeyL') startCooking();
- else if(e.code==='KeyI'||e.code==='KeyJ') serviceAction();
+ else if(e.code==='KeyI') dishAction();
+ else if(e.code==='KeyJ') openCashierOrder();
 });
 updateCoins();refreshFridgeStock();refreshMaintenanceStatus();
 if(areaUnlocked)unlockWing('right');if(leftAreaUnlocked)unlockWing('left');refreshStaffVisuals();persist();updateMenuBoard();refreshBusinessLocks();updateTutorial();
@@ -2697,8 +2695,8 @@ if(('ontouchstart' in window)||matchMedia('(pointer:coarse)').matches){
  document.body.classList.add('touch');
  const ui=document.createElement('div');ui.id='touchUI';ui.innerHTML='<div id="joy"><div id="joyKnob"></div></div><div id="actBtns"></div>';document.body.appendChild(ui);
  const actBox=ui.querySelector('#actBtns');
- for(const [code,ic,label] of [['KeyI','🍽️','Layani'],['KeyE','🏪','Bisnis'],['KeyK','🧊','Kulkas'],['KeyL','🔥','Masak'],['RUN','⚡','Lari']]){
-  const b=document.createElement('button');b.className='actBtn'+(code==='KeyI'?' main':'');b.type='button';b.innerHTML='<b>'+ic+'</b>'+label;
+ for(const [code,ic,label] of [['KeyJ','💬','Layani'],['KeyE','🏪','Bisnis'],['KeyK','🧊','Kulkas'],['KeyL','🔥','Masak'],['KeyI','🍽️','Angkat &amp; Sajikan'],['RUN','⚡','Lari']]){
+  const b=document.createElement('button');b.className='actBtn'+(code==='KeyI'?' wide':'');b.type='button';b.innerHTML='<b>'+ic+'</b>'+label;
   b.addEventListener('pointerdown',ev=>{ev.preventDefault();
    if(code==='RUN'){const on=!keys.ShiftLeft;keys.ShiftLeft=on;b.classList.toggle('on',on);return;}
    window.dispatchEvent(new KeyboardEvent('keydown',{code}));window.dispatchEvent(new KeyboardEvent('keyup',{code}));});
