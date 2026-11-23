@@ -1092,20 +1092,18 @@ for(let i=0;i<2;i++){
   box(scene,'cabinet',-.25+i*1.5,.55,-3.58,1.25,.9,.12,materials.darkTeal);
   box(scene,'cabinet handle',-.25+i*1.5,.58,-3.49,.08,.18,.05,materials.yellow);
 }
-for(let x of [-.25,1.25]) {
-  cylinder(scene,'cooking burner',x,1.31,-4.05,.36,.36,.08,materials.black,24);
-  cylinder(scene,'burner ring',x,1.37,-4.05,.23,.23,.035,materials.steel,24);
-}
 // Open-front refrigerator cabinet so the purchased stock can be seen when its door swings open.
-box(scene,'fridge left wall',5.32,1.35,-5.35,.12,2.7,1.0,materials.white);
-box(scene,'fridge right wall',6.28,1.35,-5.35,.12,2.7,1.0,materials.white);
-box(scene,'fridge back',5.8,1.35,-5.81,.92,2.7,.10,materials.white);
-box(scene,'fridge top',6.2,2.67,-5.35,1.0,.12,1.0,materials.white);
-box(scene,'fridge bottom',6.2,.03,-5.35,1.0,.12,1.0,materials.white);
-box(scene,'fridge interior',5.8,1.35,-5.73,.78,2.48,.035,materials.darkTeal);
-box(scene,'fridge door seam',5.8,1.35,-4.83,.025,2.55,.03,materials.steel);
+// Moved west along the back wall (center x=FRIDGE_X), door facing south (+z).
+const FRIDGE_X=3.7;
+box(scene,'fridge left wall',FRIDGE_X-.48,1.35,-5.35,.12,2.7,1.0,materials.white);
+box(scene,'fridge right wall',FRIDGE_X+.48,1.35,-5.35,.12,2.7,1.0,materials.white);
+box(scene,'fridge back',FRIDGE_X,1.35,-5.81,.92,2.7,.10,materials.white);
+box(scene,'fridge top',FRIDGE_X,2.67,-5.35,1.0,.12,1.0,materials.white);
+box(scene,'fridge bottom',FRIDGE_X,.03,-5.35,1.0,.12,1.0,materials.white);
+box(scene,'fridge interior',FRIDGE_X,1.35,-5.73,.78,2.48,.035,materials.darkTeal);
+box(scene,'fridge door seam',FRIDGE_X,1.35,-4.83,.025,2.55,.03,materials.steel);
 // Hinged animated fridge door for the K interaction.
-const fridgeDoorPivot=new THREE.Group();fridgeDoorPivot.position.set(5.3,1.35,-4.81);scene.add(fridgeDoorPivot);
+const fridgeDoorPivot=new THREE.Group();fridgeDoorPivot.position.set(FRIDGE_X-.5,1.35,-4.81);scene.add(fridgeDoorPivot);
 box(fridgeDoorPivot,'interactive fridge door',.5,0,0,.96,2.58,.12,materials.white);
 box(fridgeDoorPivot,'fridge handle',.83,0,.08,.055,.72,.08,materials.steel);
 // Visible ingredient packages inside the fridge; quantities mirror purchased stock.
@@ -1115,7 +1113,7 @@ const fridgeStockColors={rice:0xe6d4a6,chicken:0xe7a18b,vegetables:0x70ad72,flou
 const fridgeStockSprites={};
 function makeFridgeLabel(id){const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d');x.fillStyle='#26343b';x.fillRect(0,0,256,96);x.fillStyle='#fff';x.font='bold 27px Arial';x.textAlign='center';x.fillText(fridgeStockLabels[id],128,34);x.fillStyle='#f3c75b';x.font='bold 30px Arial';x.fillText('0',128,76);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));sp.scale.set(.72,.27,1);return {sp,ctx:x,texture:t};}
 const fridgeIds=['rice','chicken','vegetables','flour','oil','spices'];
-fridgeIds.forEach((id,i)=>{const y=i<3?.62:1.62;const col=i%3;const x=5.55+col*.24;const pkg=box(fridgeStockMeshes,'fridge package '+id,x,y,-5.63,.28,.30,.32,mat(fridgeStockColors[id]));const label=makeFridgeLabel(id);label.sp.position.set(x,y+.22,-5.32);fridgeStockMeshes.add(label.sp);fridgeStockSprites[id]=label;});
+fridgeIds.forEach((id,i)=>{const y=i<3?.62:1.62;const col=i%3;const x=FRIDGE_X-.25+col*.24;const pkg=box(fridgeStockMeshes,'fridge package '+id,x,y,-5.63,.28,.30,.32,mat(fridgeStockColors[id]));const label=makeFridgeLabel(id);label.sp.position.set(x,y+.22,-5.32);fridgeStockMeshes.add(label.sp);fridgeStockSprites[id]=label;});
 function refreshFridgeStock(){fridgeIds.forEach(id=>{const label=fridgeStockSprites[id];if(!label)return;const qty=saveData.inventory?.[id]||0;label.ctx.fillStyle='#26343b';label.ctx.fillRect(0,48,256,48);label.ctx.fillStyle='#f3c75b';label.ctx.font='bold 30px Arial';label.ctx.textAlign='center';label.ctx.fillText('× '+qty,128,84);label.texture.needsUpdate=true;const pkg=fridgeStockMeshes.getObjectByName('fridge package '+id);if(pkg)pkg.visible=qty>0;label.sp.visible=qty>0;});}
 
 
@@ -1132,41 +1130,34 @@ for(let ix=0;ix<8;ix++) for(let iy=0;iy<2;iy++){
   detailBox(scene,'kitchen backsplash tile',x,y,-6.79,.455,.405,.035,detailCeramic);
   detailBox(scene,'backsplash grout accent',x,y,-6.765,.018,.405,.012,detailGold);
 }
-// Stainless extractor hood and compact duct above the two burners.
-detailBox(scene,'extractor hood canopy',4.8,2.38,-4.82,2.35,.22,1.05,materials.steel);
-detailBox(scene,'extractor hood front fascia',4.8,2.23,-4.28,2.18,.09,.08,detailDark);
-detailBox(scene,'extractor duct',4.8,2.83,-5.12,.72,.78,.62,materials.steel);
-detailBox(scene,'extractor control strip',4.8,2.39,-4.225,.9,.055,.025,detailGold);
-for(let i=0;i<3;i++) cylinder(scene,'extractor control dial',4.48+i*.32,2.39,-4.19,.045,.045,.035,detailDark,12);
-// Stove control knobs and subtle burner markings on the island's front edge.
-for(let i=0;i<2;i++){
-  const x=4.22+i*1.16;
-  cylinder(scene,'stove control knob',x,.83,-3.625,.105,.105,.07,detailSteel,16);
-  cylinder(scene,'stove knob center',x,.83,-3.582,.035,.035,.012,detailDark,12);
-  detailBox(scene,'stove control marker',x,.98,-3.62,.025,.08,.018,detailGold);
+// Fridge shelves and a soft interior lamp, centered inside the fridge.
+for(const y of [1.12,2.12]) detailBox(scene,'fridge glass shelf',FRIDGE_X,y,-5.45,.78,.035,.48,detailSteel);
+detailBox(scene,'fridge interior light',FRIDGE_X,2.54,-5.5,.5,.045,.045,detailGlow);
+const fridgeInteriorLight=new THREE.PointLight(0xc9efff,.32,2.2,2);fridgeInteriorLight.position.set(FRIDGE_X,2.35,-5.4);fridgeInteriorLight.castShadow=false;scene.add(fridgeInteriorLight);
+// Stove at the east end of the back wall, front (burner side) facing west (-x). Hood, knobs and drawer belong to it.
+const stoveGroup=new THREE.Group();stoveGroup.name='kitchen stove';stoveGroup.position.set(7.2,0,-5.9);stoveGroup.rotation.y=-Math.PI/2;scene.add(stoveGroup);
+box(stoveGroup,'stove body',0,.58,0,1.5,1.15,1.2,materials.steel);
+box(stoveGroup,'stove top',0,1.22,0,1.58,.1,1.28,materials.black);
+box(stoveGroup,'stove front panel',0,.62,.61,1.4,.9,.04,materials.darkTeal);
+for(const x of [-.38,.38]){
+  cylinder(stoveGroup,'cooking burner',x,1.31,0,.36,.36,.08,materials.black,24);
+  cylinder(stoveGroup,'burner ring',x,1.37,0,.23,.23,.035,materials.steel,24);
+  detailBox(stoveGroup,'stove control knob',x,.95,.65,.12,.12,.06,detailSteel);
+  detailBox(stoveGroup,'stove control marker',x,1.03,.685,.025,.07,.02,detailGold);
 }
-// Refined cabinet drawer faces and brass pulls; original cabinet volumes remain intact.
-for(let i=0;i<2;i++){
-  const x=4.0+i*1.5;
-  detailBox(scene,'kitchen drawer face',x,.34,-3.495,1.05,.28,.035,materials.wood2);
-  detailBox(scene,'kitchen drawer pull',x,.35,-3.455,.32,.035,.035,detailGold);
-}
-// Fridge shelves and a soft interior lamp, positioned clear of the stock packages.
-for(const y of [1.12,2.12]) detailBox(scene,'fridge glass shelf',6.6,y,-6.12,.78,.035,.48,detailSteel);
-detailBox(scene,'fridge interior light',6.6,2.54,-6.17,.5,.045,.045,detailGlow);
-const fridgeInteriorLight=new THREE.PointLight(0xc9efff,.32,2.2,2);fridgeInteriorLight.position.set(6.6,2.35,-6.05);fridgeInteriorLight.castShadow=false;scene.add(fridgeInteriorLight);
-// Counterfront framed panels and brass kick plate for a more crafted reception counter.
-detailBox(scene,'counter brass kickplate',0,.12,-4.445,5.9,.12,.045,detailGold);
-for(const x of [-2.65,-1.35,0,1.35,2.65]){
-  detailBox(scene,'counter front vertical trim',x,.64,-4.405,.035,.72,.025,detailGold);
-}
-detailBox(scene,'counter service ledge',0,1.43,-4.46,5.9,.055,.12,detailGold);
-// A small cutting board and utensil holder add depth to the prep area without blocking movement.
-detailBox(scene,'prep cutting board',6.05,1.305,-4.55,.72,.055,.48,materials.wood2);
-detailBox(scene,'prep board inset',6.05,1.336,-4.55,.58,.012,.34,detailCeramic);
-cylinder(scene,'utensil crock',3.55,1.48,-4.95,.14,.16,.36,materials.cream,18);
+detailBox(stoveGroup,'stove drawer face',0,.38,.64,1.1,.28,.035,materials.wood2);
+detailBox(stoveGroup,'stove drawer pull',0,.4,.675,.32,.035,.035,detailGold);
+detailBox(stoveGroup,'extractor hood canopy',0,2.38,-.1,1.7,.22,1.0,materials.steel);
+detailBox(stoveGroup,'extractor hood front fascia',0,2.23,.42,1.55,.09,.08,detailDark);
+detailBox(stoveGroup,'extractor duct',0,2.83,-.3,.6,.78,.5,materials.steel);
+detailBox(stoveGroup,'extractor control strip',0,2.39,.445,.9,.055,.025,detailGold);
+for(let i=0;i<3;i++) cylinder(stoveGroup,'extractor control dial',-.32+i*.32,2.39,.46,.045,.045,.035,detailDark,12);
+// Prep items now sit on the kitchen island (the old counter decoration was removed).
+detailBox(scene,'prep cutting board',-.7,1.31,-4.95,.72,.055,.48,materials.wood2);
+detailBox(scene,'prep board inset',-.7,1.342,-4.95,.58,.012,.34,detailCeramic);
+cylinder(scene,'utensil crock',2.0,1.46,-5.1,.14,.16,.36,materials.cream,18);
 for(let i=0;i<3;i++){
-  cylinder(scene,'utensil handle',3.48+i*.07,1.78,-4.95,.018,.018,.42,detailSteel,8);
+  cylinder(scene,'utensil handle',1.93+i*.07,1.76,-5.1,.018,.018,.42,detailSteel,8);
 }
 
 // Dining tables and chairs.
@@ -1534,7 +1525,8 @@ function cellBlocked(x,z){
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
  if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
  if(x>-1.35&&x<2.35&&z>-5.5&&z<-3.62)return true;
- if(x>5.25&&x<6.35&&z>-5.9&&z<-4.75)return true;
+ if(x>3.05&&x<4.35&&z>-5.9&&z<-4.75)return true;
+ if(x>6.5&&z>-6.3&&z<-5.05)return true;
  if((x-6.8)*(x-6.8)+(z-5.5)*(z-5.5)<.5||(x+6.8)*(x+6.8)+(z-5.5)*(z-5.5)<.5)return true;
  if(x>-14.8&&x<-9.2&&z<-1.9&&leftAreaUnlocked)return true;
  for(let i=0;i<(saveData.items.stove|0);i++){const p=stoveSlots[i];if(p&&Math.abs(x-p[0])<1.0&&Math.abs(z-p[1])<.9)return true;}
@@ -1671,7 +1663,7 @@ function updateStaff(dt){
  if(ordering&&hasStaffOnDuty('cashier')){cashierAutoTimer+=dt;const cashier=getWorker('cashier');if(cashier)cashier.rotation.y=0;if(cashierAutoTimer>=2.6*cashierSpeedFactor()){cashierAutoTimer=0;acceptCashierOrder(true);}}else cashierAutoTimer=0;
  // Pelayan: ambil hidangan matang di pass, antar ke pelanggan yang memesannya.
  const waiter=getWorker('staff');
- if(waiter&&readyTickets.length&&waiterMode==='idle'){currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;dishReady=readyTickets.length>0;waiterMode='toFood';waiterPath=[V3(4.8,-3.1)];}
+ if(waiter&&readyTickets.length&&waiterMode==='idle'){currentTicket=readyTickets.shift();currentOrderMenuId=currentTicket.menuId;dishReady=readyTickets.length>0;waiterMode='toFood';waiterPath=[V3(1.0,-3.2)];}
  if(waiter&&waiterMode!=='idle'){
   const u=waiter.userData;
   if(stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7)){
@@ -1754,8 +1746,8 @@ const solidRects = [
  // Wall colliders follow actual wall thickness; player clearance is handled by the player radius.
  {x:-8,z:-4.65,hx:.175,hz:2.35},{x:-8,z:4.95,hx:.175,hz:2.05},{x:8,z:-4.65,hx:.175,hz:2.35},{x:8,z:4.95,hx:.175,hz:2.05},{x:0,z:-7,hx:8,hz:.175},{x:-4.7,z:7,hx:3.3,hz:.15},{x:4.7,z:7,hx:3.3,hz:.15},
  {x:-16,z:0,hx:.15,hz:7},{x:16,z:0,hx:.15,hz:7},{x:-12,z:-7,hx:4,hz:.15},{x:12,z:-7,hx:4,hz:.15},{x:-12,z:7,hx:4,hz:.15},{x:12,z:7,hx:4,hz:.15},
- {x:0,z:-5.1,hx:3.65,hz:.82},{x:4.8,z:-4.55,hx:1.95,hz:1.0},
- {x:6.6,z:-5.9,hx:.62,hz:.62},
+ {x:.5,z:-4.55,hx:1.85,hz:.98},{x:7.2,z:-5.9,hx:.65,hz:.8},
+ {x:3.7,z:-5.35,hx:.58,hz:.55},
  // Dining furniture colliders are added only when tables are actually placed.
  // Empty/locked table slots must remain walkable.
  {x:-6.8,z:5.5,hx:.42,hz:.42},{x:6.8,z:5.5,hx:.42,hz:.42},
@@ -1817,6 +1809,7 @@ const cookStatus=document.getElementById('cookStatus');
 const ingredientNames={rice:'beras',chicken:'ayam',flour:'tepung',oil:'minyak',spices:'bumbu',vegetables:'sayuran',egg:'telur',noodles:'mi',tea:'teh',ice:'es batu',orange:'jeruk',coffee:'kopi',milk:'susu',banana:'pisang'};
 let fridgeOpen=false,cooking=false,cookStarted=0,cookElapsed=0,dishReady=false,holdingDish=null,holdingDish2=null,secondTicket=null,currentCookTime=10;
 function nearPoint(x,z,r=3.2){return Math.hypot(player.position.x-x,player.position.z-z)<=r;}
+const STOVE_ACCESS=[6.0,-5.6],FRIDGE_ACCESS=[3.7,-4.3];
 function setCookStatus(message,show=true){message=TRX(message);if(cookStatus.textContent!==message)cookStatus.textContent=message;if(cookStatus.classList.contains('show')!==show)cookStatus.classList.toggle('show',show);}
 function createAyamGeprekPlate(menuId='ayam'){
  const dish=new THREE.Group();
@@ -1894,7 +1887,7 @@ function beginCooking(automatic=false){
  activeCooks.push({ticket,elapsed:0,duration:cookTime});cooking=true;setCookStatus('Memasak '+selected.name+' — '+cookTime+' detik');if(!automatic)showToast('Memasak '+selected.name+' dimulai!');return true;
 }
 function startCooking(){
- if(!nearPoint(.5,-3.15,3.5)){showToast('Dekati kompor untuk mulai memasak.');return;}
+ if(!nearPoint(STOVE_ACCESS[0],STOVE_ACCESS[1],3.5)){showToast('Dekati kompor untuk mulai memasak.');return;}
  if(hasStaffOnDuty('chef')){showToast('Koki sedang bertugas dan akan memasak pesanan secara otomatis.');return;}
  if(!fridgeOpen){showToast('Buka kulkas terlebih dahulu dengan tombol K.');return;}
  if(!kitchenQueue.length){showToast('Belum ada pesanan di antrean dapur.');return;}
@@ -2450,12 +2443,12 @@ function refreshStaffVisuals(){
   const sameRole=(saveData.staff||[]).filter(x=>x.shift===staff.shift&&x.role===role);
   const roleIndex=Math.max(0,sameRole.findIndex(x=>x.id===staff.id));
   // All three jobs have a dedicated station: cashier behind the counter, chef behind the stove, waiter near the kitchen pass.
-  const home=role==='chef'?new THREE.Vector3(4.8,0,-5.72):role==='cashier'?new THREE.Vector3(-2.2,0,-6.05):new THREE.Vector3(3.25,0,-3.05);
-  if(role==='chef'&&roleIndex>0){home.x+=roleIndex*1.15;home.z-=.45;}
+  const home=role==='chef'?new THREE.Vector3(5.6,0,-5.85):role==='cashier'?new THREE.Vector3(-2.2,0,-6.05):new THREE.Vector3(3.25,0,-3.05);
+  if(role==='chef'&&roleIndex>0){home.x-=roleIndex*.9;home.z+=roleIndex*.55;}
   if(role==='staff'&&roleIndex>0){home.x-=roleIndex*.72;home.z+=roleIndex*.65;}
   if(!['chef','cashier','staff'].includes(role))return;
   g.position.copy(home);g.userData.home.copy(home);
-  if(role==='chef')g.rotation.y=0;
+  if(role==='chef')g.rotation.y=Math.PI/2;
   if(role==='cashier')g.rotation.y=0;
   if(role==='staff')g.rotation.y=Math.PI*.72;
   scene.add(g);staffVisuals.push({group:g,role,shift:staff.shift});
@@ -2512,7 +2505,7 @@ addEventListener('keydown',e=>{if(e.code==='KeyE'&&!e.repeat){
 addEventListener('keydown',e=>{
  if(e.repeat||gamePaused||GATE.maint||settingsOverlay.classList.contains('open')||marketPanel.classList.contains('open')||businessPanel.classList.contains('open')||cashierOrderPanel.style.display==='block')return;
  if(e.code==='KeyK'){
-  if(!nearPoint(5.8,-4.3,3.6)){showToast('Dekati kulkas untuk membuka atau menutupnya.');return;}
+  if(!nearPoint(FRIDGE_ACCESS[0],FRIDGE_ACCESS[1],3.6)){showToast('Dekati kulkas untuk membuka atau menutupnya.');return;}
   fridgeOpen=!fridgeOpen;fridgeDoorPivot.rotation.y=fridgeOpen?-1.15:0;
   showToast(fridgeOpen?'Kulkas dibuka. Ambil bahan untuk memasak.':'Kulkas ditutup.');
  } else if(e.code==='KeyL') startCooking();
@@ -2776,7 +2769,7 @@ function frame(){
  // Koki bekerja otomatis dari area dapur; kulkas tidak perlu dibuka oleh pemain.
  while(kitchenQueue.length&&activeCooks.length<2&&hasStaffOnDuty('chef')){if(!beginCooking(true))break;}
  // Complete each cooking cycle when its configured duration has elapsed.
- for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(4.25+(readyTickets.length%2)*1.0,1.42,-4.55);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
+ for(let i=activeCooks.length-1;i>=0;i--){const job=activeCooks[i];job.elapsed+=dt;const selected=menuCatalog[job.ticket.menuId];if(job.elapsed>=job.duration){activeCooks.splice(i,1);readyTickets.push(job.ticket);const readyPlate=createAyamGeprekPlate(job.ticket.menuId);readyPlate.name='ready plate '+job.ticket.id;readyPlate.position.set(.6+(readyTickets.length%2)*.9,1.4,-4.55);readyPlate.scale.setScalar(.62);scene.add(readyPlate);showToast(selected.name+' selesai! Bisa langsung diantar.');sfxDing();}}
   cooking=activeCooks.length>0;dishReady=readyTickets.length>0;
   if(cooking){const status=activeCooks.map(j=>menuCatalog[j.ticket.menuId].name+' '+Math.max(0,j.duration-j.elapsed).toFixed(1)+'s').join(' • ');setCookStatus('Sedang dimasak: '+status);}else if(dishReady)setCookStatus('Hidangan siap antar: '+readyTickets.map(t=>menuCatalog[t.menuId].name).join(', '));
  // Karyawan kini bergerak dan menjalankan tugas, bukan berdiri diam.
