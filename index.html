@@ -1133,17 +1133,14 @@ box(scene,'serving hatch lower wall',.5,.53,dividerZ,2.0,1.06,.22,dividerMat);
 box(scene,'serving hatch upper wall',.5,2.57,dividerZ,2.0,.54,.22,dividerMat);
 box(scene,'serving hatch left pier',-.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
 box(scene,'serving hatch right pier',1.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
-box(scene,'divider right wall',3.65,1.42,dividerZ,3.9,2.84,.22,dividerMat);
-// Glass window over the stove side (x 5.6 to the east wall at 7.83) so diners can watch the chef cook.
+// One wide fixed glass pane (not a sliding window, no centre bar) from the serving hatch to the east wall,
+// above a solid sill, so diners can watch the chef cook and the whole kitchen row.
 const dividerGlassMat=new THREE.MeshStandardMaterial({color:0xa9dce8,roughness:.08,metalness:0,transparent:true,opacity:.26,depthWrite:false});
-box(scene,'divider stove window sill',6.715,.53,dividerZ,2.23,1.06,.22,dividerMat);
-box(scene,'divider stove glass',6.715,1.95,dividerZ,2.23,1.78,.05,dividerGlassMat,false,false);
-box(scene,'divider stove glass frame top',6.715,2.8,dividerZ,2.23,.08,.22,materials.teal);
-box(scene,'divider stove glass frame bottom',6.715,1.08,dividerZ,2.23,.05,.22,materials.teal);
-box(scene,'divider stove glass frame left',5.64,1.95,dividerZ,.08,1.78,.22,materials.teal);
-box(scene,'divider stove glass frame mid',6.715,1.95,dividerZ,.05,1.78,.22,materials.teal);
-box(scene,'divider stove glass frame right',7.79,1.95,dividerZ,.08,1.78,.22,materials.teal);
-// Trim follows the exact wall span (-3.4 to 7.4); no projecting beams or decorative ledges.
+box(scene,'divider glass sill',4.765,.53,dividerZ,6.13,1.06,.22,dividerMat);
+box(scene,'divider wide glass',4.765,1.95,dividerZ,6.13,1.78,.05,dividerGlassMat,false,false);
+box(scene,'divider glass frame top',4.765,2.8,dividerZ,6.13,.08,.22,materials.teal);
+box(scene,'divider glass frame bottom',4.765,1.08,dividerZ,6.13,.05,.22,materials.teal);
+box(scene,'divider glass frame right',7.79,1.95,dividerZ,.08,1.78,.22,materials.teal);
 box(scene,'divider lower trim',2.0,.12,dividerZ,10.8,.14,.22,materials.wood2);
 box(scene,'divider top trim',2.0,2.88,dividerZ,10.8,.12,.22,materials.trim);
 // One clean, shallow pass shelf on the dining side for handing over finished dishes.
@@ -1668,7 +1665,7 @@ function cellBlocked(x,z){
  for(const [tx,tz] of tablePositions)if((x-tx)*(x-tx)+(z-tz)*(z-tz)<1.35*1.35)return true;
  if(x>CASH_X-.85&&x<CASH_X+.85&&z>CASH_Z-1.025&&z<CASH_Z+1.025)return true;
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
- if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
+ if(z>-2.88&&z<-2.56&&x>-3.4&&x<7.9)return true;
  if(x>6.45&&z>=-4.35&&z<-2.8)return true;
  if(x>3.05&&x<4.35&&z>-6.9&&z<-5.7)return true;
  if(x>6.45&&z>-6.9&&z<-4.35)return true;
@@ -1902,6 +1899,8 @@ const solidRects = [
 ];
 // Cashier counter and its chair are solid for the player (appended so the wall/furniture index split in collidesAt stays intact).
 solidRects.push({x:CASH_X,z:CASH_Z,hx:.725,hz:.9},{x:CASH_X-1.3,z:CASH_QZ,hx:.3,hz:.3});
+// Kitchen divider wall / serving hatch / glass are solid; the staff doorway (x < -3.4) stays open.
+solidRects.push({x:2.215,z:-2.72,hx:5.615,hz:.11});
 function collidesAt(x,z){
  for(let i=0;i<solidRects.length;i++){
   const o=solidRects[i];
