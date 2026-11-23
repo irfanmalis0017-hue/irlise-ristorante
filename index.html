@@ -1071,8 +1071,7 @@ box(scene,'register screen glow',-5.42,1.79,4.0,.018,.3,.48,mat(0x9be0cf,.3),fal
 // Full-width kitchen screen: hides the cooks from diners, with a staff passage on the left.
 const dividerZ=-2.72;
 const dividerMat=materials.cream;
-// Left and right wall sections leave a clear staff entrance at the far-left end.
-box(scene,'divider left return',-5.15,1.42,dividerZ,.7,2.84,.22,dividerMat);
+// Main wall begins after a wide, unobstructed staff entrance on the left.
 box(scene,'divider main left wall',-1.95,1.42,dividerZ,2.9,2.84,.22,dividerMat);
 // Serving hatch: solid lower sill and upper header, open in the middle for passing plated food.
 box(scene,'serving hatch lower wall',.5,.53,dividerZ,2.0,1.06,.22,dividerMat);
@@ -1081,8 +1080,8 @@ box(scene,'serving hatch left pier',-.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
 box(scene,'serving hatch right pier',1.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
 box(scene,'divider right wall',4.55,1.42,dividerZ,5.7,2.84,.22,dividerMat);
 // Warm wood trims and a broad pass shelf facing the dining area.
-box(scene,'divider lower trim',1.05,.12,dividerZ,.22,.18,12.9,materials.wood2);
-box(scene,'divider top trim',1.05,2.88,dividerZ,.24,.12,12.9,materials.trim);
+box(scene,'divider lower trim',1.05,.12,dividerZ,12.9,.18,.22,materials.wood2);
+box(scene,'divider top trim',1.05,2.88,dividerZ,12.9,.12,.24,materials.trim);
 box(scene,'serving hatch counter shelf',.5,1.12,-2.48,2.25,.12,.62,materials.wood2);
 box(scene,'serving hatch shelf edge',.5,1.08,-2.16,2.25,.08,.08,materials.trim);
 box(scene,'serving hatch menu ledge',.5,2.22,-2.57,1.7,.08,.35,materials.wood2);
@@ -1534,7 +1533,7 @@ function cellBlocked(x,z){
  for(const [tx,tz] of tablePositions)if((x-tx)*(x-tx)+(z-tz)*(z-tz)<1.35*1.35)return true;
  if(x>-6.85&&x<-5.05&&z>2.55&&z<5.85)return true;
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
- if(z>-2.88&&z<-2.56&&((x>-5.55&&x<-4.95)||(x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
+ if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
  if(x>2.7&&x<7.3&&z<-3.45)return true;
  if((x-6.8)*(x-6.8)+(z-5.5)*(z-5.5)<.5||(x+6.8)*(x+6.8)+(z-5.5)*(z-5.5)<.5)return true;
  if(x>-14.8&&x<-9.2&&z<-1.9&&leftAreaUnlocked)return true;
