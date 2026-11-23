@@ -1079,12 +1079,11 @@ box(scene,'serving hatch upper wall',.5,2.57,dividerZ,2.0,.54,.22,dividerMat);
 box(scene,'serving hatch left pier',-.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
 box(scene,'serving hatch right pier',1.6,1.42,dividerZ,.2,2.84,.22,dividerMat);
 box(scene,'divider right wall',4.55,1.42,dividerZ,5.7,2.84,.22,dividerMat);
-// Warm wood trims and a broad pass shelf facing the dining area.
-box(scene,'divider lower trim',1.05,.12,dividerZ,12.9,.18,.22,materials.wood2);
-box(scene,'divider top trim',1.05,2.88,dividerZ,12.9,.12,.24,materials.trim);
-box(scene,'serving hatch counter shelf',.5,1.12,-2.48,2.25,.12,.62,materials.wood2);
-box(scene,'serving hatch shelf edge',.5,1.08,-2.16,2.25,.08,.08,materials.trim);
-box(scene,'serving hatch menu ledge',.5,2.22,-2.57,1.7,.08,.35,materials.wood2);
+// Trim follows the exact wall span (-3.4 to 7.4); no projecting beams or decorative ledges.
+box(scene,'divider lower trim',2.0,.12,dividerZ,10.8,.14,.22,materials.wood2);
+box(scene,'divider top trim',2.0,2.88,dividerZ,10.8,.12,.22,materials.trim);
+// One clean, shallow pass shelf on the dining side for handing over finished dishes.
+box(scene,'serving hatch counter shelf',.5,1.12,-2.38,2.0,.12,.42,materials.wood2);
 
 // Kitchen on the right.
 box(scene,'kitchen island',4.8,.58,-4.55,3.5,1.15,1.8,materials.steel);
