@@ -1057,16 +1057,69 @@ ctx.font='bold 25px Arial';ctx.fillText('SOTO • PISANG • TEH • JERUK • K
 const menuTex=new THREE.CanvasTexture(menuTextCanvas); menuTex.colorSpace=THREE.SRGBColorSpace;
 const menuSign=new THREE.Mesh(new THREE.PlaneGeometry(3.0,.94),new THREE.MeshBasicMaterial({map:menuTex}));
 menuSign.position.set(0,3.15,-6.55);scene.add(menuSign);
+
+// ===== Dinding ruang makan transparan saat kamera ditarik ke balik dinding (v2.3.9) =====
+// Dinding kiri, kanan dan belakang jadi hampir tak terlihat HANYA jika (1) kamera ada di sisi seberang dinding
+// dari karakter (dinding menghalangi pandangan) dan (2) karakter berada dekat/menempel dinding itu.
+// Jika karakter jauh dari dinding, dinding tetap utuh. Dinding depan punya logika sendiri (updateFrontWall).
+const WALL_FADE_NEAR=1.2,   // jarak karakter ke bidang dinding: sepenuhnya transparan di bawah ini
+      WALL_FADE_FAR=2.4,    // mulai memudar di bawah jarak ini; di atasnya dinding tetap solid
+      WALL_GHOST=.1;        // sisa opasitas saat transparan (sama gaya dengan dinding depan)
+const wallFaders=[];
+function addWallFader(axis,pos,lo,hi,meshes){
+  const mats=[];
+  for(const o of meshes){
+    if(!o||!o.material||Array.isArray(o.material))continue;
+    const src=o.material,m=src.clone();
+    m.transparent=true;m.userData={base:src.transparent?src.opacity:1};
+    o.material=m;mats.push(m);
+  }
+  wallFaders.push({axis,pos,lo,hi,mats,fade:1});
+}
+{
+  const byName=n=>scene.children.filter(o=>o.name===n);
+  const sideParts=sgn=>[...['wall rear','wall front','locked gate','locked sign','gate label'].flatMap(n=>byName((sgn<0?'left ':'right ')+n)),
+    ...byName('side trim').filter(o=>Math.sign(o.position.x)===sgn)];
+  addWallFader('x',-8,-7,7,sideParts(-1));
+  addWallFader('x', 8,-7,7,sideParts(1));
+  addWallFader('z',-7,-8,8,[...byName('back wall'),...byName('back trim'),...byName('menu board'),menuSign,
+    ...scene.children.filter(o=>/^window (frame|glass|divider)$/.test(o.name)&&o.position.z<-6.5)]);
+}
+function updateWallFade(dt){
+  const p=player.position,c=camera.position;
+  for(const f of wallFaders){
+    const pa=f.axis==='x'?p.x:p.z,ca=f.axis==='x'?c.x:c.z,pt=f.axis==='x'?p.z:p.x;
+    let target=1;
+    // Kamera dan karakter di sisi berlawanan dinding, dan karakter ada di sepanjang bentang dinding itu.
+    if((pa-f.pos)*(ca-f.pos)<0&&pt>f.lo-.3&&pt<f.hi+.3){
+      const near=Math.min(1,Math.max(0,(WALL_FADE_FAR-Math.abs(pa-f.pos))/(WALL_FADE_FAR-WALL_FADE_NEAR)));
+      target=1-(1-WALL_GHOST)*near;
+    }
+    f.fade+=(target-f.fade)*Math.min(1,dt*7);
+    for(const m of f.mats){m.opacity=m.userData.base*f.fade;m.depthWrite=f.fade>.9;}
+  }
+}
 // First signature dish display: a small plate with rice, crispy chicken and red sambal.
 // Meja display makanan dihilangkan agar area kasir lebih lapang.
 
-// Cashier moved beside the entrance on the left; customers approach from the dining side.
-box(scene,'counter base',-6.0,.62,4.2,1.25,1.25,2.9,materials.wood);
-box(scene,'counter top',-6.0,1.3,4.2,1.45,.18,3.05,materials.wood2);
-box(scene,'counter front panel',-5.34,.63,4.2,.035,.72,2.55,materials.trim);
-box(scene,'register base',-5.75,1.48,4.0,.55,.3,.65,materials.black);
-box(scene,'register screen',-5.48,1.78,4.0,.1,.42,.58,materials.teal);
-box(scene,'register screen glow',-5.42,1.79,4.0,.018,.3,.48,mat(0x9be0cf,.3),false);
+// Cashier beside the entrance on the left; customers approach from the dining side.
+// Layout constants: the counter sits ~1.65 from the left wall (was 1.1), and its north end stops at z=3.95
+// so the first dining table's south chair and its stand point (-4.8, 3.53) stay clear.
+const CASH_X=-5.45,CASH_Z=4.85;            // counter centre
+const CASH_QX=CASH_X+1.325,CASH_QZ=4.5;    // customer spot in front of the register (head of the queue)
+box(scene,'counter base',CASH_X,.62,CASH_Z,1.25,1.25,1.65,materials.wood);
+box(scene,'counter top',CASH_X,1.3,CASH_Z,1.45,.18,1.8,materials.wood2);
+box(scene,'counter front panel',CASH_X+.66,.63,CASH_Z,.035,.72,1.45,materials.trim);
+box(scene,'register base',CASH_X+.25,1.48,CASH_QZ,.55,.3,.65,materials.black);
+box(scene,'register screen',CASH_X+.52,1.78,CASH_QZ,.1,.42,.58,materials.teal);
+box(scene,'register screen glow',CASH_X+.58,1.79,CASH_QZ,.018,.3,.48,mat(0x9be0cf,.3),false);
+// Cashier chair behind the counter, same style as the dining chairs, facing east toward the counter.
+{
+  const kx=CASH_X-1.3,kz=CASH_QZ;
+  box(scene,'cashier chair seat',kx,.55,kz,.6,.16,.6,materials.teal);
+  for(const [lx,lz] of [[-.2,-.2],[.2,-.2],[-.2,.2],[.2,.2]])box(scene,'cashier chair leg',kx+lx,.27,kz+lz,.09,.55,.09,materials.wood);
+  box(scene,'cashier chair back',kx-.26,.98,kz,.12,.72,.6,materials.darkTeal);
+}
 
 // Full-width kitchen screen: hides the cooks from diners, with a staff passage on the left.
 const dividerZ=-2.72;
@@ -1503,7 +1556,7 @@ const menuIds=Object.keys(menuCatalog);
 let currentOrderMenuId='ayam',currentTicket=null,waiterMode='idle',waiterDish=null,waiterPath=[],cashierAutoTimer=0,spawnTimer=1.5,statusTimer=0,queueShown=false,custId=0;
 const kitchenQueue=[],customers=[],activeCooks=[],readyTickets=[];let ticketSeq=0;
 const PATIENCE_ORDER=30,PATIENCE_SEAT=30;
-const cashierSpot=new THREE.Vector3(-4.65,0,4.2);
+const cashierSpot=new THREE.Vector3(CASH_QX,0,CASH_QZ);
 const V3=(x,z)=>new THREE.Vector3(x,0,z);
 const cashierOrderPanel=document.getElementById('cashierOrderPanel');
 const custShirts=[0x4f9b72,0x477eae,0xb46f91,0xc18a45,0x8269a9,0x3d9995,0xd96c55,0x6484a8],custHairs=[0x292522,0x49352c,0x17191d,0x5a3d2b],custSkins=[0xe7b58f,0xc98f6c,0xf0c7a1,0xa96f50],custPants=[0x34445b,0x4a4a50,0x5b5146,0x2f3e46];
@@ -1524,7 +1577,7 @@ function cellBlocked(x,z){
  if(ax>15.4||z<-6.3||z>6.3)return true;
  if(ax>7.6&&ax<8.4){const open=x>0?areaUnlocked:leftAreaUnlocked;if(!open||z<-2.0||z>2.6)return true;}
  for(const [tx,tz] of tablePositions)if((x-tx)*(x-tx)+(z-tz)*(z-tz)<1.35*1.35)return true;
- if(x>-6.85&&x<-5.05&&z>2.55&&z<5.85)return true;
+ if(x>CASH_X-.85&&x<CASH_X+.85&&z>CASH_Z-1.025&&z<CASH_Z+1.025)return true;
  // Divider wall collision; keep the left staff doorway clear. The serving hatch is not a walk-through.
  if(z>-2.88&&z<-2.56&&((x>-3.4&&x<-0.6)||(x>1.7&&x<7.45)))return true;
  if(x>6.45&&z>-5.3&&z<-2.8)return true;
@@ -1610,17 +1663,17 @@ function spawnCustomer(){
  const badge=makeBadge();g.add(badge.sp);
  const maxOrderItems=level===1?2:level<=3?3:level<=5?4:level<=7?5:6;const total=1+Math.floor(Math.random()*maxOrderItems),items=[];for(let i=0;i<total;i++)items.push(pickOne(unlockedMenuIds()));
  seat.taken=true;
- customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,waitTotal:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.6,5.4),V3(-4.65,4.2)]});
+ customers.push({id:++custId,g,badge,seat,items,total,served:0,paid:0,stage:'line',slot:0,timer:0,wait:0,waitTotal:0,remaining:[...items],stand:null,path:[V3(0,8.4),V3(0,6.3),V3(-2.6,5.4),V3(CASH_QX,CASH_QZ)]});
  return true;
 }
-const slotPos=i=>V3(-4.65,4.2+1.0*i);
+const slotPos=i=>V3(CASH_QX,CASH_QZ+1.0*i);
 const orderTotal=c=>c.items.reduce((a,id)=>a+menuCatalog[id].price,0);
 function orderSummary(c){const cnt={};c.items.forEach(id=>cnt[id]=(cnt[id]||0)+1);return Object.entries(cnt).map(([id,n])=>menuCatalog[id].emoji+' '+menuCatalog[id].name+' ×'+n).join('<br>')+'<br><b>'+c.total+' menu • total '+rupiah(orderTotal(c))+' koin</b>';}
 const orderInfoEl=document.getElementById('orderMenuInfo');
 function openCashierOrder(){
  const c=customers.find(x=>x.stage==='ordering');
  if(!c){showToast('Belum ada pelanggan yang menunggu di kasir.');return;}
- if(!nearPoint(-4.65,4.2,3.0)){showToast('Dekati pelanggan di kasir untuk berinteraksi.');return;}
+ if(!nearPoint(CASH_QX,CASH_QZ,3.0)){showToast('Dekati pelanggan di kasir untuk berinteraksi.');return;}
  {const names=unlockedMenuIds().map(id=>menuCatalog[id].name);document.getElementById('menuListText').textContent=names.length+' menu: '+names.join(', ')+'.';}
  orderInfoEl.innerHTML=orderSummary(c);cashierOrderPanel.style.display='block';
 }
@@ -1757,6 +1810,8 @@ const solidRects = [
  // Locked extension gate / barrier until expansion is purchased.
  {x:8,z:.3,hx:.22,hz:2.6},{x:-8,z:.3,hx:.22,hz:2.6}
 ];
+// Cashier counter and its chair are solid for the player (appended so the wall/furniture index split in collidesAt stays intact).
+solidRects.push({x:CASH_X,z:CASH_Z,hx:.725,hz:.9},{x:CASH_X-1.3,z:CASH_QZ,hx:.3,hz:.3});
 function collidesAt(x,z){
  for(let i=0;i<solidRects.length;i++){
   const o=solidRects[i];
@@ -2776,7 +2831,7 @@ function frame(){
   cooking=activeCooks.length>0;dishReady=readyTickets.length>0;
   if(cooking){const status=activeCooks.map(j=>menuCatalog[j.ticket.menuId].name+' '+Math.max(0,j.duration-j.elapsed).toFixed(1)+'s').join(' • ');setCookStatus('Sedang dimasak: '+status);}else if(dishReady)setCookStatus('Hidangan siap antar: '+readyTickets.map(t=>menuCatalog[t.menuId].name).join(', '));
  // Karyawan kini bergerak dan menjalankan tugas, bukan berdiri diam.
- updateStaff(dt);updateFrontWall(dt);
+ updateStaff(dt);updateFrontWall(dt);updateWallFade(dt);
  // Move traffic continuously in both directions; recycle cars beyond the road edges.
  updatePedestrians(performance.now()/1000);
  updateCustomers(dt);
