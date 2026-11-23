@@ -1836,7 +1836,7 @@ function updateStaff(dt){
   const waiterArrived=stepAlong(waiter,waiterPath,2.65*waiterSpeedFactor(),dt,t*7);
   if(waiterMode==='toGuest'&&waiterDish){
    // Pastikan piring tetap berada di depan kedua tangan; jangan ikut terayun seperti objek bebas.
-   waiterDish.position.set(0,1.12+.012*Math.sin(u.phase*1.15),.58);
+   waiterDish.position.set(0,1.02+.012*Math.sin(u.phase*1.15),.34);
    waiterDish.rotation.set(0,0,0);
    u.arms[0].rotation.x=.78+Math.sin(u.phase*1.15)*.035;u.arms[1].rotation.x=.78-Math.sin(u.phase*1.15)*.035;
    u.arms[0].rotation.z=-.16;u.arms[1].rotation.z=.16;
@@ -1848,12 +1848,12 @@ function updateStaff(dt){
     if(!currentTicket){waiterMode='idle';waiterPath=[];return;}
     const target=customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
     if(!target){addIslandPlate(currentTicket);currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);return;}
-    waiterDish=createAyamGeprekPlate(currentOrderMenuId);waiterDish.name='waiter carried dish';waiterDish.scale.setScalar(.62);waiterDish.position.set(0,1.12,.58);waiterDish.rotation.set(0,0,0);waiter.add(waiterDish);
+    waiterDish=createAyamGeprekPlate(currentOrderMenuId);waiterDish.name='waiter carried dish';waiterDish.scale.setScalar(.82);waiterDish.position.set(0,1.02,.34);waiterDish.rotation.set(0,0,0);waiter.userData.root.add(waiterDish);
     waiterMode='toGuest';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),seatStand(target.seat));showToast('Pelayan mengambil '+menuCatalog[currentOrderMenuId].name+'.');
    }else if(waiterMode==='toGuest'){
     const c=customers.filter(x=>x.stage==='seated'&&currentTicket&&x.remaining.includes(currentTicket.menuId)).sort((a,b)=>Math.hypot(waiter.position.x-a.seat.x,waiter.position.z-a.seat.z)-Math.hypot(waiter.position.x-b.seat.x,waiter.position.z-b.seat.z))[0];
-    if(c){if(waiterDish){waiter.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}deliverTo(c,currentTicket);waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
-    else{if(waiterDish){waiter.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
+    if(c){if(waiterDish){u.root.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}deliverTo(c,currentTicket);waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
+    else{if(waiterDish){u.root.remove(waiterDish);disposeObj(waiterDish);waiterDish=null;}currentTicket=null;waiterMode='return';waiterPath=findPath(V3(waiter.position.x,waiter.position.z),u.home);}
    }else if(waiterMode==='return'){waiterMode='idle';waiter.position.copy(u.home);}
   }else{
    // Pose membawa: kedua lengan menopang piring di depan dada, dengan ayunan kecil agar tetap hidup saat berjalan.
