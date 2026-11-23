@@ -1922,7 +1922,7 @@ function serveDish(){
 function dishAction(){
  const hungry=(holdingDish&&currentTicket)?customers.filter(x=>x.stage==='seated'&&x.remaining.includes(currentTicket.menuId)):[];
  if(hungry.some(c=>nearPoint(c.seat.x,c.seat.z,3.6))){serveDish();return;}
- if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(4.8,-4.55,3.7)){pickupDish();return;}
+ if(readyTickets.length&&!(currentTicket&&secondTicket)&&nearPoint(.5,-3.15,3.7)){pickupDish();return;}
  // Belum ada yang bisa dikerjakan di posisi ini: tampilkan petunjuk yang sesuai kondisi.
  if(holdingDish&&currentTicket)serveDish();
  else if(readyTickets.length)pickupDish();
