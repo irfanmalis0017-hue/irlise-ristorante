@@ -1430,6 +1430,8 @@ const CH=window.__irliseChar||{style:'short',skin:0xe9b58e,hair:0x2b2320,shirt:0
 const avatar=makePerson({skin:CH.skin,hair:CH.hair,shirt:CH.shirt,pants:0x34445b,shoe:0x252a31,style:CH.style,hijab:CH.shirt,apron:0xf3e5c9,tag:true,cap:CH.style==='hijab'?null:CH.shirt,collar:0xfff1d8,scale:1.12});
 player.add(avatar);standPose(avatar);
 const pAnim={phase:0,amp:0,target:0};
+// Velocity smoothing: acceleration and braking are frame-rate independent.
+const playerVelocity={x:0,z:0};
 player.userData.speed=4.2;
 // Imported barista model: only replaces the default short-hair player; other
 // character styles keep their existing customizable procedural avatar.
@@ -2721,21 +2723,31 @@ function frame(){
  updateShiftClock(dt);
  const forward=(keys.KeyS?1:0)-(keys.KeyW?1:0);
  const strafe=(keys.KeyD?1:0)-(keys.KeyA?1:0);
- const moving=(forward!==0||strafe!==0) && !businessPanel.classList.contains('open') && !marketPanel.classList.contains('open') && cashierOrderPanel.style.display!=='block';
- if(moving){
+ const inputActive=(forward!==0||strafe!==0) && !businessPanel.classList.contains('open') && !marketPanel.classList.contains('open') && cashierOrderPanel.style.display!=='block';
+ let desiredX=0,desiredZ=0;
+ if(inputActive){
    const dir=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
    const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
-   const move=dir.multiplyScalar(forward).add(right.multiplyScalar(strafe)).normalize();
+   const desired=dir.multiplyScalar(forward).add(right.multiplyScalar(strafe)).normalize();
    const speed=keys.ShiftLeft||keys.ShiftRight?7:4.2;
-   const step=move.multiplyScalar(speed*dt);
-   movePlayerWithCollision(step.x,step.z);
-   // Badan berbelok perlahan (bukan langsung berputar) ke arah gerak.
-   let turn=Math.atan2(move.x,move.z)-avatar.rotation.y;turn=Math.atan2(Math.sin(turn),Math.cos(turn));
+   desiredX=desired.x*speed;desiredZ=desired.z*speed;
+ }
+ // Smooth acceleration, direction changes and braking; independent of frame rate.
+ const response=inputActive?10:15,blend=1-Math.exp(-response*dt);
+ playerVelocity.x+=(desiredX-playerVelocity.x)*blend;
+ playerVelocity.z+=(desiredZ-playerVelocity.z)*blend;
+ const actualSpeed=Math.hypot(playerVelocity.x,playerVelocity.z);
+ const moving=actualSpeed>.12;
+ if(actualSpeed>.015){
+   movePlayerWithCollision(playerVelocity.x*dt,playerVelocity.z*dt);
+   // Turn toward the smoothed travel direction, not the raw key input.
+   let turn=Math.atan2(playerVelocity.x,playerVelocity.z)-avatar.rotation.y;
+   turn=Math.atan2(Math.sin(turn),Math.cos(turn));
    avatar.rotation.y+=turn*(1-Math.exp(-14*dt));
-   pAnim.phase+=dt*(6.5+speed*.9);               // kecepatan langkah ikut kecepatan lari
-   pAnim.target=speed>5?1.3:1;
- } else { pAnim.target=0; }
- // Amplitudo dihaluskan: berhenti/mulai berjalan mengalir, tidak loncat ke pose lain.
+   pAnim.phase+=dt*(6.5+actualSpeed*.9);
+ }
+ // Blend the walk cycle continuously between idle, walk and run.
+ pAnim.target=Math.min(1.3,actualSpeed/4.2);
  pAnim.amp+=(pAnim.target-pAnim.amp)*(1-Math.exp(-10*dt));
  walkPose(avatar,pAnim.phase,pAnim.amp);
  if(holdingDish){const u=avatar.userData;u.arms[0].rotation.x=u.arms[1].rotation.x=-.95;u.elbows[0].rotation.x=u.elbows[1].rotation.x=-.55;}
@@ -2761,7 +2773,7 @@ function frame(){
  const target=new THREE.Vector3(player.position.x,1.15,player.position.z);
  const distance=7.8;
  const camOffset=new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance+2.0,Math.cos(yaw)*Math.cos(pitch)*distance);
- camera.position.lerp(target.clone().add(camOffset),1-Math.pow(.001,dt));
+ camera.position.lerp(target.clone().add(camOffset),1-Math.exp(-7.5*dt));
  camera.lookAt(target);
  renderer.render(scene,camera);
 }
