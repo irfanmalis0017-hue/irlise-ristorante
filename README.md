@@ -82,3 +82,7 @@ Daily Missions and rewards, 3D restaurant simulation, customers, kitchen workflo
 - Kinerja karyawan baru memakai rumus yang sama dengan penghitungan harian (`50 + reputasi × 10`), tidak lagi mulai dari 75% lalu turun saat hari pertama ditutup.
 - Gaji bulanan yang tidak terbayar kini menjadi tunggakan (`saveData.wageDebt`) yang ditambahkan ke penggajian bulan berikutnya, dan ditampilkan di panel level. Save lama tetap terbaca karena field ini opsional (default 0), sehingga `SAVE_VERSION` tidak diubah.
 - Perubahan ini tidak menyentuh `status.json`, `GAME_VERSION` (saat ini `2.3.0` di branch ini), maupun `SAVE_VERSION`.
+
+## Credits
+
+- T-Rex model: ["Tyrannosarus rex (Free model)"](https://sketchfab.com/3d-models/tyrannosarus-rex-free-model-e18c433cdd1c49f8ac152348b7384037) by Joel Anderson, licensed CC BY-NC 4.0 (non-commercial use only). Test page: `trex-test.html`.
